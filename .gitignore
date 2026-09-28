@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+# The local stack's service ports: configuration with nothing secret in it.
+!.env.development
+.DS_Store
+apps/desktop/web/
+apps/desktop/release/
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/.expo/
