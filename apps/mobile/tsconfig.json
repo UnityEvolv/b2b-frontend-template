@@ -1,0 +1,24 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "types": [],
+    "paths": {
+      "react-native": ["./node_modules/react-native"],
+      "react-native/*": ["./node_modules/react-native/*"],
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"]
+    }
+  },
+  "include": ["index.ts", "app.config.ts", "src"],
+  "exclude": ["src/**/*.test.ts", "android", "ios"]
+}

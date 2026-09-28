@@ -1,0 +1,14 @@
+{
+  "name": "@b2b-template/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "What every app and platform agrees on: permission checks and formatting for dates, time zones and names. No DOM, no React.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

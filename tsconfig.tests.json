@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["node", "vite/client"]
+  },
+  "include": [
+    "packages/**/*.test.ts",
+    "packages/**/*.test.tsx",
+    "packages/**/src/**/*.ts",
+    "packages/**/src/**/*.tsx",
+    "packages/ui-web/test/**/*",
+    "apps/desktop/src/**/*.ts",
+    "vitest.setup.ts"
+  ]
+}

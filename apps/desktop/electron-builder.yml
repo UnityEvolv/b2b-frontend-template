@@ -1,0 +1,53 @@
+# Installers for Windows and macOS. Linux is not in the MVP; nothing here
+# prevents it later.
+#
+# Signing turns on by itself when CI has the certificate and stays
+# off otherwise, so a build without secrets is simply unsigned:
+#   - CSC_LINK and CSC_KEY_PASSWORD: the code-signing certificate (a .p12 or
+#     .pfx, base64 or a path) for Windows, or the Developer ID Application
+#     certificate for macOS.
+#   - APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID (or
+#     APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER): macOS
+#     notarisation, run after signing when they are set.
+#
+# Updates: the app reads its feed at run time (DESKTOP_UPDATE_URL or
+# DESKTOP_UPDATE_GITHUB, see src/config.ts), so nothing here names one. A
+# release build that should also write the feed's latest*.yml passes it:
+#   electron-builder -c.publish.provider=generic -c.publish.url="$DESKTOP_UPDATE_URL" --publish never
+appId: com.example.b2bapp
+productName: B2B App
+copyright: Copyright the B2B template authors
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - web/**/*
+  - package.json
+asar: true
+npmRebuild: false
+publish: null
+# Links into the app: registered by the installer on both platforms.
+# The scheme must match SCHEME in src/defaults.config.ts.
+protocols:
+  - name: b2bapp
+    schemes:
+      - b2bapp
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+mac:
+  target:
+    # The DMG to install; the zip is what an update downloads.
+    - dmg
+    - zip
+  category: public.app-category.productivity
+  # Required for notarisation; applies only when the app is signed.
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist

@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  # Pull requests into main only, and not while a draft: the push to main on
+  # merge is not tested again, since the pull request already tested that merge.
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore: ['**.md', 'docs/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Types
+        run: npm run typecheck
+      - name: Lint (package boundaries, DOM in shared packages, literal strings, colours)
+        run: npm run lint
+      - name: Format
+        run: npm run format:check
+      - name: Tests (including axe on the shell)
+        run: npm test
+      - name: Build the web apps
+        env:
+          VITE_RELEASE: ${{ github.sha }}
+        run: npm run build
+      - name: unitykit styles reach every app
+        run: npm run check:kit-styles
+      - name: API client matches its contracts (generated code is never edited by hand)
+        run: npm run check:api-generated
+      - name: Web security headers match their definition
+        run: npm run check:web-headers
+      - name: Built apps carry no inline script the policy would block
+        run: npm run check:inline-scripts

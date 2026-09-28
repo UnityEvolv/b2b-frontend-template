@@ -1,0 +1,5 @@
+*.md
+package-lock.json
+apps/desktop/web/
+apps/desktop/release/
+packages/api/specs/

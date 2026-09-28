@@ -1,0 +1,28 @@
+{
+  "name": "@b2b-template/app-admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Org admin: users, roles, settings, audit, billing, SCIM.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@unityevolv/unitykit": "^0.1.0",
+    "@b2b-template/api": "0.0.0",
+    "@b2b-template/core": "0.0.0",
+    "@b2b-template/i18n": "0.0.0",
+    "@b2b-template/ui-web": "0.0.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.0.0",
+    "react-i18next": "^15.0.0"
+  },
+  "devDependencies": {
+    "@b2b-template/app-config": "0.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
+  }
+}

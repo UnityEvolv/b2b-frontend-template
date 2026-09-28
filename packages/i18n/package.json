@@ -1,0 +1,17 @@
+{
+  "name": "@b2b-template/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The translation layer: every user-facing string, the supported languages, and choosing one. Shared by web and React Native.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "i18next": "^25.0.0"
+  }
+}

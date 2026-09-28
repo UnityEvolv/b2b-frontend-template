@@ -1,0 +1,25 @@
+{
+  "name": "@b2b-template/app-config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The one Vite configuration the three web apps share, so a build rule is added once and reaches all of them.",
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./first-paint": {
+      "types": "./first-paint.d.mts",
+      "default": "./first-paint.mjs"
+    },
+    "./captcha": {
+      "types": "./captcha.d.mts",
+      "default": "./captcha.mjs"
+    }
+  },
+  "dependencies": {
+    "@sentry/vite-plugin": "5.4.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "tailwindcss": "^4.1.0",
+    "vite": "^7.0.0"
+  }
+}

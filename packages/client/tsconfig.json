@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // For the fetch, Request and Response types only: React Native declares
+    // the same globals. The lint rule keeps window, document and storage out.
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx"
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+}

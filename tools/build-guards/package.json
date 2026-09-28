@@ -1,0 +1,11 @@
+{
+  "name": "@b2b-template/build-guards",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Build-time checks: unitykit styles reach every app, and built pages carry no inline script the policy would block.",
+  "type": "module",
+  "exports": {
+    "./kit-styles": "./kit-styles.mjs",
+    "./inline-scripts": "./inline-scripts.mjs"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "b2b-frontend-template",
+  "private": true,
+  "type": "module",
+  "description": "A B2B SaaS frontend template: the account, admin and platform web apps, the mobile app and the desktop shell.",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "tools/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.tests.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:kit-styles && npm run check:api-generated && npm run check:web-headers && npm run check:inline-scripts",
+    "build": "npm run build -w @b2b-template/app-account -w @b2b-template/app-admin -w @b2b-template/app-platform",
+    "check:kit-styles": "node tools/build-guards/kit-styles.mjs",
+    "check:api-generated": "npm run generate -w @b2b-template/api && git diff --exit-code -- packages/api",
+    "generate:web-headers": "node tools/app-config/generate-headers.mjs",
+    "check:web-headers": "npm run generate:web-headers && git diff --exit-code -- deploy/web",
+    "check:inline-scripts": "node tools/build-guards/inline-scripts.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.0",
+    "@types/node": "^22.20.3",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "axe-core": "^4.10.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-i18next": "^6.1.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^17.12.0",
+    "jsdom": "^27.4.0",
+    "prettier": "^3.4.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "react-native": "0.86.3"
+  }
+}

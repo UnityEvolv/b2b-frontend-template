@@ -1,0 +1,90 @@
+# Secrets and dependency scanning.
+#
+# Runs on every ready PR into main, before a human reviews anything, and by
+# hand from the Actions tab (workflow_dispatch) for a full scan of main.
+# Each job fails the build on a finding; the findings are written to the job
+# summary. No repository secret is used, so it runs on forks too.
+#
+# Accepted risks live in .trivyignore.yaml and must name a reason and an expiry.
+# Accepted secret findings (a key already rotated) live in .gitleaksignore.
+# The web apps ship as static files, not images, so there is no image scan
+# here; the backend scans every image it builds.
+
+name: security
+
+on:
+  # Pull requests into main only, and not while a draft: the push to main on
+  # merge is not tested again, since the PR already tested that merge.
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TRIVY_IMAGE: aquasec/trivy:0.74.0
+  GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.1
+
+jobs:
+  secrets:
+    name: secrets
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The whole history, every time: a secret committed and then deleted
+          # is still a leaked secret.
+          fetch-depth: 0
+      - name: gitleaks
+        run: |
+          set +e
+          docker run --rm -v "$PWD:/repo" -w /repo "$GITLEAKS_IMAGE" \
+            git --redact --no-banner --exit-code 1 \
+            --report-format json --report-path /repo/gitleaks.json .
+          status=$?
+          set -e
+          python3 .github/scripts/report.py secrets gitleaks.json > secrets.md
+          cat secrets.md >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: report-secrets
+          path: secrets.md
+          if-no-files-found: ignore
+
+  dependencies:
+    name: dependencies
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: accepted risks are justified and dated
+        run: python3 .github/scripts/check_ignores.py .trivyignore.yaml
+      - name: trivy (npm lockfile)
+        run: |
+          set +e
+          docker run --rm -v "$PWD:/repo" -w /repo "$TRIVY_IMAGE" \
+            fs --scanners vuln --severity HIGH,CRITICAL --exit-code 1 \
+            --ignorefile .trivyignore.yaml --format json --output trivy-fs.json \
+            package-lock.json
+          status=$?
+          set -e
+          python3 .github/scripts/report.py dependencies trivy-fs.json > dependencies.md
+          cat dependencies.md >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: report-dependencies
+          path: dependencies.md
+          if-no-files-found: ignore

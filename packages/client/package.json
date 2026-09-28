@@ -1,0 +1,22 @@
+{
+  "name": "@b2b-template/client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "What the web and mobile apps share above the typed API: sign-in and the session's tokens, the account flows, where a person lands, and the rules the pages explain. No DOM: each platform passes in its storage and how its session cookie travels.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@b2b-template/api": "0.0.0",
+    "@b2b-template/core": "0.0.0",
+    "@b2b-template/theme": "0.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  }
+}

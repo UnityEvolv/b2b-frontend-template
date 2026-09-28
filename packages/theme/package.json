@@ -1,0 +1,14 @@
+{
+  "name": "@b2b-template/theme",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The theme preference and how it resolves: light, dark, or follow the system. Shared by web, React Native and the desktop shell.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@b2b-template/app-desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The desktop shell: Electron around the account web app, wrapping it rather than duplicating it.",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:main": "tsc -p tsconfig.json",
+    "build:web": "node tools/copy-web.mjs",
+    "build": "npm run build:main && npm run build:web",
+    "dev": "npm run build:main && node tools/run.mjs",
+    "start": "npm run build && node tools/run.mjs --build",
+    "smoke": "npm run build && node tools/run.mjs --build --smoke",
+    "package": "npm run build && electron-builder",
+    "package:dir": "npm run build && electron-builder --dir",
+    "smoke:packaged": "node tools/smoke.mjs"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.3",
+    "electron": "44.4.5",
+    "electron-builder": "^26.0.0"
+  }
+}
