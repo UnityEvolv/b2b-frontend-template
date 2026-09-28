@@ -13,8 +13,6 @@
   },
   "dependencies": {
     "@sentry/react": "11.0.0",
-    "@unityevolv/ofiskit-template": "^0.1.0",
-    "@unityevolv/ofiskit-ui-builder": "^0.1.0",
     "@unityevolv/unitykit": "^0.1.0",
     "@b2b-template/api": "0.0.0",
     "@b2b-template/app-config": "0.0.0",

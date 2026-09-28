@@ -54,8 +54,9 @@ export interface AppDefinition {
   /** The public CAPTCHA site key for public forms. From the build's configuration; absent on a laptop. */
   captcha?: CaptchaConfig
   /**
-   * Controls this app adds to the header, beside the org switcher: the office
-   * app's office switcher. Shared pages never need to know what is there.
+   * Controls this app adds to the header, beside the org switcher: the
+   * account app's notification bell. Shared pages never need to know what is
+   * there.
    */
   headerActions?: ComponentType
   /**
@@ -65,9 +66,9 @@ export interface AppDefinition {
    */
   banner?: ComponentType
   /**
-   * What wraps every signed-in page and outlives moving between them: the
-   * office app keeps its office connection and call here, so leaving the map
-   * never drops either, and shows the mini office over other pages.
+   * What wraps every signed-in page and outlives moving between them: state
+   * an app keeps across pages, such as a live connection. The default shell
+   * is the layout alone.
    */
   shell?: ComponentType<{ children: ReactNode }>
 }

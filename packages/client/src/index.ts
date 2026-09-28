@@ -2,10 +2,9 @@
  * @b2b-template/client
  *
  * What the web apps and the phone share above the typed API. The session and
- * the provider that renders from it, sign-in, the account flows, where a
- * person lands, and the tables that turn a refusal into a sentence. No DOM:
- * a platform passes in its cache and, on the phone, where the session cookie
- * is kept.
+ * the provider that renders from it, sign-in, the account flows, and the
+ * tables that turn a refusal into a sentence. No DOM: a platform passes in
+ * its cache and, on the phone, where the session cookie is kept.
  */
 export {
   CAPTCHA_HEADER,
@@ -51,14 +50,6 @@ export {
   SignInRefused,
   VERIFY_ERRORS,
 } from './errors'
-export {
-  canInviteGuest,
-  DEFAULT_GUEST_WINDOW,
-  GUEST_WINDOWS,
-  grantIsOpen,
-  type GuestWindow,
-} from './guests'
-export { landing, type Landing, type LandingFacts } from './landing'
 export { afterLeaving, canSwitch, leaveBlocked } from './orgs'
 export {
   maskEmail,

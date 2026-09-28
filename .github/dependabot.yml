@@ -19,9 +19,7 @@ updates:
     schedule:
       interval: weekly
     groups:
-      # The engine's packages and the design system each move together.
-      ofiskit:
-        patterns: ['@unityevolv/ofiskit-*']
+      # The design system's packages move together.
       unitykit:
         patterns: ['@unityevolv/unitykit*']
       minor-and-patch:

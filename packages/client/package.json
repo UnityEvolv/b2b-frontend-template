@@ -2,7 +2,7 @@
   "name": "@b2b-template/client",
   "version": "0.0.0",
   "private": true,
-  "description": "What the web and mobile apps share above the typed API: sign-in and the session's tokens, the account flows, where a person lands, and the rules the pages explain. No DOM: each platform passes in its storage and how its session cookie travels.",
+  "description": "What the web and mobile apps share above the typed API: sign-in and the session's tokens, the account flows, and the rules the pages explain. No DOM: each platform passes in its storage and how its session cookie travels.",
   "type": "module",
   "sideEffects": false,
   "exports": {

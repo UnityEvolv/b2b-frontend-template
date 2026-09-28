@@ -14,7 +14,7 @@ export type { OrgChoice } from '@b2b-template/client'
  * person has only one, which is the common case; otherwise it names the org
  * they are acting in and lists the others with their role in each.
  * Switching changes the session's active membership on the server and
- * reloads everything from it: navigation, permissions, offices. The platform
+ * reloads everything from it: navigation, permissions, data. The platform
  * app has no switcher; staff are not org members.
  */
 export function OrgSwitcher() {
@@ -43,8 +43,8 @@ export function OrgSwitcher() {
   const choose = async (orgId: string) => {
     try {
       await auth.orgs.switchTo(orgId)
-      // The office the person was in belongs to the org they left: the
-      // reload drops it, and with it their presence there.
+      // What the person was looking at belongs to the org they left: the
+      // reload drops it.
       navigate(home, { replace: true })
       reload()
     } catch {
