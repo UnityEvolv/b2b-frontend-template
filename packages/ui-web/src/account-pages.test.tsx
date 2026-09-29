@@ -22,9 +22,14 @@ const WAIT = { timeout: 5000 }
 const page = (Component: () => React.ReactNode) => () => Promise.resolve({ default: Component })
 
 function renderAt(path: string, fake = fakeIdentity()) {
-  const auth = createAuth({ app: 'ofis', apiOrigin: 'https://api.example.test', fetch: fake.fetch })
+  const auth = createAuth({
+    app: 'account',
+    apiOrigin: 'https://api.example.test',
+    fetch: fake.fetch,
+  })
   const definition: AppDefinition = {
     app: 'account',
+    navNamespace: 'account',
     home: '/offices',
     signInPath: '/sign-in',
     routes: [

@@ -69,7 +69,7 @@ describe('a session kept in the keystore', () => {
     const service = fakeService()
     const keystore = memoryCookieStore()
     const auth = createAuth({
-      app: 'ofis',
+      app: 'account',
       apiOrigin: 'https://api.example.test',
       fetch: service.fetch,
       cookies: keystore,
@@ -93,7 +93,7 @@ describe('a session kept in the keystore', () => {
 
     // The app is killed and launched again: a new instance, the same keystore.
     const again = createAuth({
-      app: 'ofis',
+      app: 'account',
       apiOrigin: 'https://api.example.test',
       fetch: service.fetch,
       cookies: keystore,
@@ -107,7 +107,7 @@ describe('a session kept in the keystore', () => {
   })
 
   it('points the system browser at the provider with the app and the challenge', () => {
-    const auth = createAuth({ app: 'ofis', apiOrigin: 'https://api.example.test' })
+    const auth = createAuth({ app: 'account', apiOrigin: 'https://api.example.test' })
     const url = new URL(auth.signIn.entraStartUrl('ada@acme.com', '/offices', 'mobile', 'abc'))
     expect(url.pathname).toBe('/identity/v1/sign-in/start')
     expect(url.searchParams.get('client')).toBe('mobile')
@@ -144,7 +144,7 @@ describe('a session kept in the keystore', () => {
       return new Response(null, { status: 404 })
     }
     const auth = createAuth({
-      app: 'ofis',
+      app: 'account',
       apiOrigin: 'https://api.example.test',
       fetch,
       cookies: keystore,

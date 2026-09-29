@@ -59,6 +59,7 @@ function environment(
 const definition = (siteKey?: string) =>
   ({
     app: 'admin',
+    navNamespace: 'admin',
     home: '/',
     signInPath: '/sign-in',
     routes: [],
@@ -74,9 +75,9 @@ function Harness({
   env?: CaptchaEnvironment
   onHook: (h: ReturnType<typeof useCaptcha>) => void
 }) {
-  const { app, home, signInPath, routes, captcha } = definition(siteKey)
+  const { app, navNamespace, home, signInPath, routes, captcha } = definition(siteKey)
   return (
-    <AppProvider value={{ app, home, signInPath, routes, captcha }}>
+    <AppProvider value={{ app, navNamespace, home, signInPath, routes, captcha }}>
       <SessionProvider source={memorySessionSource(null)}>
         <I18nProvider i18n={createI18n('en')}>
           <Probe env={env} onHook={onHook} />

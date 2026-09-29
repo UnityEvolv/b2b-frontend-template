@@ -15,18 +15,18 @@ export type { OrgChoice } from '@b2b-template/client'
  * they are acting in and lists the others with their role in each.
  * Switching changes the session's active membership on the server and
  * reloads everything from it: navigation, permissions, data. The platform
- * app has no switcher; staff are not org members.
+ * app turns the switcher off; staff are not org members.
  */
 export function OrgSwitcher() {
   const { t } = useTranslation()
-  const { app, auth, home } = useApp()
+  const { orgSwitcher = true, auth, home } = useApp()
   const { state, reload } = useSession()
   const navigate = useNavigate()
   const [choices, setChoices] = useState<OrgChoice[]>([])
   const orgId = state.status === 'signed-in' ? state.session.membership?.orgId : undefined
 
   useEffect(() => {
-    if (!auth || app === 'platform' || !orgId) return
+    if (!auth || !orgSwitcher || !orgId) return
     let current = true
     void auth.orgs.list().then(
       (list) => current && setChoices(list),
@@ -35,7 +35,7 @@ export function OrgSwitcher() {
     return () => {
       current = false
     }
-  }, [auth, app, orgId])
+  }, [auth, orgSwitcher, orgId])
 
   if (!auth || choices.length < 2) return null
   const here = choices.find((c) => c.active)

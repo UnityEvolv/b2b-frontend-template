@@ -1,13 +1,15 @@
+import { storageKey } from '@b2b-template/product-config'
 import { createApi, isApiError, type Api, type ServiceName } from '@b2b-template/api'
 
 import { createAccountClient, type AccountClient } from './account'
 import { cookieFrom, SESSION_COOKIE, type SessionCookieStore } from './cookies'
 import { SignInRefused } from './errors'
+import { identityApp, type AuthApp } from './identity-app'
 import type { Preferences, Session, SessionSource } from './session'
 
 /**
- * Sign-in and the session behind it (UO-63, UO-89), for the ofis and admin
- * apps and the phone.
+ * Sign-in and the session behind it (UO-63, UO-89), for the web apps and
+ * the phone.
  *
  * The identity service keeps the session in an HttpOnly cookie on the API
  * host and hands out short-lived access tokens against it. This module asks
@@ -22,7 +24,7 @@ import type { Preferences, Session, SessionSource } from './session'
  */
 
 /** The apps the identity service knows, for its links and emails. */
-export type AuthApp = 'ofis' | 'admin' | 'platform'
+export type { AuthApp } from './identity-app'
 
 /** The header a public form's bot-check token travels in. */
 export const CAPTCHA_HEADER = 'X-Captcha-Token'
@@ -73,7 +75,7 @@ export type LocalSignInResult = { kind: 'signed-in' } | { kind: 'mfa'; step: Mfa
  * Who is signing in through the provider. The web app is the browser
  * itself. The desktop app (UO-117) and the phone (UO-89) open the person's
  * own browser: the identity service then starts no session there, and
- * sends the browser to the app's scheme (`unityofis://auth/callback`) with
+ * sends the browser to the app's scheme (`<scheme>://auth/callback`) with
  * a one-time code, which the app trades with the PKCE verifier only it
  * holds. No token ever travels in a URL.
  */
@@ -171,7 +173,7 @@ export interface AuthOptions {
   now?: () => number
 }
 
-const PREFERENCES_KEY = 'unityofis.preferences'
+const PREFERENCES_KEY = storageKey('preferences')
 /** Refresh this long before the token would expire, so a request never carries a dead one. */
 const REFRESH_MARGIN_MS = 60_000
 
@@ -393,7 +395,7 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
       return identityUrl(
         `/v1/sign-in/start?${query({
           email,
-          app: options.app,
+          app: identityApp(options.app),
           next,
           ...(client ? { client } : {}),
           ...(codeChallenge
@@ -415,7 +417,7 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
       const response = await withCredentials(identityUrl('/v1/sign-in/local'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, app: options.app }),
+        body: JSON.stringify({ email, password, app: identityApp(options.app) }),
       })
       if (response.status === 202) return { kind: 'mfa', step: (await response.json()) as MfaStep }
       if (!response.ok) return refusal(response)

@@ -24,7 +24,12 @@ describe('createAuth', () => {
       membership: { orgId: 'acme', role: 'admin' },
     })
     let clock = 1_000_000
-    const auth = createAuth({ app: 'ofis', apiOrigin: origin, fetch: fake.fetch, now: () => clock })
+    const auth = createAuth({
+      app: 'account',
+      apiOrigin: origin,
+      fetch: fake.fetch,
+      now: () => clock,
+    })
 
     expect(await auth.sessionSource.load()).toBeNull()
     await expect(auth.signIn.local('ada@example.com', 'wrong')).rejects.toBeInstanceOf(
@@ -86,7 +91,7 @@ describe('createAuth', () => {
       mfaCode: '123456',
       membership: { orgId: 'acme', role: 'user' },
     })
-    const auth = createAuth({ app: 'ofis', apiOrigin: origin, fetch: fake.fetch })
+    const auth = createAuth({ app: 'account', apiOrigin: origin, fetch: fake.fetch })
     const result = await auth.signIn.local('m@example.com', 'a long password')
     expect(result.kind).toBe('mfa')
     const challenge = result.kind === 'mfa' ? result.step.challenge_token! : ''
@@ -119,7 +124,7 @@ describe('createAuth', () => {
       membership: { orgId: 'acme', role: 'user' },
     })
     fake.desktopCodes.set('code-1', { email: 'ada@acme.com', verifier: 'v-1' })
-    const auth = createAuth({ app: 'ofis', apiOrigin: origin, fetch: fake.fetch })
+    const auth = createAuth({ app: 'account', apiOrigin: origin, fetch: fake.fetch })
     await expect(auth.signIn.exchange('code-1', 'wrong')).rejects.toMatchObject({
       code: 'signin.exchange_invalid',
     })

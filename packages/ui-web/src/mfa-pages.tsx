@@ -1,3 +1,4 @@
+import { PRODUCT, recoveryCodesFile } from '@b2b-template/product-config'
 import { Alert, Button, Checkbox, Input } from '@unityevolv/unitykit'
 import QRCode from 'qrcode'
 import { useEffect, useState, type FormEvent } from 'react'
@@ -54,7 +55,7 @@ function Enrolment({ enrolment }: { enrolment: TotpEnrolment }) {
 export function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () => void }) {
   const { t } = useTranslation()
   const [saved, setSaved] = useState(false)
-  const file = `data:text/plain;charset=utf-8,${encodeURIComponent(`UnityOfis recovery codes\n\n${codes.join('\n')}\n`)}`
+  const file = `data:text/plain;charset=utf-8,${encodeURIComponent(`${PRODUCT.productName} recovery codes\n\n${codes.join('\n')}\n`)}`
   return (
     <div className="space-y-4">
       <Alert variant="warn">{t('mfa.codesOnce')}</Alert>
@@ -63,7 +64,7 @@ export function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () =
           <li key={code}>{code}</li>
         ))}
       </ul>
-      <a href={file} download="unityofis-recovery-codes.txt" className="btn btn-outline w-full">
+      <a href={file} download={recoveryCodesFile()} className="btn btn-outline w-full">
         {t('mfa.download')}
       </a>
       <Checkbox

@@ -1,3 +1,4 @@
+import { storageKey } from '@b2b-template/product-config'
 import {
   DEFAULT_THEME_PREFERENCE,
   isThemePreference,
@@ -25,7 +26,7 @@ import { readCache, writeCache } from './storage'
  * first paint is already in the right theme, before the session has loaded,
  * and so a reload does not flash white at somebody who chose dark.
  */
-export const THEME_CACHE_KEY = 'unityofis:theme'
+export const THEME_CACHE_KEY = storageKey('theme')
 
 /** Matches the query the first-paint script in `@b2b-template/app-config` uses. */
 export const DARK_QUERY = '(prefers-color-scheme: dark)'

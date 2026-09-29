@@ -1,6 +1,6 @@
 import { isApiError } from '@b2b-template/api'
 
-import type { AuthApp } from './auth'
+import { identityApp, type AuthApp } from './identity-app'
 import { SignInRefused } from './errors'
 
 /**
@@ -120,13 +120,13 @@ export function createAccountClient(options: AccountClientOptions): AccountClien
       call('POST', `/v1/invites/${encodeURIComponent(token)}/accept`, name ? { name } : {}),
     verifyEmail: (token) => call('POST', '/v1/email-verification/verify', { token }),
     resendVerification: (email) =>
-      call('POST', '/v1/email-verification/resend', { email, app: options.app }),
+      call('POST', '/v1/email-verification/resend', { email, app: identityApp(options.app) }),
     setPassword: (token, password) => call('POST', '/v1/local/password', { token, password }),
     forgotPassword: (email, captchaToken) =>
       call(
         'POST',
         '/v1/local/password/forgot',
-        { email, app: options.app },
+        { email, app: identityApp(options.app) },
         captchaToken ? { [options.captchaHeader]: captchaToken } : {},
       ),
     switchOrganization: (orgId) => call('POST', '/v1/session/switch', { org_id: orgId }),

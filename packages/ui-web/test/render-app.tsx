@@ -53,6 +53,7 @@ export function renderApp({
 } = {}) {
   const definition: AppDefinition = {
     app: 'admin',
+    navNamespace: 'admin',
     home: '/users',
     signInPath: '/sign-in',
     routes,

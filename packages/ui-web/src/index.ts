@@ -6,7 +6,15 @@
  * theme, language, loading, errors and toasts are already here.
  */
 export { startApp, AppProviders } from './start'
-export { useApp, type AppDefinition, type AppName, type AppRoute } from './app'
+export {
+  useApp,
+  type AccountMenuEntry,
+  type AppDefinition,
+  type AppName,
+  type AppRoute,
+  type Namespace,
+  type NavT,
+} from './app'
 export { buildRoutes, RequirePermission, RequireSignIn } from './routing'
 export { AppLayout } from './layout'
 export {

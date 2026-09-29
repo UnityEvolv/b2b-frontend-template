@@ -26,14 +26,14 @@ function renderSignIn({
   fake?: ReturnType<typeof fakeIdentity>
 } = {}) {
   const auth = createAuth({
-    // The identity service's contract names the member app `ofis`.
-    app: app === 'account' ? 'ofis' : app,
+    app,
     apiOrigin: 'https://api.example.test',
     fetch: fake.fetch,
     ...(roles ? { roles } : {}),
   })
   const definition: AppDefinition = {
     app,
+    navNamespace: app,
     home: '/offices',
     signInPath: '/sign-in',
     routes: [

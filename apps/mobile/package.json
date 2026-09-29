@@ -15,12 +15,13 @@
     "update": "eas update --auto"
   },
   "dependencies": {
-    "@expo/vector-icons": "^15.0.2",
     "@b2b-template/api": "0.0.0",
     "@b2b-template/client": "0.0.0",
     "@b2b-template/core": "0.0.0",
     "@b2b-template/i18n": "0.0.0",
+    "@b2b-template/product-config": "0.0.0",
     "@b2b-template/theme": "0.0.0",
+    "@expo/vector-icons": "^15.0.2",
     "expo": "~57.0.25",
     "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.19",

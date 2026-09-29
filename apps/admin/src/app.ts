@@ -24,6 +24,9 @@ const auth =
 
 export const definition: AppDefinition = {
   app: 'admin',
+  navNamespace: 'admin',
+  badge: (t) => t('common:appBadge.admin'),
+  signupPath: '/signup',
   home: '/users',
   signInPath: '/sign-in',
   banner: BillingBanner,

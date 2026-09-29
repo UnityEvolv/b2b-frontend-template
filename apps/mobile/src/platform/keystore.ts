@@ -1,4 +1,5 @@
 import type { SessionCookieStore } from '@b2b-template/client'
+import { PRODUCT } from '@b2b-template/product-config'
 import * as SecureStore from 'expo-secure-store'
 
 /**
@@ -7,7 +8,8 @@ import * as SecureStore from 'expo-secure-store'
  * kept, never an access token, which lives in memory for its fifteen
  * minutes. It survives a restart and goes with a sign-out.
  */
-const KEY = 'unityofis.session'
+// The keystore takes letters, digits, '.', '-' and '_' in a key.
+const KEY = `${PRODUCT.storagePrefix}.session`
 
 export const keystore: SessionCookieStore = {
   async read() {

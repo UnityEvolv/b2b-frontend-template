@@ -36,6 +36,7 @@ function renderSignup() {
   const auth = createAuth({ app: 'admin', apiOrigin: 'https://api.example.test', fetch })
   const definition: AppDefinition = {
     app: 'admin',
+    navNamespace: 'admin',
     home: '/users',
     signInPath: '/sign-in',
     routes: [{ path: '/signup', access: 'public', page: async () => ({ default: SignupPage }) }],

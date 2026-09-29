@@ -12,11 +12,11 @@ export const config = readConfig(env, serviceNames)
  * Sign-in and the session (UO-89): the same client as web, with the session
  * cookie in the keystore and a token refreshed before any call that would
  * otherwise go without one. The identity service knows the phone as the
- * employee app, so its emails and links are the employee app's.
+ * account app, so its emails and links are the account app's.
  */
 export const auth = configured(config)
   ? createAuth({
-      app: 'ofis',
+      app: 'account',
       ...(config.apiOrigin ? { apiOrigin: config.apiOrigin } : {}),
       serviceOrigin: config.serviceOrigin,
       envPrefix: 'EXPO_PUBLIC_',

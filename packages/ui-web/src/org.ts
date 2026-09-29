@@ -23,7 +23,7 @@ export function useOrg(): OrgContext | null {
   return { api: auth.api, orgId, membershipId, role }
 }
 
-/** The org id of the platform itself: its members are UnityEvolv staff. */
+/** The org id of the platform itself: its members are the platform operator's staff. */
 export const PLATFORM_ORG = '00000000-0000-7000-8000-000000000000'
 
 /** The roles an inviter may hand out: an Owner any but Owner, an Admin only User. */

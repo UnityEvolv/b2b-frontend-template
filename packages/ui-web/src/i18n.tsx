@@ -1,3 +1,4 @@
+import { storageKey } from '@b2b-template/product-config'
 import { pickLanguage, type Resources } from '@b2b-template/i18n'
 import type { i18n } from 'i18next'
 import { useLayoutEffect, type ReactNode } from 'react'
@@ -19,7 +20,7 @@ declare module 'i18next' {
   }
 }
 
-export const LANGUAGE_CACHE_KEY = 'unityofis:language'
+export const LANGUAGE_CACHE_KEY = storageKey('language')
 
 /** The language to start in, before the session says otherwise. */
 export function initialLanguage() {

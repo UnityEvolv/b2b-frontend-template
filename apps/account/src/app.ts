@@ -11,17 +11,24 @@ import { NotificationBell } from './notify/NotificationBell'
  * Sign-in against the identity service. A development build can still take
  * the automatic developer session with VITE_DEV_SESSION=1, for a page worked
  * on without the local stack running.
- *
- * The identity service's contract names the member app `ofis`, so that is
- * what this app signs in as; its emails and links point here.
  */
 const auth =
   import.meta.env.DEV && import.meta.env.VITE_DEV_SESSION === '1'
     ? undefined
-    : createAuth({ app: 'ofis', ...serviceOriginsFromEnv(import.meta.env) })
+    : createAuth({ app: 'account', ...serviceOriginsFromEnv(import.meta.env) })
 
 export const definition: AppDefinition = {
   app: 'account',
+  navNamespace: 'account',
+  accountMenu: [
+    { key: 'profile', icon: 'settings', path: '/profile', label: (t) => t('common:profileLink') },
+    {
+      key: 'notifications',
+      icon: 'bell',
+      path: '/settings/notifications',
+      label: (t) => t('common:notificationsLink'),
+    },
+  ],
   home: '/profile',
   signInPath: '/sign-in',
   headerActions: NotificationBell,

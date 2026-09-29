@@ -34,6 +34,10 @@ const publicPage = (name: PublicPage) => () =>
 
 export const definition: AppDefinition = {
   app: 'platform',
+  navNamespace: 'platform',
+  badge: (t) => t('common:appBadge.platform'),
+  // Staff are not members of the organizations they look after.
+  orgSwitcher: false,
   home: '/organizations',
   signInPath: '/sign-in',
   routes: [

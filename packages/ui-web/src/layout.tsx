@@ -16,7 +16,9 @@ import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate, useNavigation } from 'react-router'
 
-import { granted, NAV_NAMESPACES, useApp, type AppRoute } from './app'
+import { NAMESPACES } from '@b2b-template/i18n'
+
+import { granted, useApp, type AppRoute, type NavT } from './app'
 import { OrgSwitcher } from './org-switcher'
 import { PageLoading } from './pages'
 import { useSession } from './session'
@@ -34,9 +36,17 @@ function owns(route: AppRoute, pathname: string) {
   return pathname === route.path || pathname.startsWith(`${route.path}/`)
 }
 
+/** Every namespace, the app's own first, for labels an app declares. */
+function useNavT(): NavT {
+  const { navNamespace } = useApp()
+  const { t } = useTranslation([navNamespace, ...NAMESPACES.filter((ns) => ns !== navNamespace)])
+  return t as unknown as NavT
+}
+
 function UserMenu() {
   const { t } = useTranslation()
-  const { app } = useApp()
+  const navT = useNavT()
+  const { accountMenu = [] } = useApp()
   const navigate = useNavigate()
   const { state, signOut } = useSession()
   const { preference, setPreference } = useTheme()
@@ -63,16 +73,11 @@ function UserMenu() {
       }
     >
       <Dropdown.Label>{name}</Dropdown.Label>
-      {app === 'account' && (
-        <Dropdown.Item icon="settings" onSelect={() => void navigate('/profile')}>
-          {t('profileLink')}
+      {accountMenu.map((entry) => (
+        <Dropdown.Item key={entry.key} icon={entry.icon} onSelect={() => void navigate(entry.path)}>
+          {entry.label(navT)}
         </Dropdown.Item>
-      )}
-      {app === 'account' && (
-        <Dropdown.Item icon="bell" onSelect={() => void navigate('/settings/notifications')}>
-          {t('notificationsLink')}
-        </Dropdown.Item>
-      )}
+      ))}
       <Dropdown.Separator />
       <Dropdown.Label>{t('theme.label')}</Dropdown.Label>
       {THEME_PREFERENCES.map((option) => (
@@ -103,8 +108,15 @@ function UserMenu() {
  */
 export function AppLayout() {
   const { t } = useTranslation()
-  const { t: navT } = useTranslation(NAV_NAMESPACES)
-  const { app, home, routes, headerActions: HeaderActions, banner: Banner, shell: Shell } = useApp()
+  const navT = useNavT()
+  const {
+    badge,
+    home,
+    routes,
+    headerActions: HeaderActions,
+    banner: Banner,
+    shell: Shell,
+  } = useApp()
   const { permissions } = useSession()
   const { pathname } = useLocation()
   const navigation = useNavigation()
@@ -136,7 +148,7 @@ export function AppLayout() {
             brand={
               <Link to={home} className="flex items-center gap-2">
                 <Brand product="unityofis" size="sm" />
-                {app !== 'account' && <Badge variant="secondary">{t(`appBadge.${app}`)}</Badge>}
+                {badge && <Badge variant="secondary">{badge(navT)}</Badge>}
               </Link>
             }
             actions={

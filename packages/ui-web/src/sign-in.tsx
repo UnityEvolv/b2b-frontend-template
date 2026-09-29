@@ -35,7 +35,7 @@ export function SignInPage() {
 
 function SignInForm() {
   const { t } = useTranslation()
-  const { app, home, auth } = useApp()
+  const { signupPath, home, auth } = useApp()
   const { state, reload } = useSession()
   const [params] = useSearchParams()
   const navigate = useNavigate()
@@ -176,9 +176,9 @@ function SignInForm() {
             <Button type="submit" disabled={busy || !email.trim()} className="w-full">
               {t('signIn.continue')}
             </Button>
-            {app === 'admin' && (
+            {signupPath && (
               <p className="text-center text-sm">
-                <Link to="/signup">{t('signIn.createOrganization')}</Link>
+                <Link to={signupPath}>{t('signIn.createOrganization')}</Link>
               </p>
             )}
           </form>

@@ -153,13 +153,11 @@ export const en = {
     },
     unsupported: {
       title: 'This browser cannot run UnityOfis',
-      description: 'It is missing features the office needs: {{missing}}.',
+      description: 'It is missing features this app needs: {{missing}}.',
       supported:
         'Use the current or previous version of Chrome, Edge, Firefox or Safari, with nothing blocking these features.',
       capability: {
-        webrtc: 'video and voice calls (WebRTC)',
         websocket: 'live updates (WebSockets)',
-        media: 'camera and microphone access',
         storage: 'local storage',
         intl: 'date and number formatting',
       },

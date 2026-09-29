@@ -1,17 +1,37 @@
 import type { IconName } from '@unityevolv/unitykit'
+import type { Resources } from '@b2b-template/i18n'
 import type { TFunction } from 'i18next'
 import { createContext, useContext, type ComponentType, type ReactNode } from 'react'
 
 import type { Auth } from './auth'
+import type { Capability } from './capabilities'
 import type { CaptchaConfig } from './captcha'
 import type { ErrorTrackingConfig } from './error-tracking'
 import type { SessionSource } from './session'
 
-export type AppName = 'account' | 'admin' | 'platform'
+/**
+ * An app's name: the tag its errors carry and the key of its title. The
+ * template's apps are account, admin and platform; a product adds its own.
+ */
+export type AppName = string
 
-/** Every namespace, so a nav label can name any app's key with its prefix. */
-export const NAV_NAMESPACES = ['common', 'account', 'admin', 'platform'] as const
-export type NavT = TFunction<typeof NAV_NAMESPACES>
+/** A translation namespace. */
+export type Namespace = keyof Resources
+
+/**
+ * The translation function a nav or menu label gets: every namespace, so a
+ * label names its key with its prefix and the compiler checks it,
+ * `(t) => t('admin:nav.users')`.
+ */
+export type NavT = TFunction<Namespace[]>
+
+/** An entry in the account menu, under the person's name. */
+export interface AccountMenuEntry {
+  key: string
+  icon?: IconName
+  path: string
+  label: (t: NavT) => string
+}
 
 /**
  * One page, declared.
@@ -41,6 +61,21 @@ export interface AppRoute {
 
 export interface AppDefinition {
   app: AppName
+  /** The namespace this app's own strings, its nav labels among them, are in. */
+  navNamespace: Namespace
+  /** Pages the account menu offers besides the theme and signing out. None by default. */
+  accountMenu?: AccountMenuEntry[]
+  /** A badge beside the brand, naming a secondary app such as admin. None by default. */
+  badge?: (t: NavT) => string
+  /** Whether the header offers switching organization. On by default. */
+  orgSwitcher?: boolean
+  /** Where the sign-in page offers to create an organization, if this app does. */
+  signupPath?: string
+  /**
+   * What the browser must be able to do before this app loads. None by
+   * default: the check only runs for what an app declares it needs.
+   */
+  capabilities?: Capability[]
   routes: AppRoute[]
   /** Where `/` and the brand link go once signed in. */
   home: string
@@ -76,6 +111,11 @@ export interface AppDefinition {
 type AppContextValue = Pick<
   AppDefinition,
   | 'app'
+  | 'navNamespace'
+  | 'accountMenu'
+  | 'badge'
+  | 'orgSwitcher'
+  | 'signupPath'
   | 'home'
   | 'signInPath'
   | 'routes'

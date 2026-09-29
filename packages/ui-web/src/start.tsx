@@ -1,10 +1,11 @@
+import { PRODUCT } from '@b2b-template/product-config'
 import { Toaster, TooltipProvider } from '@unityevolv/unitykit'
 import { createI18n } from '@b2b-template/i18n'
 import { StrictMode, useEffect, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 
-import { AppProvider, type AppDefinition } from './app'
+import { AppProvider, type AppDefinition, type NavT } from './app'
 import { initErrorTracking, setErrorTrackingUser } from './error-tracking'
 import { missingCapabilities, type CapabilityEnvironment } from './capabilities'
 import { I18nProvider, initialLanguage } from './i18n'
@@ -38,6 +39,11 @@ export function AppProviders({
 }) {
   const {
     app,
+    navNamespace,
+    accountMenu,
+    badge,
+    orgSwitcher,
+    signupPath,
     home,
     signInPath,
     routes,
@@ -50,7 +56,22 @@ export function AppProviders({
   } = definition
   return (
     <AppProvider
-      value={{ app, home, signInPath, routes, captcha, auth, headerActions, banner, shell }}
+      value={{
+        app,
+        navNamespace,
+        accountMenu,
+        badge,
+        orgSwitcher,
+        signupPath,
+        home,
+        signInPath,
+        routes,
+        captcha,
+        auth,
+        headerActions,
+        banner,
+        shell,
+      }}
     >
       <SessionProvider source={sessionSource}>
         <ErrorTrackingUser />
@@ -70,17 +91,23 @@ export function AppProviders({
 /**
  * Start a web app.
  *
- * Checks the browser first and shows the plain unsupported page if it cannot
- * run the office, rather than letting it fail somewhere inside. Otherwise
+ * Checks the browser first, for what the app declares it needs, and shows the
+ * plain unsupported page if it cannot run it, rather than letting it fail
+ * somewhere inside. Otherwise
  * renders the route tree inside the providers.
  */
 export function startApp(definition: AppDefinition, container: HTMLElement) {
   initErrorTracking(definition.app, definition.errorTracking)
   const i18n = createI18n(initialLanguage())
-  document.title = i18n.t(`appName.${definition.app}`)
+  // The product's name, and the badge of a secondary app such as admin.
+  const badge = definition.badge?.(i18n.t as unknown as NavT)
+  document.title = badge ? `${PRODUCT.productName} ${badge}` : PRODUCT.productName
   const root = createRoot(container)
 
-  const missing = missingCapabilities(window as unknown as CapabilityEnvironment)
+  const missing = missingCapabilities(
+    window as unknown as CapabilityEnvironment,
+    definition.capabilities ?? [],
+  )
   if (missing.length > 0) {
     root.render(
       <StrictMode>

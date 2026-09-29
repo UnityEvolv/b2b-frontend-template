@@ -1,0 +1,14 @@
+{
+  "name": "@b2b-template/product-config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The product's own names in one place: the product name, the prefix of everything kept on a device, and the URL scheme links into the apps use. Plain JavaScript, so the build tools, the web apps, the phone and the desktop shell all read it.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./index.d.mts",
+      "default": "./index.mjs"
+    }
+  }
+}

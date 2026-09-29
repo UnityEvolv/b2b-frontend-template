@@ -3,8 +3,10 @@
  * import it without pulling in the bundler.
  */
 
+import { storageKey } from '@b2b-template/product-config'
+
 /** Must match `THEME_CACHE_KEY` and `DARK_QUERY` in `@b2b-template/ui-web`. A test holds them together. */
-export const THEME_CACHE_KEY = 'unityofis:theme'
+export const THEME_CACHE_KEY = storageKey('theme')
 export const DARK_QUERY = '(prefers-color-scheme: dark)'
 
 /**

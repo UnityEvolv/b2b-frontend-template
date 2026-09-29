@@ -12,14 +12,15 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@sentry/react": "11.0.0",
-    "@unityevolv/unitykit": "^0.1.0",
     "@b2b-template/api": "0.0.0",
     "@b2b-template/app-config": "0.0.0",
     "@b2b-template/client": "0.0.0",
     "@b2b-template/core": "0.0.0",
     "@b2b-template/i18n": "0.0.0",
+    "@b2b-template/product-config": "0.0.0",
     "@b2b-template/theme": "0.0.0",
+    "@sentry/react": "11.0.0",
+    "@unityevolv/unitykit": "^0.1.0",
     "i18next": "^25.0.0",
     "qrcode": "1.5.4",
     "react-i18next": "^15.0.0",
