@@ -26,6 +26,18 @@ products. The backend half is
 A product adds its own apps, routes and menu entries to the shared frame. It
 does not edit the template's code.
 
+## Naming the product
+
+The product's identity lives in `packages/product-config`:
+
+- `index.mjs` holds `productName` (titles, the brand's accessible name,
+  notification titles), `wordmark` (the name beside the logo, in pieces that
+  take the theme's secondary and primary colours in turn), `storagePrefix`
+  (every key kept on a device) and `urlScheme` (links into the desktop and
+  phone apps).
+- `logo.svg` is a starter placeholder logo. Replace the file, keeping its
+  name, and the web apps' `Brand` shows the product's own.
+
 ## Licence
 
 [MIT](LICENSE).

@@ -4,6 +4,9 @@
  * recovery-codes file, and the scheme links into the desktop and phone apps
  * use.
  *
+ * The logo is `logo.svg` beside this file, a starter placeholder: replace the
+ * file, keeping its name, and the web apps' brand shows the product's own.
+ *
  * The phone's app.config.ts and the desktop's electron-builder.yml cannot
  * read JavaScript from here; `apps/mobile/src/app-identity.json` and
  * `apps/desktop/src/defaults.config.ts` repeat the defaults, and a test in
@@ -18,6 +21,12 @@ export const PRODUCT = Object.freeze({
   storagePrefix: 'b2bapp',
   /** Links into the desktop and phone apps: `b2bapp://accept-invite?token=…`. */
   urlScheme: 'b2bapp',
+  /**
+   * The name as the brand writes it beside the logo, in pieces that take the
+   * theme's secondary and primary colours in turn. Joined as written, so a
+   * space belongs inside a piece; one piece is one colour.
+   */
+  wordmark: Object.freeze(['B2B ', 'App']),
 })
 
 /** A key for something kept on a device, under the product's prefix. */

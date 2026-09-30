@@ -186,7 +186,7 @@ export default function OrganizationsPage() {
         onRowClick={(o: Organization) => navigate(`/organizations/${o.org_id}`)}
         empty={
           <EmptyState
-            icon="office"
+            icon="users"
             titleAs="h2"
             title={filtered ? t('organizations.noMatch') : t('organizations.empty')}
             action={

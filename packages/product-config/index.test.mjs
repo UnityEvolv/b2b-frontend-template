@@ -8,7 +8,12 @@ describe('the product config', () => {
       productName: 'B2B App',
       storagePrefix: 'b2bapp',
       urlScheme: 'b2bapp',
+      wordmark: ['B2B ', 'App'],
     })
+  })
+
+  it('writes the product name in the wordmark', () => {
+    expect(PRODUCT.wordmark.join('')).toBe(PRODUCT.productName)
   })
 
   it('keeps everything on a device under the prefix', () => {

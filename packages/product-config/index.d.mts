@@ -2,6 +2,7 @@ export interface Product {
   readonly productName: string
   readonly storagePrefix: string
   readonly urlScheme: string
+  readonly wordmark: readonly string[]
 }
 
 export declare const PRODUCT: Product

@@ -54,7 +54,7 @@ export const definition: AppDefinition = {
     {
       path: '/organizations',
       page: () => import('./pages/OrganizationsPage'),
-      nav: { key: 'organizations', icon: 'office', label: (t) => t('platform:nav.organizations') },
+      nav: { key: 'organizations', icon: 'users', label: (t) => t('platform:nav.organizations') },
     },
     { path: '/organizations/new', page: () => import('./pages/CreateOrganizationPage') },
     { path: '/organizations/:orgId', page: () => import('./pages/OrganizationDetailPage') },

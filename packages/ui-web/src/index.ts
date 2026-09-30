@@ -67,6 +67,7 @@ export {
 } from './account-pages'
 export { MfaSettingsPage, MfaSetupPage } from './mfa-pages'
 export { PublicCard } from './public-card'
+export { Brand, type BrandProps, type BrandSize } from './brand'
 export { OrgSwitcher, type OrgChoice } from './org-switcher'
 export { createAccountClient, type AccountClient } from './account'
 export { I18nProvider } from './i18n'

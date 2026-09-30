@@ -2,7 +2,6 @@ import {
   AppShell,
   Avatar,
   Badge,
-  Brand,
   Dropdown,
   Navbar,
   Progress,
@@ -19,6 +18,7 @@ import { Link, Outlet, useLocation, useNavigate, useNavigation } from 'react-rou
 import { NAMESPACES } from '@b2b-template/i18n'
 
 import { granted, useApp, type AppRoute, type NavT } from './app'
+import { Brand } from './brand'
 import { OrgSwitcher } from './org-switcher'
 import { PageLoading } from './pages'
 import { useSession } from './session'
@@ -147,7 +147,7 @@ export function AppLayout() {
           <Navbar
             brand={
               <Link to={home} className="flex items-center gap-2">
-                <Brand product="unityofis" size="sm" />
+                <Brand size="sm" />
                 {badge && <Badge variant="secondary">{badge(navT)}</Badge>}
               </Link>
             }

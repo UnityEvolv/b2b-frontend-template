@@ -1,4 +1,4 @@
-import { Alert, Brand, Button, Card, Input, Spinner } from '@unityevolv/unitykit'
+import { Alert, Button, Card, Input, Spinner } from '@unityevolv/unitykit'
 import { CALLBACK_ERRORS, safeNext, SIGN_IN_ERRORS } from '@b2b-template/client'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 
 import { useApp } from './app'
 import { SignInRefused, type MfaStep } from './auth'
+import { Brand } from './brand'
 import { desktopBridge } from './desktop'
 import { SignInPendingPage } from './pages'
 import { useSession } from './session'
@@ -146,7 +147,7 @@ function SignInForm() {
     <main id="content" className="grid min-h-dvh place-items-center bg-base-100 p-4">
       <Card className="w-full max-w-md">
         <div className="mb-6 flex justify-center">
-          <Brand product="unityofis" />
+          <Brand />
         </div>
         <h1 className="mb-4 text-2xl font-semibold">{t('signIn.title')}</h1>
         {refused && !error && (

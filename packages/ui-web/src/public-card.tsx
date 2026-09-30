@@ -1,6 +1,8 @@
-import { Brand, Card, Spinner } from '@unityevolv/unitykit'
+import { Card, Spinner } from '@unityevolv/unitykit'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { Brand } from './brand'
 
 /** The frame around every public account page: the brand, a title, a card. */
 export function PublicCard({ title, children }: { title: ReactNode; children: ReactNode }) {
@@ -8,7 +10,7 @@ export function PublicCard({ title, children }: { title: ReactNode; children: Re
     <main id="content" className="grid min-h-dvh place-items-center bg-base-100 p-4">
       <Card className="w-full max-w-md">
         <div className="mb-6 flex justify-center">
-          <Brand product="unityofis" />
+          <Brand />
         </div>
         <h1 className="mb-4 text-2xl font-semibold">{title}</h1>
         {children}
