@@ -8,7 +8,7 @@ import {
 import { readCache, writeCache } from './storage'
 
 /**
- * Sign-in and the session behind it (UO-63), for the ofis and admin apps.
+ * Sign-in and the session behind it (UO-63), for every web app.
  *
  * The logic is shared with the phone in @b2b-template/client (UO-89). On web
  * the browser carries the session cookie, and the preferences are cached in

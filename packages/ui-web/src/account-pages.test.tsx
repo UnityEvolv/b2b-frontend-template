@@ -30,10 +30,10 @@ function renderAt(path: string, fake = fakeIdentity()) {
   const definition: AppDefinition = {
     app: 'account',
     navNamespace: 'account',
-    home: '/offices',
+    home: '/home',
     signInPath: '/sign-in',
     routes: [
-      { path: '/offices', page: pageNamed('offices page') },
+      { path: '/home', page: pageNamed('home page') },
       { path: '/sign-in', access: 'public', page: pageNamed('sign-in page') },
       { path: '/accept-invite', access: 'public', page: page(AcceptInvitePage) },
       { path: '/verify-email', access: 'public', page: page(VerifyEmailPage) },

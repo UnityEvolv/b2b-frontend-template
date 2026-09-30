@@ -53,7 +53,7 @@ describe('error tracking', () => {
 
   it('reports caught errors and the signed-in user by id', () => {
     initErrorTracking('account', { dsn: 'https://k@o.ingest.sentry.io/1' })
-    reportError(new Error('boundary'), { route: '/offices' })
+    reportError(new Error('boundary'), { route: '/home' })
     expect(sentry.captureException).toHaveBeenCalledTimes(1)
     setErrorTrackingUser('user-1')
     expect(sentry.setUser).toHaveBeenCalledWith({ id: 'user-1' })

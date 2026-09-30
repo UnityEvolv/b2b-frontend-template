@@ -206,7 +206,7 @@ export function fakeIdentity(): FakeIdentity {
             billing_admin: ['billing'],
             warnings: [],
             effective: {
-              owner: ['users', 'billing', 'offices'],
+              owner: ['users', 'billing', 'audit'],
               admin: ['users'],
               billing_admin: ['billing'],
               user: [],

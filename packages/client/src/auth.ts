@@ -328,7 +328,6 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
       ? {
           theme: saved.theme,
           language: saved.language ?? null,
-          ...(saved.hide_decorations ? { hideDecorations: true } : {}),
         }
       : loadPreferences()
     cache?.write(PREFERENCES_KEY, JSON.stringify(preferences))

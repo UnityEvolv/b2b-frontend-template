@@ -23,8 +23,6 @@ export interface Preferences {
   theme: ThemePreference
   /** A BCP 47 tag, or null to follow the browser. */
   language: string | null
-  /** Festival frames hidden for this person only (UO-147). */
-  hideDecorations?: boolean
 }
 
 export interface SessionUser {

@@ -7,6 +7,7 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 import tailwind from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { PRODUCT } from '@b2b-template/product-config'
 import { defineConfig } from 'vite'
 
 import { FIRST_PAINT_SCRIPT } from './first-paint.mjs'
@@ -21,6 +22,23 @@ function firstPaintTheme() {
     transformIndexHtml: () => [
       { tag: 'script', children: FIRST_PAINT_SCRIPT, injectTo: 'head-prepend' },
     ],
+  }
+}
+
+/** Text for an HTML page, with the characters HTML treats specially escaped. */
+const escapeHtml = (text) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+
+/**
+ * `%PRODUCT_NAME%` in an app's index.html is the product's name from the
+ * config, so the title before the app starts is already the product's.
+ */
+function productName() {
+  return {
+    name: 'b2b-template:product-name',
+    transformIndexHtml: {
+      order: 'pre',
+      handler: (html) => html.replaceAll('%PRODUCT_NAME%', escapeHtml(PRODUCT.productName)),
+    },
   }
 }
 
@@ -57,7 +75,7 @@ export function defineAppConfig({ port }) {
   // the dev policy names; production HTML has no injected scripts.
   const headers = securityHeaders({ connect: DEV_CONNECT, images: DEV_IMAGES, dev: true })
   return defineConfig(({ command }) => ({
-    plugins: [react(), tailwind(), firstPaintTheme(), ...sourceMapsToSentry()],
+    plugins: [react(), tailwind(), productName(), firstPaintTheme(), ...sourceMapsToSentry()],
     build: { sourcemap: true },
     ...(command === 'serve' ? { html: { cspNonce: DEV_NONCE } } : {}),
     server: { port, strictPort: true, headers },

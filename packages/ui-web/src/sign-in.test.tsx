@@ -17,7 +17,7 @@ import { pageNamed } from '../test/render-app'
 function renderSignIn({
   app = 'account',
   roles,
-  path = '/sign-in?next=/offices',
+  path = '/sign-in?next=/home',
   fake = fakeIdentity(),
 }: {
   app?: 'account' | 'admin'
@@ -34,10 +34,10 @@ function renderSignIn({
   const definition: AppDefinition = {
     app,
     navNamespace: app,
-    home: '/offices',
+    home: '/home',
     signInPath: '/sign-in',
     routes: [
-      { path: '/offices', page: pageNamed('offices page') },
+      { path: '/home', page: pageNamed('home page') },
       {
         path: '/sign-in',
         access: 'public',
@@ -87,9 +87,9 @@ describe('SignInPage', { timeout: 20_000 }, () => {
     await user.type(screen.getByLabelText(/Password/), 'a long password')
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(
-      await screen.findByRole('heading', { name: 'offices page' }, { timeout: 5000 }),
+      await screen.findByRole('heading', { name: 'home page' }, { timeout: 5000 }),
     ).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/offices')
+    expect(router.state.location.pathname).toBe('/home')
   })
 
   it('sends an employee at an Entra organization to the provider', async () => {
@@ -107,7 +107,7 @@ describe('SignInPage', { timeout: 20_000 }, () => {
     const url = new URL(assign.mock.calls[0]![0] as string)
     expect(url.pathname).toBe('/identity/v1/sign-in/start')
     expect(url.searchParams.get('email')).toBe('ada@acme.com')
-    expect(url.searchParams.get('next')).toBe('/offices')
+    expect(url.searchParams.get('next')).toBe('/home')
     vi.unstubAllGlobals()
   })
 
@@ -145,9 +145,9 @@ describe('SignInPage', { timeout: 20_000 }, () => {
 
     // The browser comes back through the app's scheme; the shell hands over the code.
     fake.desktopCodes.set('code-1', { email: 'ada@acme.com', verifier: 'v-1' })
-    act(() => deliver!({ code: 'code-1', verifier: 'v-1', next: '/offices' }))
-    await waitFor(() => expect(router.state.location.pathname).toBe('/offices'))
-    expect(await screen.findByText('offices page')).toBeInTheDocument()
+    act(() => deliver!({ code: 'code-1', verifier: 'v-1', next: '/home' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/home'))
+    expect(await screen.findByText('home page')).toBeInTheDocument()
     vi.unstubAllGlobals()
   })
 
@@ -175,9 +175,9 @@ describe('SignInPage', { timeout: 20_000 }, () => {
     await user.type(screen.getByLabelText(/Code/), '123456')
     await user.click(screen.getByRole('button', { name: 'Continue' }))
     expect(
-      await screen.findByRole('heading', { name: 'offices page' }, { timeout: 5000 }),
+      await screen.findByRole('heading', { name: 'home page' }, { timeout: 5000 }),
     ).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/offices')
+    expect(router.state.location.pathname).toBe('/home')
   })
 
   it('explains what the provider sent back', async () => {

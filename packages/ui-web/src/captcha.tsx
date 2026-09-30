@@ -5,7 +5,7 @@
  * token checked only here proves nothing.
  *
  * reCAPTCHA v3: no puzzle, a score per request. The widget script is loaded
- * once, on the first page that needs it, never on the office itself. Without
+ * once, on the first page that needs it, never on the signed-in app. Without
  * a site key (a laptop) nothing is loaded and no token is sent; the backend
  * in local development asks for none.
  */
