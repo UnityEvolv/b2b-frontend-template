@@ -9,6 +9,7 @@ describe('the product config', () => {
       storagePrefix: 'b2bapp',
       urlScheme: 'b2bapp',
       wordmark: ['B2B ', 'App'],
+      webSecurity: { origins: {}, permissions: [] },
     })
   })
 

@@ -35,18 +35,19 @@ function originOf(url: URL): string {
 
 /**
  * The production security headers, from the same definition the web build is
- * served with, with the deploy-time placeholders filled in. A placeholder
- * that has no value is dropped rather than left in the policy, so the shell
- * without an API configured reaches nothing beyond itself.
+ * served with, with the deploy-time placeholders filled in. The shell knows
+ * only the API's origin; every other placeholder, and the API's when it is
+ * not configured, is dropped rather than left in the policy, so the shell
+ * reaches nothing beyond itself that it was not told of.
  */
 export function securityHeaders(
   headers: Record<string, string>,
-  origins: { api?: string; realtime?: string },
+  origins: { api?: string },
 ): Record<string, string> {
   const fill = (value: string) =>
     value
       .replace(/\s*__API_ORIGIN__/g, origins.api ? ` ${origins.api}` : '')
-      .replace(/\s*__REALTIME_ORIGIN__/g, origins.realtime ? ` ${origins.realtime}` : '')
+      .replace(/\s*__[A-Z_]+_ORIGIN__/g, '')
   const out: Record<string, string> = {}
   for (const [name, value] of Object.entries(headers)) {
     // Transport security is the browser's concern over https; inside the

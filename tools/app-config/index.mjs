@@ -11,7 +11,13 @@ import { PRODUCT } from '@b2b-template/product-config'
 import { defineConfig } from 'vite'
 
 import { FIRST_PAINT_SCRIPT } from './first-paint.mjs'
-import { DEV_CONNECT, DEV_IMAGES, DEV_NONCE, securityHeaders } from './headers.mjs'
+import {
+  DEV_CONNECT,
+  DEV_IMAGES,
+  DEV_NONCE,
+  PRODUCT_SECURITY,
+  securityHeaders,
+} from './headers.mjs'
 
 export { DARK_QUERY, FIRST_PAINT_SCRIPT, THEME_CACHE_KEY } from './first-paint.mjs'
 export * from './headers.mjs'
@@ -73,7 +79,12 @@ export function defineAppConfig({ port }) {
   // policy report-only so a violation shows in the console instead of a
   // blank page. Vite tags the scripts it injects in development with a nonce
   // the dev policy names; production HTML has no injected scripts.
-  const headers = securityHeaders({ connect: DEV_CONNECT, images: DEV_IMAGES, dev: true })
+  const headers = securityHeaders({
+    connect: DEV_CONNECT,
+    images: DEV_IMAGES,
+    dev: true,
+    product: PRODUCT_SECURITY,
+  })
   return defineConfig(({ command }) => ({
     plugins: [react(), tailwind(), productName(), firstPaintTheme(), ...sourceMapsToSentry()],
     build: { sourcemap: true },

@@ -27,6 +27,22 @@ export const PRODUCT = Object.freeze({
    * space belongs inside a piece; one piece is one colour.
    */
   wordmark: Object.freeze(['B2B ', 'App']),
+  /**
+   * What the web apps' security headers allow beyond their strict default,
+   * for what the product's own pages need. Empty, the policy reaches only
+   * the page's origin, the API, error tracking and uploaded images.
+   *
+   * `origins` adds sources to a Content-Security-Policy directive, by the
+   * directive's name without `-src`: `{ connect: ['wss://rt.example.com'],
+   * media: ['https://media.example.com'] }`. `permissions` names the
+   * browser features the pages use, allowed on the app's own origin only:
+   * `['camera', 'microphone', 'display-capture']`. Anything not named is
+   * denied.
+   */
+  webSecurity: Object.freeze({
+    origins: Object.freeze({}),
+    permissions: Object.freeze([]),
+  }),
 })
 
 /** A key for something kept on a device, under the product's prefix. */

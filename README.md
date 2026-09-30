@@ -34,7 +34,9 @@ The product's identity lives in `packages/product-config`:
   notification titles), `wordmark` (the name beside the logo, in pieces that
   take the theme's secondary and primary colours in turn), `storagePrefix`
   (every key kept on a device) and `urlScheme` (links into the desktop and
-  phone apps).
+  phone apps), and `webSecurity`: the origins and browser features the
+  product's pages need beyond the strict default security headers (see
+  [deploy/web/README.md](deploy/web/README.md)).
 - `logo.svg` is a starter placeholder logo. Replace the file, keeping its
   name, and the web apps' `Brand` shows the product's own.
 

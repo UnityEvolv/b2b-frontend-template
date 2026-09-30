@@ -20,25 +20,24 @@ describe('where the window may go', () => {
 describe('the headers the packaged app is served with', () => {
   const served = {
     'Content-Security-Policy':
-      "default-src 'self'; connect-src 'self' __API_ORIGIN__ __REALTIME_ORIGIN__",
+      "default-src 'self'; img-src 'self' __STORAGE_ORIGIN__; connect-src 'self' __API_ORIGIN__ __ERROR_ORIGIN__",
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
     'X-Frame-Options': 'DENY',
   }
 
   it('fills the deploy placeholders from configuration', () => {
-    const out = securityHeaders(served, {
-      api: 'https://api.example',
-      realtime: 'wss://rt.example',
-    })
+    const out = securityHeaders(served, { api: 'https://api.example' })
     expect(out['Content-Security-Policy']).toBe(
-      "default-src 'self'; connect-src 'self' https://api.example wss://rt.example",
+      "default-src 'self'; img-src 'self'; connect-src 'self' https://api.example",
     )
     expect(out['X-Frame-Options']).toBe('DENY')
   })
 
   it('drops a placeholder with no value rather than serving it', () => {
     const out = securityHeaders(served, {})
-    expect(out['Content-Security-Policy']).toBe("default-src 'self'; connect-src 'self'")
+    expect(out['Content-Security-Policy']).toBe(
+      "default-src 'self'; img-src 'self'; connect-src 'self'",
+    )
     expect(out['Content-Security-Policy']).not.toContain('__')
   })
 

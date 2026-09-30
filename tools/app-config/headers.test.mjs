@@ -1,14 +1,20 @@
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { describe, expect, it } from 'vitest'
+
+import { productionHeaders } from './generate-headers.mjs'
 
 import {
   DEV_CONNECT,
   FIRST_PAINT_HASH,
   PROD_CONNECT,
   PROD_IMAGES,
-  PROVIDER_ORIGINS,
   RECAPTCHA_ORIGINS,
   REQUIRED_HEADERS,
   contentSecurityPolicy,
+  permissionsPolicy,
   securityHeaders,
 } from './headers.mjs'
 import { TOAST_STYLE_HASHES } from './toast-styles.mjs'
@@ -53,27 +59,34 @@ describe('web security headers', () => {
     expect(prod).toContain('upgrade-insecure-requests')
   })
 
-  it('names no provider: those are added per org by the backend', () => {
+  it('names no provider', () => {
     const prod = contentSecurityPolicy({ connect: PROD_CONNECT }).toLowerCase()
     for (const provider of ['livekit', 'daily', 'agora', 'ably', 'azure', 'skype']) {
       expect(prod).not.toContain(provider)
     }
   })
 
-  it('reaches only the API, realtime and error-tracking origins beyond itself', () => {
+  it('reaches only the API and error-tracking origins beyond itself', () => {
     expect(sources(contentSecurityPolicy({ connect: PROD_CONNECT }), 'connect-src')).toEqual([
       "'self'",
       'blob:',
       '__API_ORIGIN__',
-      '__REALTIME_ORIGIN__',
       '__ERROR_ORIGIN__',
     ])
   })
 
-  it('shows images from the realtime origin and the upload bucket, and nowhere else', () => {
+  it('shows images from the upload bucket, and nowhere else', () => {
     expect(
       sources(contentSecurityPolicy({ connect: PROD_CONNECT, images: PROD_IMAGES }), 'img-src'),
-    ).toEqual(["'self'", 'data:', 'blob:', '__IMAGE_ORIGIN__', '__STORAGE_ORIGIN__'])
+    ).toEqual(["'self'", 'data:', 'blob:', '__STORAGE_ORIGIN__'])
+  })
+
+  it('denies the camera, the microphone and screen capture', () => {
+    const policy = securityHeaders({ connect: PROD_CONNECT })['Permissions-Policy']
+    for (const feature of ['camera', 'microphone', 'display-capture']) {
+      expect(policy).toContain(`${feature}=()`)
+    }
+    expect(policy).not.toContain('(self)')
   })
 
   it("allows the toast library's injected stylesheet by hash, and no other inline style", () => {
@@ -85,7 +98,7 @@ describe('web security headers', () => {
 
   it("in development also allows Vite's nonced scripts and local ports", () => {
     const dev = contentSecurityPolicy({ connect: DEV_CONNECT, dev: true })
-    expect(sources(dev, 'script-src')).toContain("'nonce-unityofis-dev'")
+    expect(sources(dev, 'script-src')).toContain("'nonce-vite-dev'")
     expect(sources(dev, 'connect-src')).toContain('ws://localhost:*')
     expect(dev).not.toContain('upgrade-insecure-requests')
   })
@@ -117,27 +130,66 @@ describe('the CAPTCHA widget in the policy', () => {
   })
 })
 
-describe('the org’s provider origins in the served policy', () => {
-  it('leaves a placeholder per directive a provider needs, and only when asked', () => {
-    const base = contentSecurityPolicy({ connect: PROD_CONNECT, captcha: RECAPTCHA_ORIGINS })
-    expect(base).not.toContain('__PROVIDER_')
+describe('what the product adds to the policy', () => {
+  const product = {
+    origins: { connect: ['wss://rt.example.com'], frame: ['https://embed.example.com'] },
+    permissions: ['camera', 'microphone'],
+  }
 
-    const served = contentSecurityPolicy({
+  it('adds its origins to the directives it names, and nothing else', () => {
+    const policy = contentSecurityPolicy({ connect: PROD_CONNECT, product })
+    expect(sources(policy, 'connect-src')).toContain('wss://rt.example.com')
+    expect(sources(policy, 'frame-src')).toEqual(['https://embed.example.com'])
+    expect(sources(policy, 'script-src')).toEqual(["'self'", FIRST_PAINT_HASH])
+    // Beside the widget's frames, too.
+    const withWidget = contentSecurityPolicy({
       connect: PROD_CONNECT,
       captcha: RECAPTCHA_ORIGINS,
-      providers: true,
+      product,
     })
-    expect(sources(served, 'connect-src')).toContain(PROVIDER_ORIGINS.connect)
-    expect(sources(served, 'media-src')).toContain(PROVIDER_ORIGINS.media)
-    expect(sources(served, 'worker-src')).toContain(PROVIDER_ORIGINS.worker)
-    expect(sources(served, 'script-src')).toContain(PROVIDER_ORIGINS.script)
-    expect(sources(served, 'frame-src')).toContain(PROVIDER_ORIGINS.frame)
-    // Never an origin of its own: the rtc service says which, per org.
-    expect(served.toLowerCase()).not.toContain('livekit')
+    expect(sources(withWidget, 'frame-src')).toEqual([
+      ...RECAPTCHA_ORIGINS.frame,
+      'https://embed.example.com',
+    ])
   })
 
-  it('never puts a frame origin beside none', () => {
-    const noWidget = contentSecurityPolicy({ connect: PROD_CONNECT, providers: true })
-    expect(sources(noWidget, 'frame-src')).toEqual(["'none'"])
+  it('allows the features it names on its own origin, and denies the rest', () => {
+    expect(permissionsPolicy(product.permissions)).toBe(
+      'camera=(self), microphone=(self), display-capture=(), geolocation=(), payment=(), usb=()',
+    )
+    expect(permissionsPolicy(['fullscreen'])).toContain('fullscreen=(self)')
+  })
+})
+
+describe('the generated headers for the kept apps', () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
+  const committed = JSON.parse(readFileSync(join(root, 'deploy', 'web', 'headers.json'), 'utf8'))
+
+  it('are what the definition generates', () => {
+    expect(committed.headers).toEqual(productionHeaders())
+  })
+
+  it('list no provider or product origins, and deny media capture', () => {
+    // Hashes are base64, and could spell anything.
+    const text = JSON.stringify(committed)
+      .replace(/'sha256-[A-Za-z0-9+/=]+'/g, '')
+      .toLowerCase()
+    for (const name of [
+      '__provider_',
+      'realtime',
+      '__image_origin__',
+      'livekit',
+      'rtc',
+      'unityofis',
+      'unityevolv',
+      'ofis',
+      'office',
+    ]) {
+      expect(text, name).not.toContain(name)
+    }
+    const policy = committed.headers['Permissions-Policy']
+    for (const feature of ['camera', 'microphone', 'display-capture']) {
+      expect(policy).toContain(`${feature}=()`)
+    }
   })
 })
