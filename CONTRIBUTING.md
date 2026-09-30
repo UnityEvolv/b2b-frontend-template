@@ -125,6 +125,24 @@ tools/
 - No secret is ever in the repository or in a web build. CI scans the whole
   history for secrets on every pull request.
 
+### CI on a public repository
+
+- Build, test, lint and the drift checks need no secret, so a pull request
+  from a fork runs them all.
+- Every workflow starts from `permissions: contents: read`. A job that needs
+  more asks for it itself.
+- No `pull_request_target` workflow checks out code.
+- A job that uses a secret or a deployment environment runs only on the
+  upstream repository, and only from `main` or a tag:
+  `if: github.repository == 'UnityEvolv/b2b-frontend-template' && github.ref == 'refs/heads/main'`.
+  A product built on the template changes `UPSTREAM` in
+  `tools/build-guards/workflows.mjs` to its own repository.
+- `npm run check:workflows` enforces these rules, and actionlint checks the
+  workflows' syntax. The security workflow scans the full history for secrets
+  with gitleaks, refuses GPL, AGPL, SSPL and unknown licences in the
+  dependency graph (`npm run check:licences`), and scans the lockfile for
+  known vulnerabilities.
+
 ### Definition of done
 
 Responsive, both themes, loading, empty and error states, and WCAG 2.1 AA:

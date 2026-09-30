@@ -68,7 +68,7 @@ jobs:
           if-no-files-found: ignore
 
   licences:
-    name: licences
+    name: licences and identifiers
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -87,6 +87,9 @@ jobs:
           cat licences.txt
           { echo '## Licences'; echo; echo '```'; cat licences.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           exit $status
+      # Here rather than in CI, which skips pull requests that change only docs.
+      - name: no file names the original product or its infrastructure
+        run: node tools/build-guards/identifiers.mjs
 
   dependencies:
     name: dependencies

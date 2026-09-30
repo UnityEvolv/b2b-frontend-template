@@ -1,3 +1,10 @@
+# Build, test, lint and drift checks for every ready pull request.
+#
+# No secret and no write permission: a pull request from a fork runs exactly
+# what one from a branch does. A workflow that needs a secret (a deploy, a
+# release) keeps it in a job that runs only on the upstream repository from
+# main or a tag; check:workflows fails any job that does not.
+
 name: CI
 
 on:
@@ -47,3 +54,15 @@ jobs:
         run: npm run check:web-headers
       - name: Built apps carry no inline script the policy would block
         run: npm run check:inline-scripts
+      - name: Workflows are read-only by default, and secrets stay on upstream main or tags
+        run: npm run check:workflows
+
+  # Syntax, expressions and the shell in every run step.
+  actionlint:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: actionlint
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
