@@ -1,12 +1,16 @@
-# Secrets and dependency scanning.
+# Secrets, licence and dependency scanning.
 #
-# Runs on every ready PR into main, before a human reviews anything, and by
-# hand from the Actions tab (workflow_dispatch) for a full scan of main.
-# Each job fails the build on a finding; the findings are written to the job
-# summary. No repository secret is used, so it runs on forks too.
+# Runs on every ready PR into main, before a human reviews anything, weekly on
+# main so new gitleaks rules and advisories reach the old history too, and by
+# hand from the Actions tab (workflow_dispatch). Each job fails the build on a
+# finding; the findings are written to the job summary. No repository secret
+# is used, so it runs on forks too.
 #
 # Accepted risks live in .trivyignore.yaml and must name a reason and an expiry.
-# Accepted secret findings (a key already rotated) live in .gitleaksignore.
+# An accepted secret finding (a key already rotated) would go in
+# .gitleaksignore with a comment saying why; there are none, so there is no
+# such file. Licence exceptions live in tools/build-guards/licences.mjs, each
+# with its reason.
 # The web apps ship as static files, not images, so there is no image scan
 # here; the backend scans every image it builds.
 
@@ -18,6 +22,8 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    - cron: '17 5 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -60,6 +66,27 @@ jobs:
           name: report-secrets
           path: secrets.md
           if-no-files-found: ignore
+
+  licences:
+    name: licences
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The runner's own Node is enough: the script has no dependencies.
+      # It reads package-lock.json, so it covers every package on every
+      # platform without installing one. Fails on GPL, AGPL, SSPL and unknown licences,
+      # and on any @unityevolv/ofiskit-* package anywhere in the graph.
+      - name: every dependency has a licence the template can carry
+        run: |
+          set +e
+          node tools/build-guards/licences.mjs > licences.txt 2>&1
+          status=$?
+          set -e
+          cat licences.txt
+          { echo '## Licences'; echo; echo '```'; cat licences.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
   dependencies:
     name: dependencies

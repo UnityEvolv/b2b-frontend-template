@@ -2,11 +2,12 @@
   "name": "@b2b-template/build-guards",
   "version": "0.0.0",
   "private": true,
-  "description": "Build-time checks: unitykit styles reach every app, built pages carry no inline script the policy would block, and no file names the original product.",
+  "description": "Build-time checks: unitykit styles reach every app, built pages carry no inline script the policy would block, no file names the original product, and every dependency has a licence the template can carry.",
   "type": "module",
   "exports": {
     "./kit-styles": "./kit-styles.mjs",
     "./inline-scripts": "./inline-scripts.mjs",
-    "./identifiers": "./identifiers.mjs"
+    "./identifiers": "./identifiers.mjs",
+    "./licences": "./licences.mjs"
   }
 }
