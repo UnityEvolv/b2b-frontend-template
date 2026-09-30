@@ -6,7 +6,7 @@
  * app must agree on.
  */
 export { noPermissions, permissionsFrom, type Permissions } from './permissions'
-export { displayName, initials, type Named } from './names'
+export { displayName, humanizeKey, initials, type Named } from './names'
 export {
   formatDate,
   formatDateTime,

@@ -9,6 +9,7 @@
  * No DOM here: the React Native app uses the same instance and the same
  * strings. Each platform supplies its own list of the device's languages.
  */
+import { PRODUCT } from '@b2b-template/product-config'
 import i18next, { type i18n } from 'i18next'
 
 import { en, type Resources } from './locales/en'
@@ -18,6 +19,13 @@ export { en, type Resources }
 export const SUPPORTED_LANGUAGES = ['en'] as const
 export type Language = (typeof SUPPORTED_LANGUAGES)[number]
 export const DEFAULT_LANGUAGE: Language = 'en'
+
+/**
+ * The variables any string may use without the caller passing them: `{{product}}`
+ * is the product's name from the config. A call that passes options of its own
+ * spreads these in, so the compiler sees every variable the string names.
+ */
+export const DEFAULT_VARIABLES = { product: PRODUCT.productName } as const
 
 export const NAMESPACES = Object.keys(en) as Array<keyof Resources>
 
@@ -64,7 +72,11 @@ export function createI18n(language: Language = DEFAULT_LANGUAGE): i18n {
     resources: RESOURCES,
     initAsync: false,
     // React escapes already; escaping twice shows `&amp;` to the reader.
-    interpolation: { escapeValue: false },
+    interpolation: {
+      escapeValue: false,
+      // `{{product}}` in any string is the product's name from the config.
+      defaultVariables: DEFAULT_VARIABLES,
+    },
     returnNull: false,
   })
   return instance

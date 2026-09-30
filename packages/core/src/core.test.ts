@@ -4,6 +4,7 @@ import {
   displayName,
   formatDateTime,
   formatRelative,
+  humanizeKey,
   initials,
   isValidTimeZone,
   noPermissions,
@@ -72,5 +73,12 @@ describe('dates', () => {
     expect(formatRelative('2026-09-23T09:55:00Z', now, { locale: 'en' })).toBe('5 minutes ago')
     expect(formatRelative('2026-09-25T10:00:00Z', now, { locale: 'en' })).toBe('in 2 days')
     expect(formatRelative('2026-09-22T10:00:00Z', now, { locale: 'en' })).toBe('yesterday')
+  })
+})
+
+describe('humanizeKey', () => {
+  it('turns a contract key into a readable label', () => {
+    expect(humanizeKey('admin_billing')).toBe('Admin billing')
+    expect(humanizeKey('mention')).toBe('Mention')
   })
 })

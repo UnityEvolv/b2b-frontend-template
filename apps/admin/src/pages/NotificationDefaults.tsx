@@ -1,5 +1,6 @@
 import { Button, Card, Checkbox, Spinner, Toggle, toast } from '@unityevolv/unitykit'
 import type { notification } from '@b2b-template/api'
+import { humanizeKey } from '@b2b-template/core'
 import { useOrg } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -7,18 +8,11 @@ import { useTranslation } from 'react-i18next'
 type Settings = notification.components['schemas']['OrgNotificationSettings']
 type Channel = 'in_app' | 'push' | 'email'
 
-const CATEGORIES = [
-  'mention',
-  'direct_message',
-  'room_message',
-  'room_activity',
-  'meeting',
-  'admin_providers',
-  'admin_billing',
-  'admin_templates',
-  'admin_marketplace',
-  'admin_directory',
-] as const
+/** The categories the strings name; anything else the server sends gets a readable fallback. */
+const CATEGORIES = ['mention', 'direct_message', 'admin_billing', 'admin_directory'] as const
+type Known = (typeof CATEGORIES)[number]
+const known = (category: string): category is Known =>
+  (CATEGORIES as readonly string[]).includes(category)
 const CHANNELS: Channel[] = ['in_app', 'push', 'email']
 
 /**
@@ -66,6 +60,11 @@ export function NotificationDefaults() {
     }
   }
 
+  const label = (category: string) =>
+    known(category) ? t(`settings.notifications.categories.${category}`) : humanizeKey(category)
+  // The known categories first, then any the server has that the strings do not.
+  const rows = [...CATEGORIES, ...Object.keys(settings?.channels ?? {}).filter((c) => !known(c))]
+
   return (
     <Card header={t('settings.notifications.title')}>
       {!settings ? (
@@ -90,15 +89,15 @@ export function NotificationDefaults() {
               </tr>
             </thead>
             <tbody>
-              {CATEGORIES.map((category) => (
+              {rows.map((category) => (
                 <tr key={category} className="border-t border-border">
                   <th scope="row" className="py-1 text-left font-normal">
-                    {t(`settings.notifications.categories.${category}`)}
+                    {label(category)}
                   </th>
                   {CHANNELS.map((c) => (
                     <td key={c} className="py-1 text-center">
                       <Checkbox
-                        aria-label={`${t(`settings.notifications.categories.${category}`)}: ${t(`settings.notifications.channels.${c}`)}`}
+                        aria-label={`${label(category)}: ${t(`settings.notifications.channels.${c}`)}`}
                         checked={settings.channels[category]?.[c] ?? false}
                         onChange={(event) =>
                           setSettings({

@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@b2b-template/product-config": "0.0.0",
     "i18next": "^25.0.0"
   }
 }

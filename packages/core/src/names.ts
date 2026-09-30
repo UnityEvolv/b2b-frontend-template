@@ -31,3 +31,13 @@ export function initials(person: Named): string {
     words.length > 1 ? first(words[0]) + first(words[words.length - 1]) : first(words[0])
   return letters.toLocaleUpperCase()
 }
+
+/**
+ * A key from a contract as a label, when the strings have none for it: a
+ * category the server added since, say. `admin_billing` reads "Admin billing".
+ * A fallback, never the first choice; the strings win whenever they have one.
+ */
+export function humanizeKey(key: string): string {
+  const words = key.replace(/[_-]+/g, ' ').trim()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}

@@ -11,6 +11,7 @@ import {
   toast,
   type TableColumn,
 } from '@unityevolv/unitykit'
+import { DEFAULT_VARIABLES } from '@b2b-template/i18n'
 import { useOrg } from '@b2b-template/ui-web'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -224,7 +225,7 @@ export default function ScimPage() {
         </div>
         <p className="mt-3 text-sm">
           {settings.last_call_at
-            ? t('scim.connection.lastCall', {
+            ? t('scim.connection.lastRequest', {
                 date: when(settings.last_call_at),
                 operation: settings.last_operation ?? '',
               })
@@ -258,7 +259,7 @@ export default function ScimPage() {
             content: (
               <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm">
                 {GUIDE_STEPS[p].map((key) => (
-                  <li key={key}>{t(key, { url })}</li>
+                  <li key={key}>{t(key, { ...DEFAULT_VARIABLES, url })}</li>
                 ))}
               </ol>
             ),

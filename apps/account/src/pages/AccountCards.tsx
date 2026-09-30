@@ -152,8 +152,7 @@ export function AccountCards({
           </Button>
         }
       >
-        <p className="mb-2 text-sm">{t('account.delete.warning')}</p>
-        <p className="mb-3 text-sm">{t('account.delete.messagesStay')}</p>
+        <p className="mb-3 text-sm">{t('account.delete.warning')}</p>
         {deleteError && (
           <Alert variant="danger" className="mb-3">
             {deleteError}
