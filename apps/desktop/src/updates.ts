@@ -1,6 +1,6 @@
 /**
  * Updates (UO-117): checked and downloaded in the background, applied the
- * next time the app starts, so nobody is interrupted mid-call. The feed is
+ * next time the app starts, so nobody is interrupted mid-task. The feed is
  * configuration (a generic web folder or a GitHub repository's releases);
  * with none configured, or in development, nothing is checked at all.
  */

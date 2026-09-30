@@ -1,5 +1,4 @@
 import Feather from '@expo/vector-icons/Feather'
-import Ionicons from '@expo/vector-icons/Ionicons'
 
 import { useColors } from './theme'
 
@@ -9,9 +8,7 @@ import { useColors } from './theme'
  * font, so a name means the same picture on both. Never an emoji.
  */
 const GLYPHS = {
-  office: 'grid',
   bell: 'bell',
-  chat: 'message-circle',
   profile: 'user',
   back: 'chevron-left',
   forward: 'chevron-right',
@@ -19,9 +16,6 @@ const GLYPHS = {
   up: 'chevron-up',
   lock: 'lock',
   unlock: 'unlock',
-  knock: 'bell',
-  reception: 'home',
-  break: 'coffee',
   people: 'users',
   invite: 'user-plus',
   check: 'check',
@@ -32,25 +26,10 @@ const GLYPHS = {
   copy: 'copy',
   share: 'share-2',
   paste: 'clipboard',
-  mic: 'mic',
-  micOff: 'mic-off',
   camera: 'video',
-  cameraOff: 'video-off',
-  flip: 'refresh-cw',
-  speaker: 'volume-2',
-  earpiece: 'phone',
-  leave: 'phone-off',
-  screen: 'monitor',
-  send: 'send',
-  attach: 'paperclip',
   image: 'image',
   file: 'file',
-  bold: 'bold',
-  italic: 'italic',
-  list: 'list',
   link: 'link',
-  code: 'code',
-  at: 'at-sign',
   search: 'search',
   signOut: 'log-out',
   settings: 'settings',
@@ -62,21 +41,10 @@ const GLYPHS = {
   clock: 'clock',
   show: 'eye',
   hide: 'eye-off',
-  hash: 'hash',
-  reply: 'corner-up-left',
   more: 'more-horizontal',
-  phone: 'phone-call',
 } as const
 
-/**
- * The glyphs Feather lacks, from Ionicons: a raised hand is one of
- * unitykit's own icons, and Feather has none.
- */
-const IONICONS = {
-  hand: 'hand-left-outline',
-} as const
-
-export type IconName = keyof typeof GLYPHS | keyof typeof IONICONS
+export type IconName = keyof typeof GLYPHS
 
 export function Icon({
   name,
@@ -95,9 +63,5 @@ export function Icon({
     accessibilityElementsHidden: true,
     importantForAccessibility: 'no' as const,
   }
-  return name in IONICONS ? (
-    <Ionicons name={IONICONS[name as keyof typeof IONICONS]} {...common} />
-  ) : (
-    <Feather name={GLYPHS[name as keyof typeof GLYPHS]} {...common} />
-  )
+  return <Feather name={GLYPHS[name]} {...common} />
 }

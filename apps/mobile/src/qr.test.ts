@@ -4,7 +4,7 @@ import { qrShape, QUIET } from './qr'
 
 describe('the authenticator QR code', () => {
   it('draws the finder pattern in the corner, inside the quiet zone', () => {
-    const shape = qrShape('otpauth://totp/UnityOfis:ada%40example.com?secret=JBSWY3DPEHPK3PXP')
+    const shape = qrShape('otpauth://totp/Example:ada%40example.com?secret=JBSWY3DPEHPK3PXP')
     // Version 3 or more for a link this long: at least 29 modules a side.
     expect(shape.size).toBeGreaterThanOrEqual(29)
     // The top-left finder's first row is seven dark modules.

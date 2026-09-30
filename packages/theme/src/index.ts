@@ -28,9 +28,9 @@ export function resolveTheme(preference: ThemePreference, systemIsDark: boolean)
 /**
  * The right variant of something that comes in both themes.
  *
- * The office background, a festival frame, a catalog thumbnail. A missing dark
- * variant falls back to the light one: a template is valid without it, and a
- * light picture in dark mode beats no picture.
+ * A background, a logo, a thumbnail. A missing dark variant falls back to the
+ * light one: a picture is valid without it, and a light picture in dark mode
+ * beats no picture.
  */
 export function pickThemed<T>(variants: { light: T; dark?: T | null }, theme: Theme): T {
   return theme === 'dark' && variants.dark != null ? variants.dark : variants.light

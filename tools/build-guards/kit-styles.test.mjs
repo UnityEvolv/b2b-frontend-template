@@ -10,8 +10,8 @@ function fakeRepo() {
   const root = mkdtempSync(join(tmpdir(), 'kit-styles-'))
   mkdirSync(join(root, 'node_modules/@unityevolv/unitykit/dist'), { recursive: true })
   mkdirSync(join(root, 'packages/ui-web/src'), { recursive: true })
-  mkdirSync(join(root, 'apps/ofis/src'), { recursive: true })
-  return { root, cssPath: join(root, 'apps/ofis/src/styles.css') }
+  mkdirSync(join(root, 'apps/account/src'), { recursive: true })
+  return { root, cssPath: join(root, 'apps/account/src/styles.css') }
 }
 
 describe('checkStylesheet', () => {
@@ -25,7 +25,7 @@ describe('checkStylesheet', () => {
 
   it('catches the path that looks right and resolves to nothing', () => {
     const { root, cssPath } = fakeRepo()
-    // One level short: apps/ofis/node_modules, which npm never creates.
+    // One level short: apps/account/node_modules, which npm never creates.
     const css = '@source "../../node_modules/@unityevolv/unitykit/dist";'
     expect(checkStylesheet({ css, cssPath, root })).toEqual([
       '@source "../../node_modules/@unityevolv/unitykit/dist" does not resolve to anything',

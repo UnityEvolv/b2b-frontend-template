@@ -13,15 +13,15 @@ import {
 } from './index'
 
 describe('permissions', () => {
-  type P = 'users.invite' | 'users.remove' | 'offices.create'
-  const admin = permissionsFrom<P>(['users.invite', 'offices.create'])
+  type P = 'users.invite' | 'users.remove' | 'billing.update'
+  const admin = permissionsFrom<P>(['users.invite', 'billing.update'])
 
   it('answers from the set the server sent', () => {
     expect(admin.can('users.invite')).toBe(true)
     expect(admin.can('users.remove')).toBe(false)
-    expect(admin.canAll('users.invite', 'offices.create')).toBe(true)
+    expect(admin.canAll('users.invite', 'billing.update')).toBe(true)
     expect(admin.canAll('users.invite', 'users.remove')).toBe(false)
-    expect(admin.canAny('users.remove', 'offices.create')).toBe(true)
+    expect(admin.canAny('users.remove', 'billing.update')).toBe(true)
   })
 
   it('allows nothing without a session', () => {
