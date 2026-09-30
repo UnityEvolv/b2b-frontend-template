@@ -102,17 +102,17 @@ describe('createAuth', () => {
     expect((await auth.sessionSource.load())?.user.email).toBe('m@example.com')
   })
 
-  it('points an Entra domain at the provider, with the app and where to return', async () => {
+  it('points an SSO domain at the provider, with the app and where to return', async () => {
     const fake = fakeIdentity()
-    fake.entraDomains.add('acme.com')
+    fake.ssoDomains.add('acme.com')
     const auth = createAuth({ app: 'admin', apiOrigin: origin, fetch: fake.fetch })
     await expect(auth.signIn.methods('ada@acme.com')).resolves.toBe('sso')
-    const url = new URL(auth.signIn.entraStartUrl('ada@acme.com', '/users'))
+    const url = new URL(auth.signIn.ssoStartUrl('ada@acme.com', '/users'))
     expect(url.origin + url.pathname).toBe(`${origin}/identity/v1/sign-in/start`)
     expect(url.searchParams.get('app')).toBe('admin')
     expect(url.searchParams.get('next')).toBe('/users')
     expect(url.searchParams.has('client')).toBe(false)
-    const desktop = new URL(auth.signIn.entraStartUrl('ada@acme.com', '/users', 'desktop'))
+    const desktop = new URL(auth.signIn.ssoStartUrl('ada@acme.com', '/users', 'desktop'))
     expect(desktop.searchParams.get('client')).toBe('desktop')
   })
 

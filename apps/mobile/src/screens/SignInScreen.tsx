@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, Text, View } from 'react-native'
 
 import { NS } from '../i18n'
-import { signInWithProvider } from '../platform/entra'
+import { signInWithProvider } from '../platform/sso'
 import { CodeField } from './mfa'
 import { requireAuth } from '../services'
 import { Banner, Body, Button, Field, Screen, Title } from '../ui/kit'
@@ -21,7 +21,7 @@ type Step = 'email' | 'password' | 'mfa' | 'enroll'
 
 /**
  * Sign-in on the phone: the same email-first page as web. The
- * address decides: a domain whose organization signs in through Microsoft
+ * address decides: a domain whose organization signs in through its own identity provider
  * goes to the system browser, anything else (a local organization, a guest)
  * gets the password field. A second factor is asked for when the
  * organization or the person has one. The page never names an organization.

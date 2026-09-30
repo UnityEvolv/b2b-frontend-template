@@ -129,7 +129,7 @@ describe('a session kept in the keystore', () => {
 
   it('points the system browser at the provider with the app and the challenge', () => {
     const auth = createAuth({ app: 'account', apiOrigin: 'https://api.example.test' })
-    const url = new URL(auth.signIn.entraStartUrl('ada@acme.com', '/home', 'mobile', 'abc'))
+    const url = new URL(auth.signIn.ssoStartUrl('ada@acme.com', '/home', 'mobile', 'abc'))
     expect(url.pathname).toBe('/identity/v1/sign-in/start')
     expect(url.searchParams.get('client')).toBe('mobile')
     expect(url.searchParams.get('code_challenge')).toBe('abc')

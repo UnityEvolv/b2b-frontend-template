@@ -92,9 +92,9 @@ describe('SignInPage', { timeout: 20_000 }, () => {
     expect(router.state.location.pathname).toBe('/home')
   })
 
-  it('sends an employee at an Entra organization to the provider', async () => {
+  it('sends an employee at an SSO organization to the provider', async () => {
     const fake = fakeIdentity()
-    fake.entraDomains.add('acme.com')
+    fake.ssoDomains.add('acme.com')
     const assign = vi.fn()
     vi.stubGlobal('location', { ...window.location, assign })
     const { user } = renderSignIn({ fake })
@@ -113,7 +113,7 @@ describe('SignInPage', { timeout: 20_000 }, () => {
 
   it('in the desktop app, signs in through the browser and finishes back in the app', async () => {
     const fake = fakeIdentity()
-    fake.entraDomains.add('acme.com')
+    fake.ssoDomains.add('acme.com')
     fake.accounts.set('ada@acme.com', {
       email: 'ada@acme.com',
       password: 'unused',

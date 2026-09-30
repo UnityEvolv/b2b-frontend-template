@@ -18,7 +18,7 @@ export interface FakeAccount {
 export interface FakeIdentity {
   fetch: typeof globalThis.fetch
   /** Which domains have a provider. */
-  entraDomains: Set<string>
+  ssoDomains: Set<string>
   accounts: Map<string, FakeAccount>
   /** Whether a session cookie is "set". */
   signedIn: boolean
@@ -37,7 +37,7 @@ export interface FakeIdentity {
 
 export function fakeIdentity(): FakeIdentity {
   const state: FakeIdentity = {
-    entraDomains: new Set(),
+    ssoDomains: new Set(),
     accounts: new Map(),
     signedIn: false,
     calls: [],
@@ -79,7 +79,7 @@ export function fakeIdentity(): FakeIdentity {
         const email = url.searchParams.get('email') ?? ''
         if (!email.includes('@')) return refused(400, 'invalid_request')
         return json(200, {
-          method: state.entraDomains.has(email.split('@')[1] ?? '') ? 'sso' : 'local',
+          method: state.ssoDomains.has(email.split('@')[1] ?? '') ? 'sso' : 'local',
         })
       }
       case 'POST /identity/v1/sign-in/local': {

@@ -92,7 +92,7 @@ export interface SignInClient {
    * says which it is and passes its PKCE challenge (S256, base64url); the
    * desktop shell adds its own challenge to the address it is handed.
    */
-  entraStartUrl(
+  ssoStartUrl(
     email: string,
     next: string,
     client?: Exclude<SignInClientKind, 'web'>,
@@ -405,7 +405,7 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
       const body = (await response.json()) as { method: 'sso' | 'local' }
       return body.method
     },
-    entraStartUrl(email, next, client, codeChallenge) {
+    ssoStartUrl(email, next, client, codeChallenge) {
       return identityUrl(
         `/v1/sign-in/start?${query({
           email,

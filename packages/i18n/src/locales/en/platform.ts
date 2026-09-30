@@ -70,7 +70,7 @@ export const platform = {
     created: 'Created',
     timeZone: 'Time zone',
     identity: 'Sign-in',
-    entra: 'Microsoft Entra ID ({{status}})',
+    sso: 'Single sign-on through {{issuer}} ({{status}})',
     local: 'Email and password',
     seats: 'Users',
     seatsOfCap: '{{used}} of {{cap}}',

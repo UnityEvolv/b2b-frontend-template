@@ -265,7 +265,10 @@ export default function OrganizationDetailPage() {
               {provider === undefined
                 ? t('detail.loading')
                 : provider
-                  ? t('detail.entra', { status: t(`providerStatuses.${provider.status}`) })
+                  ? t('detail.sso', {
+                      issuer: provider.issuer,
+                      status: t(`providerStatuses.${provider.status}`),
+                    })
                   : t('detail.local')}
             </dd>
             <dt className="font-medium">{t('detail.seats')}</dt>

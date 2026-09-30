@@ -19,7 +19,7 @@ import { Banner, Body, Button, Field, Loading, Screen } from '../ui'
  * organization shown before anything is accepted; a name is asked for when
  * the person is new. What comes next is the identity service's answer: an
  * email to confirm the address and choose a password (a local-account
- * organization), or sign-in (an existing account, or Microsoft).
+ * organization), or sign-in (an existing account, or the organization's identity provider).
  * Signed in already, accepting moves the session to the new organization,
  * so the person lands signed in there.
  */
@@ -31,7 +31,7 @@ export function InviteScreen({
 }: {
   token: string
   onBack: () => void
-  /** Accepted, and now to sign in: with a password, or through Microsoft. */
+  /** Accepted, and now to sign in: with a password, or through the organization's identity provider. */
   onSignIn: () => void
   /** Accepted while signed in: the session moved to the new organization. */
   onDone: () => void

@@ -81,13 +81,13 @@ function SignInForm() {
         const desktop = desktopBridge()
         if (desktop?.signInWithBrowser) {
           const opened = await desktop.signInWithBrowser(
-            auth.signIn.entraStartUrl(email.trim(), next, 'desktop'),
+            auth.signIn.ssoStartUrl(email.trim(), next, 'desktop'),
           )
           if (opened) setStep('browser')
           else setError('unexpected')
           return
         }
-        window.location.assign(auth.signIn.entraStartUrl(email.trim(), next))
+        window.location.assign(auth.signIn.ssoStartUrl(email.trim(), next))
         return
       }
       setStep('password')

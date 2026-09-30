@@ -13,7 +13,7 @@ import { base64Url, SIGN_IN_RETURN, signInReturn, verifierFrom } from '../links'
  * sends the browser back to `<scheme>://auth/callback` with a one-time
  * code, and the app trades it with the verifier only it holds.
  */
-export type EntraOutcome =
+export type SsoOutcome =
   | { kind: 'signed-in'; next: string | null }
   | { kind: 'cancelled' }
   /** The callback's error code, for the sign-in page's table. */
@@ -23,12 +23,12 @@ export async function signInWithProvider(
   signIn: SignInClient,
   email: string,
   next = '/',
-): Promise<EntraOutcome> {
+): Promise<SsoOutcome> {
   const verifier = verifierFrom(Crypto.getRandomBytes(64))
   const digest = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, verifier, {
     encoding: Crypto.CryptoEncoding.BASE64,
   })
-  const start = signIn.entraStartUrl(email, next, 'mobile', base64Url(digest))
+  const start = signIn.ssoStartUrl(email, next, 'mobile', base64Url(digest))
   const result = await WebBrowser.openAuthSessionAsync(start, SIGN_IN_RETURN, {
     // A fresh session each time: another person's cookie at their provider
     // must never sign this one in.
