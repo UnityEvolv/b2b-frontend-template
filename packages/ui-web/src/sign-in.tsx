@@ -12,7 +12,7 @@ import { SignInPendingPage } from './pages'
 import { useSession } from './session'
 
 /**
- * Where employees and guests sign in (UO-63, UO-81).
+ * Where employees and guests sign in.
  *
  * The page cannot know which organization someone belongs to before they
  * say who they are, so it starts with the email address. A domain claimed
@@ -24,7 +24,7 @@ import { useSession } from './session'
 
 type Step = 'email' | 'password' | 'mfa' | 'enroll' | 'browser'
 
-/** The refusal tables and the return path are shared with the phone (UO-89). */
+/** The refusal tables and the return path are shared with the phone. */
 export { safeNext }
 const REFUSALS = SIGN_IN_ERRORS
 
@@ -77,7 +77,7 @@ function SignInForm() {
       const method = await auth.signIn.methods(email.trim())
       if (method === 'entra') {
         // In the desktop app the provider's page opens in the person's own
-        // browser, and the sign-in comes back into the app (UO-117).
+        // browser, and the sign-in comes back into the app.
         const desktop = desktopBridge()
         if (desktop?.signInWithBrowser) {
           const opened = await desktop.signInWithBrowser(

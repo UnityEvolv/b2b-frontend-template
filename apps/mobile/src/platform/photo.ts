@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker'
 
 /**
- * A profile photo from the camera or the gallery (UO-91), cropped square by
+ * A profile photo from the camera or the gallery, cropped square by
  * the system's own editor before it leaves the phone. The server crops and
  * scales again; this only saves uploading what would be thrown away.
  */

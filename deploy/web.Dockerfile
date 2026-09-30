@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # A web app as a container: the static build behind nginx, with the
-# security headers from deploy/web/headers.json (UO-43). Build context is
+# security headers from deploy/web/headers.json. Build context is
 # the repository root; APP is account, admin or platform.
 #
 #   docker build --build-arg APP=account -f deploy/web.Dockerfile -t web-account .

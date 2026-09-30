@@ -1,5 +1,5 @@
 /**
- * The password policy as a person types (UO-71, UO-92). The server's rule
+ * The password policy as a person types. The server's rule
  * is length and not the address; length is what can be shown as it grows,
  * and the server refuses the rest on its own.
  */

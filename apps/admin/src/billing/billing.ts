@@ -26,7 +26,7 @@ export function daysUntil(at: string, now = Date.now()): number {
 }
 
 /**
- * The org's billing account (UO-171), read fresh: a change made elsewhere
+ * The org's billing account, read fresh: a change made elsewhere
  * (a webhook, another admin) shows the next time it is read, and on focus.
  */
 export function useBilling(api: Api | undefined, orgId: string | undefined, enabled: boolean) {

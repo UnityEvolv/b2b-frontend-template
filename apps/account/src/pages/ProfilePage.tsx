@@ -1,6 +1,6 @@
 import { Avatar, Button, Card, Checkbox, Input, Select, Spinner, toast } from '@unityevolv/unitykit'
 import type { identity, user } from '@b2b-template/api'
-// The profile's rules are shared with the phone (UO-91).
+// The profile's rules are shared with the phone.
 import {
   DAYS,
   DIRECTORY_FIELDS,
@@ -23,7 +23,7 @@ type Session = identity.components['schemas']['Session']
 const message = (error: unknown) => (error as { message?: string } | undefined)?.message
 
 /**
- * The person's own profile and appearance (UO-65): photo, display name,
+ * The person's own profile and appearance: photo, display name,
  * time zone and working hours they control; the directory attributes their
  * organization's identity provider controls, shown read-only; appearance
  * stored on the user so it follows them; and where they are signed in.

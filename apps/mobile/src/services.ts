@@ -9,7 +9,7 @@ import { keystore } from './platform/keystore'
 export const config = readConfig(env, serviceNames)
 
 /**
- * Sign-in and the session (UO-89): the same client as web, with the session
+ * Sign-in and the session: the same client as web, with the session
  * cookie in the keystore and a token refreshed before any call that would
  * otherwise go without one. The identity service knows the phone as the
  * account app, so its emails and links are the account app's.

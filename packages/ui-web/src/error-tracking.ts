@@ -3,8 +3,8 @@ import * as Sentry from '@sentry/react'
 import type { AppName } from './app'
 
 /**
- * Unhandled errors go to Sentry with the app, the release and the environment
- * (UO-44). Ids only: the signed-in user's id and, once sessions carry one, the
+ * Unhandled errors go to Sentry with the app, the release and the environment.
+ * Ids only: the signed-in user's id and, once sessions carry one, the
  * org id. Never a name, an email or a token.
  */
 export interface ErrorTrackingConfig {

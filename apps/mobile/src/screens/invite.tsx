@@ -15,7 +15,7 @@ import { requireAuth } from '../services'
 import { Banner, Body, Button, Field, Loading, Screen } from '../ui'
 
 /**
- * Following an invite on the phone (UO-90): the invite is checked and the
+ * Following an invite on the phone: the invite is checked and the
  * organization shown before anything is accepted; a name is asked for when
  * the person is new. What comes next is the identity service's answer: an
  * email to confirm the address and choose a password (a local-account

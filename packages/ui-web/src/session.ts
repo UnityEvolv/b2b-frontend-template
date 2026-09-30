@@ -1,4 +1,4 @@
-/** The session moved to @b2b-template/client (UO-89), so the phone renders from the same provider. */
+/** The session moved to @b2b-template/client, so the phone renders from the same provider. */
 export {
   memorySessionSource,
   SessionProvider,

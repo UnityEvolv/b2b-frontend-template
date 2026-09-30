@@ -8,7 +8,7 @@ import { SetPasswordScreen } from './screens/password'
 import { useColors } from './ui'
 
 /**
- * A link from an email, opened while signed in (UO-90): shown over the app,
+ * A link from an email, opened while signed in: shown over the app,
  * which keeps running beneath. Closing it
  * goes back to where the person was.
  */

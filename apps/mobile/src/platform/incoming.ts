@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { linkTarget, type LinkTarget } from '../deeplinks'
 
 /**
- * The link the app was opened with, or opened by while running (UO-90).
+ * The link the app was opened with, or opened by while running.
  * Each new link gets a new serial, so a screen that shows it starts afresh
  * even when the same link is followed twice.
  */

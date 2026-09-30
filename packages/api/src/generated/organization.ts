@@ -692,8 +692,8 @@ export interface components {
       domain?: string | null
       time_zone?: components['schemas']['TimeZone']
       /**
-       * @description Whether people may give control of their screen during a share
-       *     (UO-216). Off refuses every new grant, however it is asked for;
+       * @description Whether people may give control of their screen during a share.
+       *     Off refuses every new grant, however it is asked for;
        *     one already running ends with its share.
        */
       remote_control?: boolean

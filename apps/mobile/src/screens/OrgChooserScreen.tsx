@@ -7,7 +7,7 @@ import { requireAuth } from '../services'
 import { Banner, Body, Button, Icon, Loading, Row, Screen, Title } from '../ui'
 
 /**
- * Several organizations and none active yet (UO-89): the person chooses
+ * Several organizations and none active yet: the person chooses
  * where to start. Choosing moves the session's active membership on the
  * server; nothing else is asked, no second sign-in.
  */

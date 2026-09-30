@@ -16,7 +16,7 @@ const known = (category: string): category is Known =>
 const CHANNELS: Channel[] = ['in_app', 'push', 'email']
 
 /**
- * The org's notification defaults (UO-179), small on purpose: what new
+ * The org's notification defaults, small on purpose: what new
  * members start with, and whether pushes may show message text at all. An
  * Owner's call; people own their own noise from there.
  */

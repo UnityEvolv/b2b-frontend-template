@@ -1,5 +1,5 @@
 /**
- * The security headers every web app is served with (UO-120).
+ * The security headers every web app is served with.
  *
  * One definition, used three ways: the Vite dev server sends them (report-only,
  * so a violation shows in the console without breaking work), `deploy/web/headers.json`
@@ -25,7 +25,7 @@ export const FIRST_PAINT_HASH = `'sha256-${createHash('sha256').update(FIRST_PAI
 export const DEV_NONCE = 'vite-dev'
 
 /**
- * What the CAPTCHA widget on public forms needs the browser to reach (UO-75):
+ * What the CAPTCHA widget on public forms needs the browser to reach:
  * the one platform-wide runtime script the apps load.
  */
 export { RECAPTCHA_ORIGINS } from './captcha.mjs'

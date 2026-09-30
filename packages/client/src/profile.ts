@@ -1,7 +1,7 @@
 import type { user } from '@b2b-template/api'
 
 /**
- * The person's own profile (UO-65, UO-91): the rules web and the phone both
+ * The person's own profile: the rules web and the phone both
  * apply before the API applies them again.
  */
 

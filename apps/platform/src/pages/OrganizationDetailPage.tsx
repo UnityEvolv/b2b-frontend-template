@@ -49,7 +49,7 @@ async function countSeats(api: Api, orgId: string): Promise<number> {
 const AUDIT_MONTHS = [13, 24, 36, 60, 84]
 
 /**
- * One organization, for a platform operator (UO-84): what it is, how full
+ * One organization, for a platform operator: what it is, how full
  * it is, its plan and status, and a read-only support view of its people
  * and recent activity. Reading it writes a support entry to the org's own
  * audit log (the organization service does that), so the customer sees
@@ -169,7 +169,7 @@ export default function OrganizationDetailPage() {
     reload()
   }
 
-  // Closing (UO-183): the operator's reason stands in for the Owner typing
+  // Closing: the operator's reason stands in for the Owner typing
   // the name; the org is deleted 30 days on unless reopened.
   const close = async () => {
     setBusy(true)

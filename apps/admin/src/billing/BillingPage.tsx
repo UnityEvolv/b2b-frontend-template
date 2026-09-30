@@ -24,7 +24,7 @@ type Consequence = organization.components['schemas']['PlanConsequence']
 const rank = (b: string) => BANDS.indexOf(b as Band)
 
 /**
- * The billing page (UO-171): what the org is on and paying, and changing
+ * The billing page: what the org is on and paying, and changing
  * either. Card details never pass through here: the provider's hosted form
  * takes them. Everything the page does the API checks again.
  */

@@ -19,7 +19,7 @@ type Membership = user.components['schemas']['Membership']
 const PAGE = 50
 
 /**
- * Everyone in the organization (UO-60): search, filters and sort run on the
+ * Everyone in the organization: search, filters and sort run on the
  * server, and so does pagination, so a list of several hundred is one page
  * at a time. Guests are members like any other, marked and filterable.
  */

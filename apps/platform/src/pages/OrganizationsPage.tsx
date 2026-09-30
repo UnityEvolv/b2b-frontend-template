@@ -19,7 +19,7 @@ import { PAGE_SIZES, PLANS, readView, STATUSES, writeView, type ListView } from 
 type Organization = organization.components['schemas']['Organization']
 
 /**
- * Every organization on the platform (UO-58). Search, filters, sort and
+ * Every organization on the platform. Search, filters, sort and
  * paging run on the server, and the whole view lives in the URL, so a view
  * can be shared or reloaded.
  */

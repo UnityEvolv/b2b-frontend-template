@@ -18,13 +18,14 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:kit-styles && npm run check:api-generated && npm run check:web-headers && npm run check:inline-scripts",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:kit-styles && npm run check:api-generated && npm run check:web-headers && npm run check:inline-scripts && npm run check:identifiers",
     "build": "npm run build -w @b2b-template/app-account -w @b2b-template/app-admin -w @b2b-template/app-platform",
     "check:kit-styles": "node tools/build-guards/kit-styles.mjs",
     "check:api-generated": "npm run generate -w @b2b-template/api && git diff --exit-code -- packages/api",
     "generate:web-headers": "node tools/app-config/generate-headers.mjs",
     "check:web-headers": "npm run generate:web-headers && git diff --exit-code -- deploy/web",
-    "check:inline-scripts": "node tools/build-guards/inline-scripts.mjs"
+    "check:inline-scripts": "node tools/build-guards/inline-scripts.mjs",
+    "check:identifiers": "node tools/build-guards/identifiers.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

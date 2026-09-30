@@ -180,9 +180,7 @@ describe('the generated headers for the kept apps', () => {
       '__image_origin__',
       'livekit',
       'rtc',
-      'unityofis',
       'unityevolv',
-      'ofis',
       'office',
     ]) {
       expect(text, name).not.toContain(name)

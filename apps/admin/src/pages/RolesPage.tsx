@@ -36,8 +36,8 @@ export function toggled(
 }
 
 /**
- * What the Admin and Billing Admin roles may do, and handing over ownership
- * (UO-87). Owner only: the route asks for configure_permissions, which no
+ * What the Admin and Billing Admin roles may do, and handing over ownership.
+ * Owner only: the route asks for configure_permissions, which no
  * other role can hold.
  */
 export default function RolesPage() {

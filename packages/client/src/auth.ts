@@ -8,7 +8,7 @@ import { identityApp, type AuthApp } from './identity-app'
 import type { Preferences, Session, SessionSource } from './session'
 
 /**
- * Sign-in and the session behind it (UO-63, UO-89), for the web apps and
+ * Sign-in and the session behind it, for the web apps and
  * the phone.
  *
  * The identity service keeps the session in an HttpOnly cookie on the API
@@ -73,7 +73,7 @@ export type LocalSignInResult = { kind: 'signed-in' } | { kind: 'mfa'; step: Mfa
 
 /**
  * Who is signing in through the provider. The web app is the browser
- * itself. The desktop app (UO-117) and the phone (UO-89) open the person's
+ * itself. The desktop app and the phone open the person's
  * own browser: the identity service then starts no session there, and
  * sends the browser to the app's scheme (`<scheme>://auth/callback`) with
  * a one-time code, which the app trades with the PKCE verifier only it

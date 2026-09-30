@@ -1,5 +1,5 @@
 /**
- * The session, kept in the operating system's keychain (UO-117).
+ * The session, kept in the operating system's keychain.
  *
  * On the web the identity service keeps the session in an HttpOnly cookie
  * on its own host, and the browser holds it. Inside the shell the app is

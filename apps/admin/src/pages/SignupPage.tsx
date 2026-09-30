@@ -23,7 +23,7 @@ function timeZones(): string[] {
 }
 
 /**
- * Self-serve signup (UO-66): a stranger's email, name, organization name
+ * Self-serve signup: a stranger's email, name, organization name
  * and zone, behind a CAPTCHA. Nothing is created until the emailed link is
  * used. An address at a domain another organization has claimed is
  * refused, and the page says how to get in instead.

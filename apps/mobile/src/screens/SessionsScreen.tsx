@@ -12,7 +12,7 @@ import { Badge, Banner, Body, Button, Icon, Loading, Row, Screen } from '../ui'
 type Session = identity.components['schemas']['Session']
 
 /**
- * Where the person is signed in (UO-91): every session, this phone marked,
+ * Where the person is signed in: every session, this phone marked,
  * and signing out of all the others at once. Signing out here ends this
  * phone's session only.
  */

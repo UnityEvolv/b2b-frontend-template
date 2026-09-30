@@ -22,7 +22,7 @@ cpSync(accountBuild, out, { recursive: true })
 cpSync(headers, join(out, 'headers.json'))
 
 // The shell's addresses, written down from the build's environment, so an
-// installed app carries them (UO-117). Addresses only; never a secret.
+// installed app carries them. Addresses only; never a secret.
 const variables = [
   'DESKTOP_API_ORIGIN',
   'DESKTOP_IDENTITY_ORIGIN',

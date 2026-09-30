@@ -205,7 +205,7 @@ export interface paths {
     put?: never
     /**
      * Something happened that people may be told about (services only)
-     * @description The same intake as the Redis channel unityofis:notify.
+     * @description The same intake as the Redis notify channel.
      */
     post: operations['emitEvent']
     delete?: never
@@ -328,9 +328,9 @@ export interface components {
       in_app: boolean
       push: boolean
       email: boolean
-      /** @description A direct message from the org's Slack app (UO-211). A person's own choice only, offered when chat_channels lists slack; never an org default and never for knocks. */
+      /** @description A direct message from the org's Slack app. A person's own choice only, offered when chat_channels lists slack; never an org default and never for knocks. */
       slack?: boolean
-      /** @description A message from the org's Teams app (UO-212), on the same terms as slack. */
+      /** @description A message from the org's Teams app, on the same terms as slack. */
       teams?: boolean
     }
     FeedEntry: {

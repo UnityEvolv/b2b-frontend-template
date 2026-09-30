@@ -8,7 +8,7 @@ import {
 import { BillingBanner } from './billing/BillingBanner'
 
 /**
- * Sign-in against the identity service (UO-81). Only an Owner, Admin or
+ * Sign-in against the identity service. Only an Owner, Admin or
  * Billing Admin may use this app: a plain User with valid credentials is
  * refused and told so. A development build can still take the automatic
  * developer session with VITE_DEV_SESSION=1.
@@ -51,7 +51,7 @@ export const definition: AppDefinition = {
       access: 'public',
       page: () => import('@b2b-template/ui-web').then((m) => ({ default: m.SetPasswordPage })),
     },
-    // Reopening a closing organization from the emailed link (UO-183).
+    // Reopening a closing organization from the emailed link.
     {
       path: '/reopen',
       access: 'public',

@@ -1,7 +1,7 @@
 import type { ServiceName } from '@b2b-template/api'
 
 /**
- * The build's configuration, as the app reads it (UO-47, UO-89). Pure, so
+ * The build's configuration, as the app reads it. Pure, so
  * it is tested without a device.
  *
  * `EXPO_PUBLIC_*` values are inlined at build time, and only where the code

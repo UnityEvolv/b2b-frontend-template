@@ -1,7 +1,7 @@
 import { parseLink } from './links'
 
 /**
- * What a link the app was opened with asks for (UO-90). The same link as
+ * What a link the app was opened with asks for. The same link as
  * the email's web address: `https://<web app host>/accept-invite?token=…`
  * through Android's app links, or `<scheme>://accept-invite?token=…`.
  */

@@ -1,5 +1,5 @@
 // Write deploy/web/headers.json: the production headers for whatever serves
-// the built web apps (UO-120). Host-agnostic on purpose: the deploy story turns
+// the built web apps. Host-agnostic on purpose: a deployment turns
 // this into nginx, CDN or Cloud Run configuration. CI regenerates it and fails
 // if it differs from what is committed.
 //

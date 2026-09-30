@@ -6,7 +6,7 @@ import { Link, useLocation } from 'react-router'
 import { daysUntil, useBilling } from './billing'
 
 /**
- * The billing banners across the admin app (UO-171), for whoever holds the
+ * The billing banners across the admin app, for whoever holds the
  * billing permission: past due with the days left, a trial ending from day
  * 10, and a pending downgrade that can still be cancelled.
  */

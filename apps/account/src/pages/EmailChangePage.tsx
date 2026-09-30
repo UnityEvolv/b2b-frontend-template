@@ -9,7 +9,7 @@ type State = 'ready' | 'working' | 'done' | 'failed'
 const UNDO_PATH = '/undo-email-change'
 
 /**
- * The two links an email change sends (UO-184): confirming the new address,
+ * The two links an email change sends: confirming the new address,
  * from the new inbox; and undoing it within the hour, from the old one.
  * Neither needs a session; the link is the proof. Nothing happens until the
  * person presses the button, so a mail scanner opening the link does not

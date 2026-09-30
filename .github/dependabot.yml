@@ -1,7 +1,7 @@
 # Small, reviewable update PRs rather than one painful upgrade a year.
 #
 # Major versions are ignored for npm: a major is a deliberate upgrade with its
-# own story, not a weekly PR. Patch and minor updates, where security fixes
+# own pull request, not a weekly one. Patch and minor updates, where security fixes
 # land, keep arriving.
 
 version: 2

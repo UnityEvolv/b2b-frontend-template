@@ -1,5 +1,5 @@
 /**
- * CAPTCHA for public forms (UO-75): self-serve signup, forgot password,
+ * CAPTCHA for public forms: self-serve signup, forgot password,
  * invite acceptance. A page asks for a token for its action and sends it in
  * the request header; the backend verifies it with the provider, because a
  * token checked only here proves nothing.

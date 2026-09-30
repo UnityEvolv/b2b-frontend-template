@@ -1,6 +1,6 @@
 /**
  * Signing in through the organization's identity provider, in the person's
- * own browser rather than a view inside the app (UO-117): the browser is
+ * own browser rather than a view inside the app: the browser is
  * where their provider session, password manager and security keys are, and
  * an embedded view would let the app see the password.
  *

@@ -36,7 +36,7 @@ function asSheet(addresses: string[], role: string): Blob {
 }
 
 /**
- * Inviting people (UO-61). The addresses are checked by the server before
+ * Inviting people. The addresses are checked by the server before
  * anything is sent (the bulk import's dry run: malformed, duplicate, already
  * a member, and the plan's user cap, naming the next plan), so the form says
  * what would fail rather than failing after submission. Then the invites go,

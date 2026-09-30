@@ -20,7 +20,7 @@ const CONFIRM_FIELD = 'confirm-name'
 
 /**
  * What the platform keeps and for how long, the organization's exports,
- * and closing it (UO-183, UO-184). The schedule is the same words for every
+ * and closing it. The schedule is the same words for every
  * org; the API refuses whatever a button here does not offer.
  */
 export function OrgDataSettings({ name }: { name: string }) {

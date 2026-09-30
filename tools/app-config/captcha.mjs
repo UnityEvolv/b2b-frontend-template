@@ -1,5 +1,5 @@
 /**
- * The CAPTCHA provider's addresses (UO-75), in one place: the widget script
+ * The CAPTCHA provider's addresses, in one place: the widget script
  * the public forms load, the origins the security policy must allow for it,
  * and the policy pages the required notice links to. Swapping the provider
  * (Turnstile, say) changes this file and the backend's verifier, nothing else.

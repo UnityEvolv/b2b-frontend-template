@@ -16,7 +16,7 @@ import { requireAuth } from '../services'
 import { Badge, Banner, Body, Button, Icon, Loading, Row, Screen, Section } from '../ui'
 
 /**
- * The person's organizations (UO-114), by the same rules as web: the
+ * The person's organizations, by the same rules as web: the
  * switcher only when there is somewhere else to go; switching moves the
  * session's active membership without signing in again, and everything
  * reloads from it.

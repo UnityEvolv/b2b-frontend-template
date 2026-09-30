@@ -30,7 +30,7 @@ export const CALLBACK_ERRORS: Readonly<Record<string, string>> = {
   no_membership: 'noMembership',
   organization_suspended: 'orgSuspended',
   organization_closing: 'orgClosing',
-  // An app's hand-off (UO-117, UO-89): the code was refused, or never came.
+  // An app's hand-off: the code was refused, or never came.
   exchange_invalid: 'attemptExpired',
 }
 

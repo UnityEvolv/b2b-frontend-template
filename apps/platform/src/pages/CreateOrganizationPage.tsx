@@ -21,7 +21,7 @@ function timeZones(): string[] {
 }
 
 /**
- * Sales-led creation (UO-59): the org, then an invite for its first Owner.
+ * Sales-led creation: the org, then an invite for its first Owner.
  * Each step carries an idempotency key made once per form, so a retried
  * submit never makes a second org or a second invite. When the org is made
  * but the invite fails, the page says so and retries only the invite.

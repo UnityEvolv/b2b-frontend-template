@@ -1,7 +1,7 @@
 import type { Api } from '@b2b-template/api'
 
 /**
- * Web push on this browser (UO-176): the service worker, a subscription to
+ * Web push on this browser: the service worker, a subscription to
  * our own VAPID key, and the device registered for the person's session.
  * Everything here may be missing: a browser without push, a private window,
  * a person who said no. None of it is needed for the app to work.

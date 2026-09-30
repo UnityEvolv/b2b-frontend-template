@@ -51,7 +51,7 @@ export function buildRoutes({
 
   const tree: RouteObject[] = [
     {
-      // Links into the desktop app, and its sign-in in the browser (UO-117).
+      // Links into the desktop app, and its sign-in in the browser.
       element: <DesktopRoot />,
       errorElement: <RouteErrorPage />,
       hydrateFallbackElement: <PageLoading />,

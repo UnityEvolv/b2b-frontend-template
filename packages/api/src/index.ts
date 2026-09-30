@@ -1,5 +1,5 @@
 /**
- * The typed client for every backend service (UO-39).
+ * The typed client for every backend service.
  *
  * Paths, parameters, bodies and responses are generated from each service's
  * OpenAPI contract (src/generated), so a changed endpoint changes these types

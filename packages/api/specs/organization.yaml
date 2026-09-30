@@ -1358,8 +1358,8 @@ components:
         remote_control:
           type: boolean
           description: |
-            Whether people may give control of their screen during a share
-            (UO-216). Off refuses every new grant, however it is asked for;
+            Whether people may give control of their screen during a share.
+            Off refuses every new grant, however it is asked for;
             one already running ends with its share.
     OrganizationStatus:
       type: string

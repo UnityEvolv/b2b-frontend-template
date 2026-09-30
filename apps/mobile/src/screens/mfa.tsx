@@ -16,7 +16,7 @@ import { Banner, Body, Button, Field, IconButton, Loading, Screen, Section, useC
 import { QrCode } from '../ui/QrCode'
 
 /**
- * The second factor on the phone (UO-92): enrolling with an authenticator,
+ * The second factor on the phone: enrolling with an authenticator,
  * the recovery codes shown once, and managing it. The rules and refusals
  * are the identity service's, through the same client web uses.
  */

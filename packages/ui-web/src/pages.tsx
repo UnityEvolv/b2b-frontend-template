@@ -131,7 +131,7 @@ export function UnsupportedBrowserPage({ missing }: { missing: Capability[] }) {
   )
 }
 
-/** Until the sign-in stories land, the page a signed-out person is sent to. */
+/** Where no sign-in page is wired, the page a signed-out person is sent to. */
 export function SignInPendingPage() {
   const { t } = useTranslation()
   return (

@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: |
     The notification service: transactional email from its own outbox, and
-    notifications (UO-175 to UO-179), the one place that decides who is told
+    notifications, the one place that decides who is told
     about what, on which channel, and whether at all: the in-app feed, push to
     browsers and Android, and email, immediate or in a daily digest.
 
@@ -369,7 +369,7 @@ paths:
     post:
       operationId: emitEvent
       summary: Something happened that people may be told about (services only)
-      description: The same intake as the Redis channel unityofis:notify.
+      description: The same intake as the Redis notify channel.
       tags: [internal]
       requestBody:
         required: true
@@ -579,10 +579,10 @@ components:
           type: boolean
         slack:
           type: boolean
-          description: A direct message from the org's Slack app (UO-211). A person's own choice only, offered when chat_channels lists slack; never an org default and never for knocks.
+          description: A direct message from the org's Slack app. A person's own choice only, offered when chat_channels lists slack; never an org default and never for knocks.
         teams:
           type: boolean
-          description: A message from the org's Teams app (UO-212), on the same terms as slack.
+          description: A message from the org's Teams app, on the same terms as slack.
     FeedEntry:
       type: object
       required: [id, category, kind, data, link, count, items, occurred_at, read]

@@ -7,7 +7,7 @@ import { Link, useSearchParams } from 'react-router'
 type State = 'ready' | 'working' | 'done' | 'invalid' | 'gone'
 
 /**
- * Reopening a closing organization from the emailed link (UO-183). No
+ * Reopening a closing organization from the emailed link. No
  * sign-in: nobody can sign in to a closing org, and the link is the proof.
  */
 export default function ReopenPage() {

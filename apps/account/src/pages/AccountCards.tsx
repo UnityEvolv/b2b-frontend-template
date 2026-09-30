@@ -15,7 +15,7 @@ const EMAIL_REFUSALS: Record<string, string> = {
 }
 
 /**
- * Changing the sign-in address, and deleting the account (UO-184). Both are
+ * Changing the sign-in address, and deleting the account. Both are
  * checked again by the API: an address an identity provider manages cannot
  * be changed here, and the last Owner of an organization cannot delete
  * their account until someone else owns it.

@@ -1,6 +1,6 @@
 /**
  * The session cookie, for a platform with no browser cookie jar of its own
- * worth trusting (UO-89).
+ * worth trusting.
  *
  * The identity service keeps a session in an HttpOnly cookie on its host and
  * rotates it on every refresh. A browser keeps it; a phone app keeps it in

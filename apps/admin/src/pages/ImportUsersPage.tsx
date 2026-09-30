@@ -32,7 +32,7 @@ type Step = 'pick' | 'map' | 'preview' | 'importing' | 'done'
 const message = (error: unknown) => (error as { message?: string } | undefined)?.message
 
 /**
- * Bulk import (UO-70): drop a CSV or XLSX, match its columns to the fields
+ * Bulk import: drop a CSV or XLSX, match its columns to the fields
  * whatever the sheet calls them, see every row checked before anything is
  * sent, then import. Failed rows can be downloaded, fixed and uploaded
  * again. The server checks everything, including the plan's user cap.

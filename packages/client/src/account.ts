@@ -4,7 +4,7 @@ import { identityApp, type AuthApp } from './identity-app'
 import { SignInRefused } from './errors'
 
 /**
- * The account flows around sign-in (UO-64, UO-71, UO-72): following an
+ * The account flows around sign-in: following an
  * invite, proving an address, setting or resetting a password, and the
  * second factor. All against the identity service; the pages call these and
  * nothing else.

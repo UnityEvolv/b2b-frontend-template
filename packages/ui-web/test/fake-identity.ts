@@ -110,7 +110,7 @@ export function fakeIdentity(): FakeIdentity {
         return json(200, token(account))
       }
       case 'POST /identity/v1/sign-in/exchange': {
-        // The desktop app's one-time code (UO-117), redeemed once with its verifier.
+        // The desktop app's one-time code, redeemed once with its verifier.
         const handed = state.desktopCodes.get(body.code ?? '')
         state.desktopCodes.delete(body.code ?? '')
         const account = handed ? state.accounts.get(handed.email) : undefined

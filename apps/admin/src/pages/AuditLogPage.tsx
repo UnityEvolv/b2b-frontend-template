@@ -20,7 +20,7 @@ const FILTERS = [
 ] as const satisfies readonly (readonly [keyof AuditView, string])[]
 
 /**
- * Who did what, and when (UO-85): the org's audit log, filtered by actor,
+ * Who did what, and when: the org's audit log, filtered by actor,
  * action, target and dates, newest or oldest first, a page at a time, and
  * exported as CSV for a compliance request. Owners and Admins by default;
  * the server refuses anyone else however this page is reached.

@@ -3,7 +3,7 @@ import { PRODUCT } from '@b2b-template/product-config'
 import * as SecureStore from 'expo-secure-store'
 
 /**
- * The session, kept in the platform keystore (UO-89): Android's Keystore,
+ * The session, kept in the platform keystore: Android's Keystore,
  * iOS's Keychain. Only the session cookie the identity service rotates is
  * kept, never an access token, which lives in memory for its fifteen
  * minutes. It survives a restart and goes with a sign-out.

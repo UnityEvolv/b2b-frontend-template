@@ -1,7 +1,7 @@
 import { create } from 'qrcode'
 
 /**
- * An otpauth link as a QR code (UO-92), as one SVG path of dark squares.
+ * An otpauth link as a QR code, as one SVG path of dark squares.
  * The same library web draws its code with; here only its matrix is used,
  * because a phone has no canvas. Pure, so it is tested without a device.
  */

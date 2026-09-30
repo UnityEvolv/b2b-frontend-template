@@ -1,5 +1,5 @@
 /**
- * The audit log's view (UO-85): its filters live in the URL, so a view can
+ * The audit log's view: its filters live in the URL, so a view can
  * be linked to (the user page links to one person's history) or reloaded.
  */
 

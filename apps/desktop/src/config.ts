@@ -1,5 +1,5 @@
 /**
- * What the shell is pointed at (UO-117). Configuration, never a literal:
+ * What the shell is pointed at. Configuration, never a literal:
  * the environment at launch wins, then the `desktop.json` the build wrote
  * next to the web app from the same variables, so an installed app carries
  * its own addresses. Nothing set means the shell reaches nothing beyond

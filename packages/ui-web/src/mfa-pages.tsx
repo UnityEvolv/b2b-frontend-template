@@ -14,7 +14,7 @@ import { PublicCard, PublicLoading } from './public-card'
 import { useSession } from './session'
 
 /**
- * The second factor (UO-72): enrolling with an authenticator app, the
+ * The second factor: enrolling with an authenticator app, the
  * recovery codes shown once, and managing it from the profile. The challenge
  * at sign-in is on the sign-in page.
  */

@@ -9,8 +9,8 @@ import { useNavigation } from '../nav'
 import { Avatar, Body, Button, Icon, Row, Screen, Section, Title } from '../ui'
 
 /**
- * The person's own tab (UO-89): who is signed in, and signing out. The
- * profile, security and organization stories add their sections here.
+ * The person's own tab: who is signed in, and signing out. The
+ * profile, security and organization sections sit here.
  */
 export function YouScreen() {
   const { t } = useTranslation(NS)

@@ -20,7 +20,7 @@ import { useColors } from '../ui/theme'
 type Step = 'email' | 'password' | 'mfa' | 'enroll'
 
 /**
- * Sign-in on the phone (UO-89): the same email-first page as web. The
+ * Sign-in on the phone: the same email-first page as web. The
  * address decides: a domain whose organization signs in through Microsoft
  * goes to the system browser, anything else (a local organization, a guest)
  * gets the password field. A second factor is asked for when the

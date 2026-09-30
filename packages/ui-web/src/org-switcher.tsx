@@ -10,7 +10,7 @@ import { useSession } from './session'
 export type { OrgChoice } from '@b2b-template/client'
 
 /**
- * Move between organizations without signing out (UO-99). Hidden when the
+ * Move between organizations without signing out. Hidden when the
  * person has only one, which is the common case; otherwise it names the org
  * they are acting in and lists the others with their role in each.
  * Switching changes the session's active membership on the server and

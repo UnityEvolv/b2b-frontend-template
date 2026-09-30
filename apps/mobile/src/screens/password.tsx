@@ -14,7 +14,7 @@ import { requireAuth } from '../services'
 import { Banner, Body, Button, Field, Icon, IconButton, Screen, useColors } from '../ui'
 
 /**
- * Passwords on the phone (UO-92): choosing one from an invite's setup link
+ * Passwords on the phone: choosing one from an invite's setup link
  * or a reset link, and asking for a reset link by email. The policy is shown
  * as the person types, from the same rules web shows.
  */

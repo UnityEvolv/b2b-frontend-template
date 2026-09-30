@@ -11,7 +11,7 @@ import { ForgotPasswordScreen, SetPasswordScreen } from './screens/password'
 import { SignInScreen } from './screens/SignInScreen'
 
 /**
- * Everything before sign-in (UO-89, UO-90, UO-92): the sign-in screen, what
+ * Everything before sign-in: the sign-in screen, what
  * it leads to, and what a link in an email opens. A stack of its own, with
  * the hardware back button popping it.
  */

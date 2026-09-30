@@ -30,7 +30,7 @@ import { Avatar, Banner, Body, Button, Chip, Field, Loading, Row, Screen, Sectio
 type Me = user.components['schemas']['Me']
 
 /**
- * The person's profile on the phone (UO-91): a photo from the camera or the
+ * The person's profile on the phone: a photo from the camera or the
  * gallery, display name, time zone and working hours, and the directory
  * attributes their organization controls, read-only. The same rules as web,
  * from the same code; the API checks them again.

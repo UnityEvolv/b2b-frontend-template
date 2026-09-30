@@ -7,7 +7,7 @@ import {
 } from '@b2b-template/ui-web'
 
 /**
- * Staff sign-in (UO-82): the same identity service, admitting only members
+ * Staff sign-in: the same identity service, admitting only members
  * of the platform org. The server demands a second factor for them. A
  * development build can still take the automatic developer session with
  * VITE_DEV_SESSION=1, for a page worked on without the local stack running.

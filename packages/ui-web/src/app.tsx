@@ -82,7 +82,7 @@ export interface AppDefinition {
   /** Where a signed-out visitor is sent, with `?next=` set to where they were going. */
   signInPath: string
   sessionSource: SessionSource
-  /** Sign-in and the API behind the session (UO-63). Absent for a development session. */
+  /** Sign-in and the API behind the session. Absent for a development session. */
   auth?: Auth & { reason(): 'not_admin' | 'not_staff' | null }
   /** Where unhandled errors go. From the build's configuration; absent on a laptop. */
   errorTracking?: ErrorTrackingConfig

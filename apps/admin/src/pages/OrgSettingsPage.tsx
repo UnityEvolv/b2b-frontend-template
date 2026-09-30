@@ -35,7 +35,7 @@ const reason = (error: unknown, fallback: string) =>
   (error as { message?: string } | undefined)?.message ?? fallback
 
 /**
- * The organization itself (UO-83): its name, domain, time zone, how people
+ * The organization itself: its name, domain, time zone, how people
  * sign in, and how long sessions last. Owner and Admin, through the settings
  * permission; the API refuses anyone else on its own.
  */

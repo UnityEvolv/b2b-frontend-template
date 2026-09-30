@@ -20,7 +20,7 @@ type Session = identity.components['schemas']['Session']
 type Event = audit.components['schemas']['AuditEvent']
 
 /**
- * One person in the organization (UO-62): what their directory says,
+ * One person in the organization: what their directory says,
  * their role, their status, their second factor and sessions, and what
  * happened to them lately. Every refusal the server gives is shown with
  * its reason, the last Owner above all.

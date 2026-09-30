@@ -1,5 +1,5 @@
 /**
- * Links into the app (UO-117). The installer registers the app's scheme, so
+ * Links into the app. The installer registers the app's scheme, so
  * `<scheme>://accept-invite?token=…` opens the desktop app on the same page
  * the web app has at `/accept-invite?token=…`. Only the pages a link in an
  * email or a sign-in points at are reachable this way; anything else in a

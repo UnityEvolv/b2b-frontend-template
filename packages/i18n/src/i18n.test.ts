@@ -39,8 +39,7 @@ function strings(value: unknown, path: string[] = []): Array<[string, string]> {
 describe('the strings', () => {
   it('never name the product, and say nothing about a product this template is not', () => {
     // The product's name is `{{product}}`; these words belong to another product.
-    const foreign =
-      /unityofis|unityevolv|ofiskit|\boffices?\b|\brooms?\b|\bknock|\bcall(s|ed|ing)?\b/i
+    const foreign = /unityevolv|ofiskit|\boffices?\b|\brooms?\b|\bknock|\bcall(s|ed|ing)?\b/i
     const offending = strings(en).filter(([, text]) => foreign.test(text))
     expect(offending).toEqual([])
   })

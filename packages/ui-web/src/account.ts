@@ -1,4 +1,4 @@
-/** The account flows moved to @b2b-template/client (UO-89), shared with the phone. */
+/** The account flows moved to @b2b-template/client, shared with the phone. */
 export {
   createAccountClient,
   type AccountClient,

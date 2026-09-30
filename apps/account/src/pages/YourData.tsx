@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 type DataExport = organization.components['schemas']['DataExport']
 
 /**
- * Your own data (UO-184): an export of everything about you across every
+ * Your own data: an export of everything about you across every
  * organization you belong to, emailed as a link. Only your own records;
  * never other people's messages to you beyond what you already see.
  */

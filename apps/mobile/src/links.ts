@@ -3,8 +3,8 @@ import { env } from './env'
 
 /**
  * Reading the addresses the app is opened with: the system browser coming
- * back from an organization's sign-in (UO-89), and the links in emails
- * (UO-90). Pure and by hand, because React Native's URL is incomplete.
+ * back from an organization's sign-in, and the links in emails.
+ * Pure and by hand, because React Native's URL is incomplete.
  */
 
 export interface ParsedLink {

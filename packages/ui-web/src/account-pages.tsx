@@ -22,10 +22,10 @@ import { PublicCard, PublicLoading } from './public-card'
 import { useSession } from './session'
 
 /**
- * The pages a person reaches from an email (UO-64, UO-71): an invite, a
+ * The pages a person reaches from an email: an invite, a
  * verification link, a password link; and the one they reach from the
  * sign-in page when they forgot their password. The rules and refusal
- * tables are shared with the phone (UO-90, UO-92).
+ * tables are shared with the phone.
  */
 
 export { maskEmail }

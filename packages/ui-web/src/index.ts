@@ -1,7 +1,7 @@
 /**
  * @b2b-template/ui-web
  *
- * The frame every page in the three web apps renders inside. A page story
+ * The frame every page in the three web apps renders inside. A new page
  * declares a route and writes the page; sign-in, permissions, the layout,
  * theme, language, loading, errors and toasts are already here.
  */
@@ -37,7 +37,7 @@ export {
 } from './session'
 export { DARK_QUERY, THEME_CACHE_KEY, ThemeProvider, useTheme } from './theme'
 export { developmentSessionSource } from './dev-session'
-/** Sign-in and the session behind it (UO-63): the identity service's source, and the page. */
+/** Sign-in and the session behind it: the identity service's source, and the page. */
 export {
   createAuth,
   serviceOrigins,
@@ -57,7 +57,7 @@ export {
   type DesktopSignIn,
 } from './desktop'
 export { serviceOriginsFromEnv } from './env'
-/** The pages around sign-in (UO-64, UO-71, UO-72). */
+/** The pages around sign-in. */
 export {
   AcceptInvitePage,
   ForgotPasswordPage,

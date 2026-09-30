@@ -1,7 +1,7 @@
 import type { OrgChoice } from './auth'
 
 /**
- * Moving between organizations and leaving one (UO-99, UO-113, UO-114): the
+ * Moving between organizations and leaving one: the
  * rules web and the phone show the same way. The server enforces each of
  * them on its own; these only decide what to offer and what to say.
  */

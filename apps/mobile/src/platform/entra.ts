@@ -5,8 +5,8 @@ import * as WebBrowser from 'expo-web-browser'
 import { base64Url, SIGN_IN_RETURN, signInReturn, verifierFrom } from '../links'
 
 /**
- * Signing in through an organization's provider on the phone (UO-89), the
- * same hand-off as the desktop app's (UO-117): the system browser, never a
+ * Signing in through an organization's provider on the phone, the
+ * same hand-off as the desktop app's: the system browser, never a
  * webview inside the app, so the person types their password into their
  * provider's page in the browser they trust and the app never sees it. The
  * start says `client=mobile` with a PKCE challenge; the identity service

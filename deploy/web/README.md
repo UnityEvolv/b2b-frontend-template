@@ -1,7 +1,7 @@
 # Serving the web apps
 
 Each web app is a container: its static build behind nginx, sending the
-security headers from `headers.json` on every response (UO-43).
+security headers from `headers.json` on every response.
 
 ```sh
 docker build --build-arg APP=account -f deploy/web.Dockerfile -t web-account .

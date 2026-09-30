@@ -19,7 +19,7 @@ import { Banner, Button, Loading, Screen, ThemeRoot, Title, useTheme } from './u
 const nobody = memorySessionSource(null)
 
 /**
- * The phone app (UO-89): the same session as web, from the same provider,
+ * The phone app: the same session as web, from the same provider,
  * over a source whose session cookie lives in the keystore. Signed out, the
  * sign-in screen; several organizations and none chosen, the chooser;
  * otherwise the app.
@@ -64,7 +64,7 @@ function Bar() {
 function Root() {
   const { t } = useTranslation(NS)
   const { state } = useSession()
-  // A link from an email (UO-90): signed out, it starts the signed-out
+  // A link from an email: signed out, it starts the signed-out
   // screens where it points; signed in, it opens over the app.
   const link = useIncomingLink()
   // Why the app signed the person out, when it did: said on the sign-in screen.
