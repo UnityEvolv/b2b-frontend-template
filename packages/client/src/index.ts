@@ -97,3 +97,10 @@ export {
   type SessionState,
   type SessionUser,
 } from './session'
+export {
+  categoryOf,
+  feedHeading,
+  useNotificationCategories,
+  type FeedEntry,
+  type NotificationCategory,
+} from './notifications'

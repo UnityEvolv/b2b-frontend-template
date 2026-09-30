@@ -1,35 +1,28 @@
-import { Badge, Button, Icon, Popover, Spinner, type IconName } from '@unityevolv/unitykit'
-import { desktopBridge, useOrg } from '@b2b-template/ui-web'
+import { Badge, Button, Icon, Popover, Select, Spinner } from '@unityevolv/unitykit'
+import { categoryOf, feedHeading } from '@b2b-template/client'
+import { desktopBridge, useNotificationCategories, useOrg } from '@b2b-template/ui-web'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 
 import { desktopNotices, entryPath, useFeed, type Category, type Entry } from './feed'
 
-/** An icon per category the feed knows; anything else shows the bell. */
-const ICONS: Partial<Record<Category, IconName>> = {
-  mention: 'message',
-  direct_message: 'message',
-  admin_billing: 'settings',
-  admin_directory: 'users',
-}
-
-const text = (data: Record<string, unknown>, key: string): string =>
-  typeof data[key] === 'string' ? (data[key] as string) : ''
-
 /**
  * The bell: what happened while the person was not looking, newest first and
  * grouped by day, a batch as one line that opens to its items. Opening an
- * entry goes where it points and reads it, on every device.
+ * entry goes where it points and reads it, on every device. Each entry is
+ * named by its own heading or its category's label, and the feed narrows to
+ * one category, from the registry the notification service keeps.
  */
 export function NotificationBell() {
   const { t, i18n } = useTranslation('account')
   const org = useOrg()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const [mentionsOnly, setMentionsOnly] = useState(false)
+  const [filter, setFilter] = useState<Category | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
-  const feed = useFeed(org?.api, org?.orgId, mentionsOnly ? 'mention' : null)
+  const categories = useNotificationCategories(org?.api)
+  const feed = useFeed(org?.api, org?.orgId, filter)
 
   // A new unread entry is announced without taking focus.
   const [announce, setAnnounce] = useState('')
@@ -44,19 +37,11 @@ export function NotificationBell() {
 
   const summary = useCallback(
     (e: Entry): string => {
-      const by = text(e.data, 'by') || t('notify.someone')
-      switch (e.kind) {
-        case 'mention':
-          return t('notify.kinds.mention', { count: e.count, by })
-        case 'direct_message':
-          return t('notify.kinds.direct', { count: e.count, by })
-        case 'test':
-          return t('notify.kinds.test')
-        default:
-          return text(e.data, 'heading') || t('notify.kinds.other')
-      }
+      if (e.kind === 'test') return t('notify.kinds.test')
+      const heading = feedHeading(e, categories) ?? t('notify.kinds.other')
+      return t('notify.batched', { heading, count: e.count })
     },
-    [t],
+    [categories, t],
   )
 
   // In the desktop app a new entry is a system notification too, when the
@@ -120,14 +105,21 @@ export function NotificationBell() {
           <div className="mb-2 flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold">{t('notify.title')}</h2>
             <div className="flex items-center gap-1">
-              <Button
-                size="sm"
-                variant={mentionsOnly ? 'secondary' : 'ghost'}
-                aria-pressed={mentionsOnly}
-                onClick={() => setMentionsOnly(!mentionsOnly)}
-              >
-                {t('notify.mentionsOnly')}
-              </Button>
+              {categories && categories.length > 1 && (
+                <Select
+                  size="sm"
+                  aria-label={t('notify.filter')}
+                  value={filter ?? ''}
+                  onChange={(e) => setFilter(e.target.value || null)}
+                >
+                  <option value="">{t('notify.all')}</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+                </Select>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
@@ -151,7 +143,10 @@ export function NotificationBell() {
                 {g.entries.map((e) => (
                   <li key={e.id} className="border-b border-border last:border-0">
                     <div className="flex items-start gap-2 py-2">
-                      <Icon name={ICONS[e.category] ?? 'bell'} size="sm" />
+                      <Icon
+                        name={categoryOf(e, categories)?.audience === 'admin' ? 'settings' : 'bell'}
+                        size="sm"
+                      />
                       <button
                         type="button"
                         className="min-w-0 flex-1 text-left"

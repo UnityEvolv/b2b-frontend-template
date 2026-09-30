@@ -5,8 +5,8 @@ import { desktopNotices, entryPath, type Entry } from './feed'
 const entry = (id: string, read: boolean, link = '/settings/notifications'): Entry =>
   ({
     id,
-    category: 'mention',
-    kind: 'mention',
+    category: 'security',
+    kind: 'new_sign_in',
     data: {},
     link,
     count: 1,

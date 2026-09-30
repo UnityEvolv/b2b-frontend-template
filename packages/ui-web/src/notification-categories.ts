@@ -1,7 +1,11 @@
-import type { Api, notification } from '@b2b-template/api'
-import { useEffect, useState } from 'react'
+import type { notification } from '@b2b-template/api'
+import type { NotificationCategory } from '@b2b-template/client'
 
-export type NotificationCategory = notification.components['schemas']['NotificationCategory']
+/**
+ * The registry's read lives in the client, which the phone shares; the web's
+ * grids add the channel helpers below.
+ */
+export { useNotificationCategories, type NotificationCategory } from '@b2b-template/client'
 export type ChannelChoice = notification.components['schemas']['ChannelChoice']
 export type ChoiceChannel = keyof ChannelChoice
 
@@ -12,27 +16,6 @@ export const CHOICE_CHANNELS = [
   'email',
   'digest',
 ] as const satisfies readonly ChoiceChannel[]
-
-/**
- * The notification categories the deployment registers, the template's and
- * the product's, with their labels: read from the notification service each
- * time a page opens, never listed here. Null while loading; empty when the
- * read failed.
- */
-export function useNotificationCategories(api: Api | undefined): NotificationCategory[] | null {
-  const [categories, setCategories] = useState<NotificationCategory[] | null>(null)
-  useEffect(() => {
-    if (!api) return
-    let current = true
-    void api.notification
-      .GET('/v1/notification-categories')
-      .then(({ data }) => current && setCategories(data?.categories ?? []))
-    return () => {
-      current = false
-    }
-  }, [api])
-  return categories
-}
 
 /** The channels any of the categories may use: the grid's columns. */
 export function channelsIn(categories: readonly NotificationCategory[]): ChoiceChannel[] {

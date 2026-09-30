@@ -1,4 +1,5 @@
 import type { notification } from '@b2b-template/api'
+import { feedHeading, useNotificationCategories } from '@b2b-template/client'
 import { formatDateTime } from '@b2b-template/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -13,13 +14,11 @@ type Entry = notification.components['schemas']['FeedEntry']
 /** The feed is read again this often while the screen is open. */
 const POLL_MS = 60_000
 
-const text = (data: Record<string, unknown>, key: string): string =>
-  typeof data[key] === 'string' ? (data[key] as string) : ''
-
 /**
  * The notification feed: what happened while the person was away, newest
- * first, from the same notification API as the web app's bell. Reading an
- * entry here reads it on every device.
+ * first, from the same notification API as the web app's bell, each named by
+ * its own heading or its category's label in the registry. Reading an entry
+ * here reads it on every device.
  */
 export function NotificationsScreen() {
   const { t } = useTranslation(NS)
@@ -32,6 +31,7 @@ export function NotificationsScreen() {
 
   const api = org?.api
   const orgId = org?.orgId
+  const categories = useNotificationCategories(api)
 
   const load = useCallback(async () => {
     if (!api || !orgId) return
@@ -66,17 +66,9 @@ export function NotificationsScreen() {
   }
 
   const summary = (e: Entry): string => {
-    const by = text(e.data, 'by') || t('account:notify.someone')
-    switch (e.kind) {
-      case 'mention':
-        return t('account:notify.kinds.mention', { count: e.count, by })
-      case 'direct_message':
-        return t('account:notify.kinds.direct', { count: e.count, by })
-      case 'test':
-        return t('account:notify.kinds.test')
-      default:
-        return text(e.data, 'heading') || t('account:notify.kinds.other')
-    }
+    if (e.kind === 'test') return t('account:notify.kinds.test')
+    const heading = feedHeading(e, categories) ?? t('account:notify.kinds.other')
+    return t('account:notify.batched', { heading, count: e.count })
   }
 
   if (!org) return null
