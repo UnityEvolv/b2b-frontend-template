@@ -6,6 +6,8 @@ export default defineConfig({
       'packages/**/*.test.{ts,tsx,mjs}',
       'apps/**/*.test.{ts,tsx}',
       'tools/**/*.test.{ts,mjs}',
+      // A product's examples, when there are any; none is fine.
+      'examples/**/*.test.{ts,tsx,mjs}',
     ],
     // Node by default; a browser test opts in with `// @vitest-environment jsdom`.
     environment: 'node',

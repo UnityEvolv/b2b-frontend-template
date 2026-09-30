@@ -1,0 +1,12 @@
+/*
+ * The @source lines are load-bearing. Tailwind does not scan node_modules for
+ * class names, so without them every unitykit component renders unstyled, with
+ * no error and nothing in the console. npm hoists packages to the repository
+ * root, so the path climbs three levels. `npm run check:kit-styles` fails when
+ * a path stops resolving.
+ */
+@import 'tailwindcss';
+@import '@unityevolv/unitykit/theme.css';
+
+@source "../../../node_modules/@unityevolv/unitykit/dist";
+@source "../../../packages/ui-web/src";

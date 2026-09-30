@@ -75,6 +75,10 @@ tools/
   tools cannot read JavaScript, and a test fails when they drift.
 - **Apps, routes and menus.** A product adds its own app, or routes and menu
   entries, to the shared shell in `ui-web`. It never forks a template page.
+- **Strings.** A product's own namespace is declared on `ProductResources` in
+  `@b2b-template/i18n` and handed to its app definition as `locales`; the
+  template's strings stay in the i18n package, and lint rejects literals in a
+  product's pages as it does in the template's.
 - **Security headers.** Extra origins and browser features the product's
   pages need are declared in `product-config` (`webSecurity`); the headers
   in `deploy/web` are generated from that and checked in CI.
@@ -84,6 +88,12 @@ tools/
   `membership.changed` and `org.suspended` load the session again. A product
   declares its own event types on `LiveEventTypes` in `@b2b-template/client`
   and listens with `useLiveEvent(type, handler)` from `ui-web`.
+- **An example.** `examples/projects` is a small product built only through
+  these seams: its own app, generated client, strings, permission group,
+  plan refusal and live event. It is a workspace like the apps, and its own
+  checks run from `npm run check:examples`. Delete `examples/` and the
+  template is exactly as it was; CI proves it on every pull request
+  (`npm run check:without-examples`).
 - **Deployment configuration.** Hostnames, the API base URL, error tracking
   and CAPTCHA keys come from the build's environment, never from code.
 

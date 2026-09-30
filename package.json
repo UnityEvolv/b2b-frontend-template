@@ -9,7 +9,8 @@
   "workspaces": [
     "apps/*",
     "packages/*",
-    "tools/*"
+    "tools/*",
+    "examples/*"
   ],
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.tests.json",
@@ -18,7 +19,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:kit-styles && npm run check:api-generated && npm run check:web-headers && npm run check:inline-scripts && npm run check:identifiers && npm run check:licences && npm run check:workflows",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:kit-styles && npm run check:api-generated && npm run check:web-headers && npm run check:inline-scripts && npm run check:identifiers && npm run check:licences && npm run check:workflows && npm run check:examples",
     "build": "npm run build -w @b2b-template/app-account -w @b2b-template/app-admin -w @b2b-template/app-platform",
     "check:kit-styles": "node tools/build-guards/kit-styles.mjs",
     "check:api-generated": "npm run generate -w @b2b-template/api && git diff --exit-code -- packages/api",
@@ -27,7 +28,9 @@
     "check:inline-scripts": "node tools/build-guards/inline-scripts.mjs",
     "check:identifiers": "node tools/build-guards/identifiers.mjs",
     "check:licences": "node tools/build-guards/licences.mjs",
-    "check:workflows": "node tools/build-guards/workflows.mjs"
+    "check:workflows": "node tools/build-guards/workflows.mjs",
+    "check:examples": "node tools/build-guards/examples.mjs",
+    "check:without-examples": "node tools/build-guards/without-examples.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

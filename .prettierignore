@@ -2,4 +2,5 @@
 package-lock.json
 apps/desktop/web/
 apps/desktop/release/
-packages/api/specs/
+# The backend's contracts, copied as they are.
+**/specs/*.yaml

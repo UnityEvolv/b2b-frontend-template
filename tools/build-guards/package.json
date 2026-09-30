@@ -2,14 +2,16 @@
   "name": "@b2b-template/build-guards",
   "version": "0.0.0",
   "private": true,
-  "description": "Build-time checks: unitykit styles reach every app, built pages carry no inline script the policy would block, no file names the original product, every dependency has a licence the template can carry, and every workflow is safe to run on forks.",
+  "description": "Build-time checks: unitykit styles reach every app, built pages carry no inline script the policy would block, no file names the original product, every dependency has a licence the template can carry, every workflow is safe to run on forks, and each example product passes its own checks.",
   "type": "module",
   "exports": {
     "./kit-styles": "./kit-styles.mjs",
     "./inline-scripts": "./inline-scripts.mjs",
     "./identifiers": "./identifiers.mjs",
     "./licences": "./licences.mjs",
-    "./workflows": "./workflows.mjs"
+    "./workflows": "./workflows.mjs",
+    "./examples": "./examples.mjs",
+    "./without-examples": "./without-examples.mjs"
   },
   "devDependencies": {
     "yaml": "^2.9.1"

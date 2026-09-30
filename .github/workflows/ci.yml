@@ -56,6 +56,24 @@ jobs:
         run: npm run check:inline-scripts
       - name: Workflows are read-only by default, and secrets stay on upstream main or tags
         run: npm run check:workflows
+      - name: Each example product passes its own checks (its client, build and styles)
+        run: npm run check:examples
+
+  # Deleting examples/ leaves a working template: a copy without it installs,
+  # type checks, lints, tests and builds. A product that deletes examples/
+  # deletes this job with it.
+  without-examples:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: The template without examples/
+        run: node tools/build-guards/without-examples.mjs
 
   # Syntax, expressions and the shell in every run step.
   actionlint:

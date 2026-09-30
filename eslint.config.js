@@ -41,8 +41,12 @@ const DOM_GLOBALS = [
   message: `${name} is browser-only. Shared packages run on React Native too; put this in ui-web and pass it in.`,
 }))
 
-/** React packages: the web UI and the three apps. */
-const UI = ['packages/ui-web/**/*.{ts,tsx}', 'apps/*/src/**/*.{ts,tsx}']
+/** React packages: the web UI, the three apps and any example product's app. */
+const UI = [
+  'packages/ui-web/**/*.{ts,tsx}',
+  'apps/*/src/**/*.{ts,tsx}',
+  'examples/*/src/**/*.{ts,tsx}',
+]
 
 const NO_URLS = [
   {
@@ -221,6 +225,7 @@ export default tseslint.config(
       'apps/mobile/plugins/**',
       'tools/**',
       'packages/*/scripts/**',
+      'examples/*/scripts/**',
       'packages/*/src/corpus/**',
     ],
     languageOptions: { globals: { ...globals.node } },
