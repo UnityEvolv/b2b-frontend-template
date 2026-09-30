@@ -12,9 +12,31 @@
 import { PRODUCT } from '@b2b-template/product-config'
 import i18next, { type i18n } from 'i18next'
 
-import { en, type Resources } from './locales/en'
+import { en, type Resources as CoreResources } from './locales/en'
 
-export { en, type Resources }
+export { en, type CoreResources }
+
+/**
+ * A product's own namespaces, beside the template's. A product declares
+ * each by augmenting this interface next to its strings, and hands the
+ * strings to its app definition's `locales`; the template never names them:
+ *
+ * ```ts
+ * declare module '@b2b-template/i18n' {
+ *   interface ProductResources {
+ *     projects: typeof projects
+ *   }
+ * }
+ * ```
+ *
+ * `t('projects:title')` is then checked by the compiler like the template's
+ * own keys.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ProductResources {}
+
+/** Every namespace: the template's, and those a product declares. */
+export type Resources = CoreResources & ProductResources
 
 export const SUPPORTED_LANGUAGES = ['en'] as const
 export type Language = (typeof SUPPORTED_LANGUAGES)[number]
@@ -27,9 +49,15 @@ export const DEFAULT_LANGUAGE: Language = 'en'
  */
 export const DEFAULT_VARIABLES = { product: PRODUCT.productName } as const
 
-export const NAMESPACES = Object.keys(en) as Array<keyof Resources>
+/** The template's namespaces. A product's are added by `createI18n`. */
+export const NAMESPACES = Object.keys(en) as Array<keyof CoreResources>
 
-const RESOURCES: Record<Language, Resources> = { en }
+/** A product's strings per language: English required, the others as they are translated. */
+export type ProductLocales = { [L in typeof DEFAULT_LANGUAGE]: ProductResources } & {
+  [L in Language]?: Partial<ProductResources>
+}
+
+const RESOURCES: Record<Language, CoreResources> = { en }
 
 export const isSupportedLanguage = (value: string): value is Language =>
   (SUPPORTED_LANGUAGES as readonly string[]).includes(value)
@@ -61,15 +89,19 @@ export function pickLanguage(
  * a shell that has to download its own error page's text cannot show that error
  * page when the network is the problem.
  */
-export function createI18n(language: Language = DEFAULT_LANGUAGE): i18n {
+export function createI18n(language: Language = DEFAULT_LANGUAGE, product?: ProductLocales): i18n {
   const instance = i18next.createInstance()
+  // A product's namespaces sit beside the template's; one never replaces another.
+  const resources = Object.fromEntries(
+    SUPPORTED_LANGUAGES.map((lng) => [lng, { ...product?.[lng], ...RESOURCES[lng] }]),
+  )
   void instance.init({
     lng: language,
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: [...SUPPORTED_LANGUAGES],
-    ns: NAMESPACES,
+    ns: [...NAMESPACES, ...Object.keys(product?.[DEFAULT_LANGUAGE] ?? {})],
     defaultNS: 'common',
-    resources: RESOURCES,
+    resources,
     initAsync: false,
     // React escapes already; escaping twice shows `&amp;` to the reader.
     interpolation: {

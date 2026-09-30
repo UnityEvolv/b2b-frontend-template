@@ -44,3 +44,19 @@ describe('the strings', () => {
     expect(offending).toEqual([])
   })
 })
+
+describe('a product’s own namespace', () => {
+  it('sits beside the template’s, and never replaces one of them', () => {
+    // A product declares its namespace on ProductResources; this test has none, so it casts.
+    const product = {
+      en: {
+        widgets: { title: 'Widgets for {{product}}' },
+        common: { userMenu: 'replaced' },
+      },
+    } as never
+    const i18n = createI18n('en', product)
+    expect(i18n.t('widgets:title' as never)).toBe(`Widgets for ${PRODUCT.productName}`)
+    expect(i18n.t('common:userMenu', { name: 'Asha' })).toBe('Account menu for Asha')
+    expect(i18n.options.ns).toContain('widgets')
+  })
+})

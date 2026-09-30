@@ -98,7 +98,7 @@ export function AppProviders({
  */
 export function startApp(definition: AppDefinition, container: HTMLElement) {
   initErrorTracking(definition.app, definition.errorTracking)
-  const i18n = createI18n(initialLanguage())
+  const i18n = createI18n(initialLanguage(), definition.locales)
   // The product's name, and the badge of a secondary app such as admin.
   const badge = definition.badge?.(i18n.t as unknown as NavT)
   document.title = badge ? `${PRODUCT.productName} ${badge}` : PRODUCT.productName

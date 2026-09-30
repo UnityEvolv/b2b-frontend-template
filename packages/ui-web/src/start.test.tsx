@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { PRODUCT } from '@b2b-template/product-config'
 import { act, screen } from '@testing-library/react'
+import { useTranslation } from 'react-i18next'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import type { AppDefinition } from './app'
@@ -61,5 +62,31 @@ describe('startApp', () => {
     } finally {
       window.WebSocket = saved
     }
+  })
+})
+
+describe('a product’s locales', () => {
+  it('are there for its pages and nav once the app starts', async () => {
+    // A product declares its namespace on ProductResources; this test has none, so it casts.
+    const locales = { en: { widgets: { nav: 'All widgets', heading: 'Widget list' } } } as never
+    const WidgetsPage = () => {
+      const { t } = useTranslation('widgets' as never)
+      return <h1>{t('heading' as never)}</h1>
+    }
+    start(
+      definition({
+        locales,
+        routes: [
+          {
+            path: '/home',
+            page: () => Promise.resolve({ default: WidgetsPage }),
+            nav: { key: 'widgets', label: (t) => t('widgets:nav' as never) },
+          },
+          { path: '/sign-in', access: 'public', page: pageNamed('sign-in page') },
+        ],
+      }),
+    )
+    expect(await screen.findByRole('heading', { name: 'Widget list' })).toBeInTheDocument()
+    expect(screen.getAllByText('All widgets').length).toBeGreaterThan(0)
   })
 })

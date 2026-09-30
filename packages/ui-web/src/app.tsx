@@ -1,5 +1,5 @@
 import type { IconName } from '@unityevolv/unitykit'
-import type { Resources } from '@b2b-template/i18n'
+import type { ProductLocales, Resources } from '@b2b-template/i18n'
 import type { TFunction } from 'i18next'
 import { createContext, useContext, type ComponentType, type ReactNode } from 'react'
 
@@ -63,6 +63,13 @@ export interface AppDefinition {
   app: AppName
   /** The namespace this app's own strings, its nav labels among them, are in. */
   navNamespace: Namespace
+  /**
+   * A product's own namespaces, declared on `ProductResources` in
+   * `@b2b-template/i18n`: added beside the template's when the app starts.
+   * None by default; the template's apps keep their strings in the i18n
+   * package.
+   */
+  locales?: ProductLocales
   /** Pages the account menu offers besides the theme and signing out. None by default. */
   accountMenu?: AccountMenuEntry[]
   /** A badge beside the brand, naming a secondary app such as admin. None by default. */
