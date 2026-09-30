@@ -60,8 +60,8 @@ export interface paths {
      * @description The sign-in page cannot know which organization someone belongs to
      *     before they say who they are, so it asks by address. A domain
      *     claimed by an organization with an identity provider signs in
-     *     through it (`entra`); anything else (a local organization, an
-     *     unknown domain, a guest) signs in with a password (`local`). Nothing
+     *     through it (`sso`, whatever the provider); anything else (a local organization or an
+     *     unknown domain) signs in with a password (`local`). Nothing
      *     else is said: no organization's name or existence is revealed to
      *     someone who has not signed in. Rate limited by address.
      */
@@ -182,16 +182,73 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** The organization's identity provider, without its secret */
+    /**
+     * The organization's identity provider, without its secret
+     * @description Needs the sso permission, as changing it does.
+     */
     get: operations['getIdentityProvider']
     /**
      * Configure the organization's identity provider
-     * @description The credentials are checked with a real round trip to the provider's
-     *     discovery document before anything is saved; the client secret is
-     *     encrypted under the organization's data key and never returned.
-     *     Audited. Until the roles story, a platform operator's action.
+     * @description Any OpenID Connect provider, filled in from a preset. Nothing is
+     *     saved unless the settings pass the same test as
+     *     `POST .../identity-provider/test` (discovery, issuer, keys, and the
+     *     client id and secret at the token endpoint); a failure is 422 with
+     *     `fields` naming the inputs to fix. The client secret is encrypted
+     *     under the organization's data key and never returned; left out on a
+     *     change to the same provider and client id, the stored one is kept
+     *     and tested again. Audited. Needs the
+     *     sso permission (an Owner, an Admin with it, or a platform operator).
      */
     put: operations['setIdentityProvider']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/identity-provider/test': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Test identity provider settings without saving them
+     * @description The round trip a save requires, reported check by check so the
+     *     admin page can show what passed: the discovery document is
+     *     fetched, its issuer matches, its signing keys load, and the token
+     *     endpoint accepts the client id and secret (an authorization-code
+     *     request with a code that cannot exist: a provider answers
+     *     `invalid_client` for wrong credentials and `invalid_grant` for
+     *     right ones). Nothing is stored. The same body as the PUT; the
+     *     secret may be left out when one is saved. Needs the sso permission.
+     */
+    post: operations['testIdentityProvider']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/identity-provider-presets': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * The presets a provider is filled in from
+     * @description What each preset fills in, so the admin page's provider picker
+     *     needs no copy of it: the issuer (with `{tenant_id}` where Entra's
+     *     goes), the scopes, the claims, and which fields the preset asks for.
+     */
+    get: operations['listIdentityProviderPresets']
+    put?: never
     post?: never
     delete?: never
     options?: never
@@ -420,9 +477,9 @@ export interface paths {
     put?: never
     /**
      * Sign in with email and password
-     * @description For organizations without an identity provider, and for guests
-     *     anywhere. Starts a session and answers with the access token, as a
-     *     refresh would; the session cookie is set. A wrong address and a
+     * @description For organizations without an identity provider. Starts a session and
+     *     answers with the access token, as a refresh would; the session
+     *     cookie is set. A wrong address and a
      *     wrong password are refused alike. Failed attempts are throttled per
      *     account and per address; a person who types their password right is
      *     never slowed. An unverified account is refused until its email is
@@ -690,7 +747,7 @@ export interface paths {
      * The organization's invites
      * @description Newest first, cursor paginated, by status. The users permission
      *     lists every invite; any member lists the ones they sent with
-     *     `mine=true`, which is where a guest's inviter extends or revokes them.
+     *     `mine=true`, which is where an inviter extends or revokes them.
      */
     get: operations['listInvites']
     put?: never
@@ -722,7 +779,7 @@ export interface paths {
     put?: never
     /**
      * Send an open invite again, with a fresh link and expiry
-     * @description The users permission, or the member who sent it. A guest invite's inviter extends it this way. Audited.
+     * @description The users permission, or the member who sent it. Audited.
      */
     post: operations['resendInvite']
     delete?: never
@@ -762,9 +819,8 @@ export interface paths {
     put?: never
     /**
      * An invite made by another service (services only)
-     * @description The office service's guest invites (kind guest, one room, a purpose
-     *     and an expiry set by the inviter) and the organization service's
-     *     first-owner invite. Same rules as the organization's own endpoint.
+     * @description Another service inviting someone into an organization. Same rules
+     *     as the organization's own endpoint.
      */
     post: operations['createInternalInvite']
     delete?: never
@@ -804,8 +860,7 @@ export interface paths {
      * @description One use. The membership is made (the user too, on first sight, with
      *     the name given); a second organization inviting a known address
      *     gets a second membership, never a second account. Refused when the
-     *     organization is at its plan's user cap, leaving the invite open;
-     *     guests do not count. The answer says what comes next: sign in
+     *     organization is at its plan's user cap, leaving the invite open. The answer says what comes next: sign in
      *     through the organization's identity provider, verify the email and
      *     set a password, or sign in with the password the person already has.
      */
@@ -831,8 +886,7 @@ export interface paths {
      *     Every live session carrying that membership moves at once: to
      *     another of the person's organizations by the landing rule, to the
      *     chooser, or, when none remain, it is revoked. Either way the person's
-     *     open sockets in that organization are told and closed, so nobody is
-     *     left standing in a room they have been removed from.
+     *     open connections in that organization are told and closed.
      */
     post: operations['membershipEnded']
     delete?: never
@@ -1107,12 +1161,8 @@ export interface components {
        * @default user
        */
       role: string
-      /**
-       * @description Which web app the link opens.
-       * @default ofis
-       * @enum {string}
-       */
-      app: 'ofis' | 'admin' | 'platform'
+      /** @description Which web app the link opens, one of the configured apps; the main app (account, unless the deployment names others) when left out. */
+      app?: string
       /** @default 168 */
       expires_in_hours: number
     }
@@ -1120,18 +1170,10 @@ export interface components {
       /** Format: uuid */
       org_id: string
       email: string
-      /** @enum {string} */
-      kind: 'member' | 'guest'
       /** @default user */
       role: string
-      /**
-       * Format: uuid
-       * @description Required for a guest.
-       */
-      room_id?: string
-      purpose?: string
-      /** @enum {string} */
-      app: 'ofis' | 'admin' | 'platform'
+      /** @description Which web app the link opens, one of the configured apps; the main app when left out. */
+      app?: string
       /** @default 168 */
       expires_in_hours: number
       /**
@@ -1146,12 +1188,7 @@ export interface components {
       /** Format: uuid */
       org_id: string
       email: string
-      /** @enum {string} */
-      kind: 'member' | 'guest'
       role: string
-      /** Format: uuid */
-      room_id?: string
-      purpose?: string
       /** @enum {string} */
       status: 'pending' | 'accepted' | 'revoked' | 'expired'
       /** Format: date-time */
@@ -1173,12 +1210,7 @@ export interface components {
       /** Format: uuid */
       org_id: string
       org_name: string
-      /** @enum {string} */
-      kind: 'member' | 'guest'
       role: string
-      /** Format: uuid */
-      room_id?: string
-      purpose?: string
       /** Format: date-time */
       expires_at: string
       /** @description The address, partly hidden, so the person can tell which account it is for. */
@@ -1192,12 +1224,12 @@ export interface components {
       /** Format: uuid */
       user_id: string
       /**
-       * @description sign_in_entra: the organization's identity provider signs the person in.
+       * @description sign_in_sso: the organization's identity provider signs the person in.
        *     verify_email: a verification link was sent; verify, then set a password.
        *     sign_in: the person already has a password; sign in with it.
        * @enum {string}
        */
-      next: 'sign_in_entra' | 'verify_email' | 'sign_in'
+      next: 'sign_in_sso' | 'verify_email' | 'sign_in'
     }
     MfaChallenge: {
       /**
@@ -1240,27 +1272,96 @@ export interface components {
       /** @description With verified, when the account has no password yet: what POST /v1/local/password takes with the first one. One use, fifteen minutes. */
       setup_token?: string
     }
+    /**
+     * @description An OpenID Connect provider. The preset fills in what is left out:
+     *     see `GET /v1/identity-provider-presets` and docs/sso.md.
+     */
     NewIdentityProvider: {
-      /** @enum {string} */
-      type: 'entra'
-      /** @description The Entra tenant id (a GUID) or verified domain. */
-      tenant_id: string
+      /** @description `entra`, `google` or `generic`; checked by the server. */
+      preset: string
+      /**
+       * @description generic only (required there): the issuer URL, whose
+       *     `/.well-known/openid-configuration` is the discovery document.
+       *     https, except where the deployment allows plain http (a laptop).
+       *     Left out for entra and google, whose issuer the preset derives.
+       */
+      issuer?: string
+      /** @description entra only (required there): the tenant id (a GUID) or a verified domain. Not common, organizations or consumers. */
+      tenant_id?: string
+      /** @description google only (required there): the Workspace domain; identity tokens must carry it in hd. */
+      hosted_domain?: string
       client_id: string
-      client_secret: string
+      /** @description Required the first time; left out on a change, the stored secret is kept, but only while the preset, issuer (tenant, hosted domain) and client id stay the same. */
+      client_secret?: string
+      /** @description The scopes asked for; must include openid. The preset's when left out. */
+      scopes?: string[]
+      /** @description The identity-token claim the address is read from. The preset's when left out. */
+      email_claim?: string
+      /** @description The claim the display name is read from. The preset's when left out. */
+      name_claim?: string
+      /**
+       * @description Refuse a token that does not say email_verified=true. A token that
+       *     says false is refused either way. The preset's when left out.
+       */
+      require_email_verified?: boolean
     }
     IdentityProvider: {
       /** Format: uuid */
       org_id: string
-      type: string
-      tenant_id: string
-      client_id: string
+      /** @description `entra`, `google` or `generic`. */
+      preset: string
+      /** @description The issuer as its discovery document names it. */
       issuer: string
+      /** @description entra only. */
+      tenant_id?: string
+      /** @description google only. */
+      hosted_domain?: string
+      client_id: string
+      /** @description A secret is stored. The secret itself is never returned. */
+      client_secret_set: boolean
+      scopes: string[]
+      email_claim: string
+      name_claim: string
+      require_email_verified: boolean
       /** @enum {string} */
       status: 'active' | 'disabled'
-      /** Format: date-time */
+      /**
+       * Format: date-time
+       * @description When the settings last passed the test before saving.
+       */
       verified_at?: string
-      /** @description What to register on the app registration as the redirect URI. */
+      /** @description What to register with the provider as the redirect URI. */
       redirect_uri: string
+    }
+    IdentityProviderTest: {
+      /** @description Every check passed; a save with these settings would be accepted. */
+      ok: boolean
+      /** @description The issuer the discovery document named, once it was fetched. */
+      issuer?: string
+      /** @description What to register with the provider as the redirect URI. */
+      redirect_uri: string
+      /** @description In order; a check after a failed one is not run and not listed. */
+      checks: components['schemas']['IdentityProviderCheck'][]
+    }
+    IdentityProviderCheck: {
+      /** @description `discovery`, `issuer`, `keys` or `client`. */
+      check: string
+      ok: boolean
+      /** @description When it failed, the input to fix (issuer, tenant_id, client_id, client_secret). */
+      field?: string
+      /** @description A sentence for the admin. Never a secret or a token. */
+      message: string
+    }
+    IdentityProviderPreset: {
+      preset: string
+      /** @description The issuer the preset uses: `{tenant_id}` stands for Entra's tenant; empty for generic, which asks for it. */
+      issuer: string
+      scopes: string[]
+      email_claim: string
+      name_claim: string
+      require_email_verified: boolean
+      /** @description The inputs the preset asks for besides the client id and secret. */
+      fields: string[]
     }
     Error: {
       code: string
@@ -1325,7 +1426,7 @@ export interface operations {
         org_id?: string
         email?: string
         next?: string
-        app?: 'ofis' | 'admin' | 'platform'
+        app?: string
         client?: 'web' | 'desktop' | 'mobile'
         /** @description The desktop app's PKCE challenge, base64url SHA-256 of its verifier. Required with client=desktop. */
         code_challenge?: string
@@ -1378,7 +1479,7 @@ export interface operations {
         content: {
           'application/json': {
             /** @enum {string} */
-            method: 'entra' | 'local'
+            method: 'sso' | 'local'
           }
         }
       }
@@ -1556,7 +1657,7 @@ export interface operations {
       }
     }
     responses: {
-      /** @description The provider, verified and saved */
+      /** @description The provider, tested and saved */
       200: {
         headers: {
           [name: string]: unknown
@@ -1568,7 +1669,10 @@ export interface operations {
       400: components['responses']['Error']
       401: components['responses']['Error']
       403: components['responses']['Error']
-      /** @description The provider could not be reached with these settings */
+      /**
+       * @description The settings failed the test: `identity_provider.test_failed`,
+       *     with `fields` naming each input to fix.
+       */
       422: {
         headers: {
           [name: string]: unknown
@@ -1577,6 +1681,60 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
+      default: components['responses']['Error']
+    }
+  }
+  testIdentityProvider: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NewIdentityProvider']
+      }
+    }
+    responses: {
+      /** @description The report; `ok` is whether a save would be accepted */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['IdentityProviderTest']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  listIdentityProviderPresets: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The presets */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': {
+            presets: components['schemas']['IdentityProviderPreset'][]
+          }
+        }
+      }
+      401: components['responses']['Error']
       default: components['responses']['Error']
     }
   }
@@ -1756,11 +1914,8 @@ export interface operations {
           /** Format: uuid */
           org_id: string
           org_name: string
-          /**
-           * @description Which web app the link opens.
-           * @enum {string}
-           */
-          app: 'ofis' | 'admin' | 'platform'
+          /** @description Which web app the link opens, one of the configured apps (account, admin and platform unless the deployment names others). */
+          app: string
           /**
            * @description The caller has already proven the address (a self-serve
            *     signup): no link is sent, the account starts verified,
@@ -1875,8 +2030,8 @@ export interface operations {
       content: {
         'application/json': {
           email: string
-          /** @enum {string} */
-          app: 'ofis' | 'admin' | 'platform'
+          /** @description One of the configured web apps (account, admin and platform unless the deployment names others). */
+          app: string
         }
       }
     }
@@ -1933,11 +2088,8 @@ export interface operations {
         'application/json': {
           email: string
           password: string
-          /**
-           * @default ofis
-           * @enum {string}
-           */
-          app?: 'ofis' | 'admin' | 'platform'
+          /** @description One of the configured web apps; the main app (account, unless the deployment names others) when left out. */
+          app?: string
         }
       }
     }
@@ -2390,8 +2542,8 @@ export interface operations {
       content: {
         'application/json': {
           email: string
-          /** @enum {string} */
-          app: 'ofis' | 'admin' | 'platform'
+          /** @description One of the configured web apps (account, admin and platform unless the deployment names others). */
+          app: string
         }
       }
     }

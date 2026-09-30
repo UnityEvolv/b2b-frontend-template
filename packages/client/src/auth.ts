@@ -4,7 +4,6 @@ import { createApi, isApiError, type Api, type ServiceName } from '@b2b-template
 import { createAccountClient, type AccountClient } from './account'
 import { cookieFrom, SESSION_COOKIE, type SessionCookieStore } from './cookies'
 import { SignInRefused } from './errors'
-import { identityApp, type AuthApp } from './identity-app'
 import type { Preferences, Session, SessionSource } from './session'
 
 /**
@@ -23,8 +22,12 @@ import type { Preferences, Session, SessionSource } from './session'
  * cookie is read from each answer and presented on each call by hand.
  */
 
-/** The apps the identity service knows, for its links and emails. */
-export type { AuthApp } from './identity-app'
+/**
+ * The apps, by the names the identity service's configured apps use (its
+ * APP_NAMES, `account,admin,platform` by default): sign-in and the account emails
+ * send them as they are.
+ */
+export type AuthApp = 'account' | 'admin' | 'platform'
 
 /** The header a public form's bot-check token travels in. */
 export const CAPTCHA_HEADER = 'X-Captcha-Token'
@@ -83,7 +86,7 @@ export type SignInClientKind = 'web' | 'desktop' | 'mobile'
 
 export interface SignInClient {
   /** How an address signs in: through its org's provider, or with a password. */
-  methods(email: string): Promise<'entra' | 'local'>
+  methods(email: string): Promise<'sso' | 'local'>
   /**
    * Where the browser goes to sign in through the org's provider. An app
    * says which it is and passes its PKCE challenge (S256, base64url); the
@@ -399,14 +402,14 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
     async methods(email) {
       const response = await baseFetch(identityUrl(`/v1/sign-in/methods?${query({ email })}`))
       if (!response.ok) return refusal(response)
-      const body = (await response.json()) as { method: 'entra' | 'local' }
+      const body = (await response.json()) as { method: 'sso' | 'local' }
       return body.method
     },
     entraStartUrl(email, next, client, codeChallenge) {
       return identityUrl(
         `/v1/sign-in/start?${query({
           email,
-          app: identityApp(options.app),
+          app: options.app,
           next,
           ...(client ? { client } : {}),
           ...(codeChallenge
@@ -428,7 +431,7 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
       const response = await withCredentials(identityUrl('/v1/sign-in/local'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, app: identityApp(options.app) }),
+        body: JSON.stringify({ email, password, app: options.app }),
       })
       if (response.status === 202) return { kind: 'mfa', step: (await response.json()) as MfaStep }
       if (!response.ok) return refusal(response)

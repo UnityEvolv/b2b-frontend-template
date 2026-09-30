@@ -1,4 +1,5 @@
 import { Alert, Button } from '@unityevolv/unitykit'
+import { humanizeKey } from '@b2b-template/core'
 import { useOrg, useSession } from '@b2b-template/ui-web'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
@@ -54,7 +55,7 @@ export function BillingBanner() {
     return (
       <Alert variant="info" className="mb-4">
         {t('billing.banner.pending', {
-          band: t(`billing.bands.${account.pending_band}`),
+          band: humanizeKey(account.pending_band),
           date: account.period_end ? new Date(account.period_end).toLocaleDateString() : '',
         })}{' '}
         <Button size="sm" variant="ghost" onClick={() => void cancel()}>

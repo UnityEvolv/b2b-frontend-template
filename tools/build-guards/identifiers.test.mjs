@@ -22,11 +22,24 @@ describe('findIdentifiers', () => {
   })
 
   it('leaves the design system and words that merely contain the letters', () => {
-    const text = ["import '@unityevolv/unitykit'", 'officer', 'profiser', 'UO_SESSION'].join('\n')
+    const text = ["import '@unityevolv/unitykit'", 'officer', 'profiser', 'b2bapp_session'].join(
+      '\n',
+    )
     expect(findIdentifiers('a.ts', text)).toEqual([])
   })
 
-  it('skips a file on the allow list', () => {
-    expect(findIdentifiers('packages/client/src/identity-app.ts', `'${PRODUCT}'`)).toEqual([])
+  it('finds the original cookie and SCIM token names', () => {
+    const cookie = 'u' + 'o_session=abc'
+    const token = 'u' + 'oscim_123'
+    expect(findIdentifiers('a.ts', [cookie, token].join('\n'))).toEqual([
+      `a.ts:1: ${cookie}`,
+      `a.ts:2: ${token}`,
+    ])
+  })
+
+  it('exempts no file, generated or not', () => {
+    expect(findIdentifiers('packages/api/src/generated/identity.ts', `'${PRODUCT}'`)).toEqual([
+      `packages/api/src/generated/identity.ts:1: '${PRODUCT}'`,
+    ])
   })
 })

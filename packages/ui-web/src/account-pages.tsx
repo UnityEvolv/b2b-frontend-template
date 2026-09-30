@@ -44,7 +44,7 @@ export function AcceptInvitePage() {
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState<
-    'verify_email' | 'sign_in' | 'sign_in_entra' | 'wrong_identity' | null
+    'verify_email' | 'sign_in' | 'sign_in_sso' | 'wrong_identity' | null
   >(null)
 
   useEffect(() => {
@@ -106,16 +106,11 @@ export function AcceptInvitePage() {
       {preview && !error && done === null && (
         <div className="space-y-4">
           <p>
-            {t(preview.kind === 'guest' ? 'invite.guestOf' : 'invite.memberOf', {
+            {t('invite.memberOf', {
               org: preview.org_name,
               role: t(`roles.${preview.role}` as never),
             })}
           </p>
-          {preview.purpose && (
-            <p className="text-sm text-base-content/70">
-              {t('invite.purpose', { purpose: preview.purpose })}
-            </p>
-          )}
           <p className="text-sm text-base-content/70">
             {t('invite.for', { email: preview.email_hint ?? '' })}
           </p>
@@ -156,7 +151,7 @@ export function AcceptInvitePage() {
           <p>{t('invite.checkInbox')}</p>
         </div>
       )}
-      {(done === 'sign_in' || done === 'sign_in_entra') && (
+      {(done === 'sign_in' || done === 'sign_in_sso') && (
         <div className="space-y-4">
           <Alert variant="ok">{t('invite.accepted')}</Alert>
           <Link

@@ -22,7 +22,6 @@ export {
   type SignedOutReason,
   type SignInClient,
 } from './auth'
-export { identityApp, type IdentityApp } from './identity-app'
 export {
   backoffDelay,
   CORE_LIVE_EVENTS,

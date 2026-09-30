@@ -61,6 +61,9 @@ export function YourData() {
           ) : (
             t(`yourData.states.${latest.status}`)
           )}
+          {latest.status === 'pending' && latest.blocked_by
+            ? ` ${t('yourData.blockedBy', { service: latest.blocked_by })}`
+            : null}
         </p>
       )}
     </Card>

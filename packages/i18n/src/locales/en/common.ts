@@ -27,8 +27,6 @@ export const common = {
   invite: {
     title: 'You are invited',
     memberOf: '{{org}} has invited you to join as {{role}}.',
-    guestOf: '{{org}} has invited you as a guest, with limited access.',
-    purpose: 'Purpose: {{purpose}}',
     for: 'This invitation is for {{email}}.',
     name: 'Your name',
     nameHelp: 'How people will see you. Needed if you are new here.',

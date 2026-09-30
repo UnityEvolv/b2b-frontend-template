@@ -213,7 +213,7 @@ export const admin = {
     exports: {
       title: 'Export the organization\u2019s data',
       intro:
-        'A zip of everything the organization has: people and memberships, the audit log, usage, and every message and attachment. It is ready within a day and the link, emailed to you, works for 7 days.',
+        'A zip of everything the organization has: people and memberships, the audit log and the rest of its records. It is ready within a day and the link, emailed to you, works for 7 days.',
       ask: 'Export all data',
       asked: 'Export asked for. The link will be emailed to you when it is ready.',
       tooMany: 'Three exports a day at most. Try again tomorrow.',
@@ -222,6 +222,7 @@ export const admin = {
       download: 'Download',
       downloadLink: 'Download (until {{date}})',
       states: { pending: 'Being made', ready: 'Ready', failed: 'Failed', expired: 'Expired' },
+      blockedBy: 'Waiting on the {{service}} service; tried again within the hour.',
     },
     close: {
       title: 'Close the organization',
@@ -254,13 +255,6 @@ export const admin = {
     perInterval: '{{price}} per {{interval}}',
     invoicedNote:
       'Your organisation is invoiced under its contract. To change the plan or how you pay, contact your account manager.',
-    bands: {
-      free: 'Free',
-      'team-50': 'Team 50',
-      'team-200': 'Team 200',
-      'team-500': 'Team 500',
-      enterprise: 'Enterprise',
-    },
     states: {
       free: 'On the free plan.',
       trialing: 'On a free trial.',

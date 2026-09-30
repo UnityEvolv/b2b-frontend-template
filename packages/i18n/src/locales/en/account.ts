@@ -74,6 +74,7 @@ export const account = {
       failed: 'Your last export failed. Ask again.',
       expired: 'Your last export has expired.',
     },
+    blockedBy: 'Waiting on the {{service}} service; tried again within the hour.',
   },
   profile: {
     title: 'Your profile',

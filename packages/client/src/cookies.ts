@@ -9,8 +9,10 @@
  * hold: a new value, nothing (the service cleared it), or no change.
  */
 
-/** The identity service's session cookie. */
-export const SESSION_COOKIE = 'uo_session'
+import { cookieName } from '@b2b-template/product-config'
+
+/** The identity service's session cookie, named as the backend names it: `b2bapp_session` by default. */
+export const SESSION_COOKIE = cookieName('session')
 
 /** Where a session cookie is kept between launches: the keystore, on mobile. */
 export interface SessionCookieStore {

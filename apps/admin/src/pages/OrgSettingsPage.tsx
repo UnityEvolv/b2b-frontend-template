@@ -10,7 +10,7 @@ import {
   toast,
 } from '@unityevolv/unitykit'
 import type { identity, organization } from '@b2b-template/api'
-import { useOrg } from '@b2b-template/ui-web'
+import { useOrg, useSession } from '@b2b-template/ui-web'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -42,6 +42,8 @@ const reason = (error: unknown, fallback: string) =>
 export default function OrgSettingsPage() {
   const { t } = useTranslation('admin')
   const org = useOrg()
+  // The identity provider is the sso permission's: without it the service refuses even a read.
+  const sso = useSession().permissions.can('sso')
   const [record, setRecord] = useState<Org | null>(null)
   const [claim, setClaim] = useState<Claim | null>(null)
   const [provider, setProvider] = useState<Provider | null | undefined>(undefined)
@@ -67,7 +69,9 @@ export default function OrgSettingsPage() {
     void Promise.all([
       api.organization.GET('/v1/organizations/{org_id}', path),
       api.organization.GET('/v1/organizations/{org_id}/domain', path),
-      api.identity.GET('/v1/organizations/{org_id}/identity-provider', path),
+      sso
+        ? api.identity.GET('/v1/organizations/{org_id}/identity-provider', path)
+        : Promise.resolve({ data: undefined }),
       api.identity.GET('/v1/organizations/{org_id}/session-policy', path),
     ]).then(([o, d, p, s]) => {
       if (!current) return
@@ -89,7 +93,7 @@ export default function OrgSettingsPage() {
     return () => {
       current = false
     }
-  }, [api, orgId, version])
+  }, [api, orgId, sso, version])
 
   if (!org || !record || !policy || provider === undefined) {
     return <Spinner block size="lg" label={t('detail.loading')} />
@@ -146,7 +150,7 @@ export default function OrgSettingsPage() {
     event.preventDefault()
     const { error } = await org.api.identity.PUT('/v1/organizations/{org_id}/identity-provider', {
       ...path,
-      body: { type: 'entra', ...idp },
+      body: { preset: 'entra', ...idp },
     })
     if (error) return toast.error(reason(error, t('settings.identity.unreachable')))
     toast.success(t('settings.identity.connected'))
@@ -226,43 +230,45 @@ export default function OrgSettingsPage() {
           )}
         </Card>
 
-        <Card header={t('settings.identity.title')}>
-          {provider ? (
-            <p className="flex items-center gap-2 text-sm">
-              {t('settings.identity.entra', { tenant: provider.tenant_id })}
-              <Badge variant={provider.status === 'active' ? 'primary' : 'danger'}>
-                {provider.status}
-              </Badge>
-            </p>
-          ) : (
-            <form onSubmit={connect} noValidate className="space-y-3">
-              <p className="text-sm">{t('settings.identity.local')}</p>
-              <Input
-                label={t('settings.identity.tenant')}
-                value={idp.tenant_id}
-                onChange={(e) => setIdp({ ...idp, tenant_id: e.target.value })}
-              />
-              <Input
-                label={t('settings.identity.clientId')}
-                value={idp.client_id}
-                onChange={(e) => setIdp({ ...idp, client_id: e.target.value })}
-              />
-              <Input
-                type="password"
-                label={t('settings.identity.secret')}
-                autoComplete="off"
-                value={idp.client_secret}
-                onChange={(e) => setIdp({ ...idp, client_secret: e.target.value })}
-              />
-              <Button
-                type="submit"
-                disabled={!idp.tenant_id || !idp.client_id || !idp.client_secret}
-              >
-                {t('settings.identity.connect')}
-              </Button>
-            </form>
-          )}
-        </Card>
+        {sso && (
+          <Card header={t('settings.identity.title')}>
+            {provider ? (
+              <p className="flex items-center gap-2 text-sm">
+                {t('settings.identity.entra', { tenant: provider.tenant_id ?? provider.issuer })}
+                <Badge variant={provider.status === 'active' ? 'primary' : 'danger'}>
+                  {provider.status}
+                </Badge>
+              </p>
+            ) : (
+              <form onSubmit={connect} noValidate className="space-y-3">
+                <p className="text-sm">{t('settings.identity.local')}</p>
+                <Input
+                  label={t('settings.identity.tenant')}
+                  value={idp.tenant_id}
+                  onChange={(e) => setIdp({ ...idp, tenant_id: e.target.value })}
+                />
+                <Input
+                  label={t('settings.identity.clientId')}
+                  value={idp.client_id}
+                  onChange={(e) => setIdp({ ...idp, client_id: e.target.value })}
+                />
+                <Input
+                  type="password"
+                  label={t('settings.identity.secret')}
+                  autoComplete="off"
+                  value={idp.client_secret}
+                  onChange={(e) => setIdp({ ...idp, client_secret: e.target.value })}
+                />
+                <Button
+                  type="submit"
+                  disabled={!idp.tenant_id || !idp.client_id || !idp.client_secret}
+                >
+                  {t('settings.identity.connect')}
+                </Button>
+              </form>
+            )}
+          </Card>
+        )}
 
         <Card header={t('settings.sessions.title')}>
           <form onSubmit={savePolicy} noValidate className="space-y-4">

@@ -97,7 +97,10 @@ export function OrgDataSettings({ name }: { name: string }) {
     {
       key: 'status',
       header: t('data.exports.status'),
-      cell: (e) => t(`data.exports.states.${e.status}`),
+      cell: (e) =>
+        e.status === 'pending' && e.blocked_by
+          ? `${t('data.exports.states.pending')}. ${t('data.exports.blockedBy', { service: e.blocked_by })}`
+          : t(`data.exports.states.${e.status}`),
     },
     {
       key: 'download',

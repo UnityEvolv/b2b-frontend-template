@@ -108,6 +108,7 @@ export function NotificationDefaults() {
                                 in_app: false,
                                 push: false,
                                 email: false,
+                                digest: false,
                                 ...settings.channels[category],
                                 [c]: event.target.checked,
                               },

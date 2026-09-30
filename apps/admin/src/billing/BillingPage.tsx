@@ -12,6 +12,7 @@ import {
   type TableColumn,
 } from '@unityevolv/unitykit'
 import type { organization } from '@b2b-template/api'
+import { humanizeKey } from '@b2b-template/core'
 import { useOrg } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -241,7 +242,7 @@ export default function BillingPage() {
 
       <Card header={t('billing.plan.title')}>
         <p className="text-lg font-semibold">
-          {t(`billing.bands.${account.band}`)}{' '}
+          {humanizeKey(account.band)}{' '}
           <span className="text-sm font-normal text-muted-foreground">{price(account.band)}</span>
         </p>
         <p className="text-sm">{t(`billing.states.${account.state}`)}</p>
@@ -271,17 +272,17 @@ export default function BillingPage() {
             <li className="text-muted-foreground">
               {price(account.next_band)
                 ? t('billing.plan.next', {
-                    band: t(`billing.bands.${account.next_band}`),
+                    band: humanizeKey(account.next_band),
                     price: price(account.next_band),
                   })
-                : t('billing.plan.nextNoPrice', { band: t(`billing.bands.${account.next_band}`) })}
+                : t('billing.plan.nextNoPrice', { band: humanizeKey(account.next_band) })}
             </li>
           )}
         </ul>
         {account.pending_band && (
           <Alert variant="info" className="mt-3">
             {t('billing.banner.pending', {
-              band: t(`billing.bands.${account.pending_band}`),
+              band: humanizeKey(account.pending_band),
               date: date(account.period_end),
             })}{' '}
             <Button size="sm" variant="ghost" onClick={() => void cancelPending()}>
@@ -298,7 +299,7 @@ export default function BillingPage() {
             <option value="">{t('billing.plan.choose')}</option>
             {BANDS.filter((b) => b !== account.band).map((b) => (
               <option key={b} value={b}>
-                {t(`billing.bands.${b}`)} {price(b)}
+                {humanizeKey(b)} {price(b)}
               </option>
             ))}
           </Select>
@@ -350,9 +351,7 @@ export default function BillingPage() {
       <Modal
         open={confirm !== null}
         onOpenChange={(open) => !open && setConfirm(null)}
-        title={
-          confirm ? t('billing.confirm.title', { band: t(`billing.bands.${confirm.band}`) }) : ''
-        }
+        title={confirm ? t('billing.confirm.title', { band: humanizeKey(confirm.band) }) : ''}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirm(null)}>

@@ -79,7 +79,7 @@ export function fakeIdentity(): FakeIdentity {
         const email = url.searchParams.get('email') ?? ''
         if (!email.includes('@')) return refused(400, 'invalid_request')
         return json(200, {
-          method: state.entraDomains.has(email.split('@')[1] ?? '') ? 'entra' : 'local',
+          method: state.entraDomains.has(email.split('@')[1] ?? '') ? 'sso' : 'local',
         })
       }
       case 'POST /identity/v1/sign-in/local': {
@@ -181,7 +181,6 @@ export function fakeIdentity(): FakeIdentity {
               return json(200, {
                 org_id: 'acme',
                 org_name: 'Acme',
-                kind: 'member',
                 role: 'user',
                 expires_at: '2030-01-01T00:00:00Z',
                 email_hint: found.email[0] + '***' + found.email.slice(at),

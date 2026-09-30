@@ -157,6 +157,29 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/notification-categories': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * The registered notification categories, for the preferences pages to render
+     * @description Every category registered in this deployment, the template's and the
+     *     product's, in order, with its label, who it is for, where it goes by
+     *     default and where it may go. The same for every org; any signed-in
+     *     caller may read it.
+     */
+    get: operations['listNotificationCategories']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/v1/push-config': {
     parameters: {
       query?: never
@@ -184,8 +207,8 @@ export interface paths {
     get?: never
     put?: never
     /**
-     * One-click unsubscribe from a category's email, from the link in it
-     * @description No sign-in; the token is signed and names the person and the category.
+     * One-click unsubscribe from a category's email, or from the digest, from the link in it
+     * @description No sign-in; the token is signed and names the person and the category, or `digest` for the daily digest, which it turns off for every category.
      */
     post: operations['unsubscribe']
     delete?: never
@@ -205,7 +228,7 @@ export interface paths {
     put?: never
     /**
      * Something happened that people may be told about (services only)
-     * @description The same intake as the Redis notify channel.
+     * @description The same intake as the Redis channel <prefix>:notify.
      */
     post: operations['emitEvent']
     delete?: never
@@ -309,29 +332,39 @@ export interface components {
         [key: string]: string
       }
     }
+    /** @description A registered notification category's id (GET /v1/notification-categories): security, membership, billing and admin_notices in the template, and whatever the product registers. Validated against the registry. */
+    Category: string
     /** @enum {string} */
-    Category:
-      | 'mention'
-      | 'direct_message'
-      | 'room_message'
-      | 'room_activity'
-      | 'knock'
-      | 'meeting'
-      | 'admin_providers'
-      | 'admin_billing'
-      | 'admin_templates'
-      | 'admin_marketplace'
-      | 'admin_directory'
-    /** @enum {string} */
-    Channel: 'in_app' | 'push' | 'email' | 'slack' | 'teams'
+    Channel: 'in_app' | 'push' | 'email'
     ChannelChoice: {
+      /** @description The in-app feed. */
       in_app: boolean
       push: boolean
+      /** @description An email at once. */
       email: boolean
-      /** @description A direct message from the org's Slack app. A person's own choice only, offered when chat_channels lists slack; never an org default and never for knocks. */
-      slack?: boolean
-      /** @description A message from the org's Teams app, on the same terms as slack. */
-      teams?: boolean
+      /** @description A line in the daily digest email. */
+      digest: boolean
+    }
+    NotificationCategory: {
+      id: components['schemas']['Category']
+      /** @description What the preferences grid calls it. */
+      label: string
+      description: string
+      /**
+       * @description Who it is for. An admin category's links open in the admin app.
+       * @enum {string}
+       */
+      audience: 'member' | 'admin'
+      default_channels: components['schemas']['ChannelChoice']
+      /** @description The channels it may use at all; the grid offers only these, and a choice outside them is ignored. */
+      channels: ('in_app' | 'push' | 'email' | 'digest')[]
+      /** @description Whether quiet hours hold its push and email. */
+      quiet_hours: boolean
+      /** @description Whether events about the same thing within a few minutes are one entry and one push. */
+      batched: boolean
+    }
+    NotificationCategoryList: {
+      categories: components['schemas']['NotificationCategory'][]
     }
     FeedEntry: {
       /** Format: uuid */
@@ -382,8 +415,6 @@ export interface components {
       quiet_hours: components['schemas']['QuietHours']
       /** @description Conversations silenced from the conversation itself. */
       muted: string[]
-      /** @description Answers only. Which of slack and teams the person may choose now, because the org's app has notifications on and they have linked their account; a choice of another is refused. */
-      chat_channels?: components['schemas']['Channel'][]
     }
     OrgNotificationSettings: {
       channels: {
@@ -408,7 +439,7 @@ export interface components {
       id: string
       /** Format: uuid */
       org_id: string
-      /** @description What happened, such as mention, direct_message, knock or provider_failing. */
+      /** @description What happened within the category, such as new_sign_in or payment_failed; picks the category's words. */
       kind: string
       category: components['schemas']['Category']
       /** @description Memberships. Empty with an audience set, for the service to resolve. */
@@ -424,7 +455,7 @@ export interface components {
        */
       actor?: string
       link: string
-      /** @description What it is about, for batching and suppression, such as conv:<id> or room:<office>:<room>. */
+      /** @description What it is about, for batching and suppression, such as project:<id>. */
       group?: string
       data?: {
         [key: string]: unknown
@@ -785,6 +816,28 @@ export interface operations {
       default: components['responses']['Error']
     }
   }
+  listNotificationCategories: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The categories */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['NotificationCategoryList']
+        }
+      }
+      401: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
   getPushConfig: {
     parameters: {
       query?: never
@@ -827,7 +880,8 @@ export interface operations {
         }
         content: {
           'application/json': {
-            category: components['schemas']['Category']
+            /** @description The category unsubscribed from, or digest. */
+            category: string
           }
         }
       }

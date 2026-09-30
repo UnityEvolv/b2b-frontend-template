@@ -23,7 +23,7 @@ function fakeService() {
   const issue = () => {
     const value = `s${++serial}`
     live.add(value)
-    return `uo_session=${value}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax`
+    return `b2bapp_session=${value}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax`
   }
   const accessToken = {
     access_token: 'token',
@@ -37,7 +37,7 @@ function fakeService() {
     const request = input instanceof Request ? input : new Request(String(input), init)
     const path = new URL(request.url).pathname
     const headers = new Headers(init?.headers ?? request.headers)
-    const cookie = /uo_session=([^;]+)/.exec(headers.get('Cookie') ?? '')?.[1] ?? null
+    const cookie = /b2bapp_session=([^;]+)/.exec(headers.get('Cookie') ?? '')?.[1] ?? null
     seen.push({ path, cookie, ...(init?.credentials ? { credentials: init.credentials } : {}) })
     if (path.endsWith('/sign-in/local')) return json(200, accessToken, issue())
     if (path.endsWith('/session/refresh')) {
@@ -49,7 +49,7 @@ function fakeService() {
       live = new Set()
       return new Response(null, {
         status: 204,
-        headers: { 'Set-Cookie': 'uo_session=; Max-Age=0' },
+        headers: { 'Set-Cookie': 'b2bapp_session=; Max-Age=0' },
       })
     }
     if (path.endsWith('/v1/me')) {
@@ -134,7 +134,7 @@ describe('a session kept in the keystore', () => {
     expect(url.searchParams.get('client')).toBe('mobile')
     expect(url.searchParams.get('code_challenge')).toBe('abc')
     expect(url.searchParams.get('code_challenge_method')).toBe('S256')
-    expect(url.searchParams.get('app')).toBe('ofis')
+    expect(url.searchParams.get('app')).toBe('account')
     expect(url.searchParams.get('next')).toBe('/home')
     // The scheme is fixed by the identity service; the app never names it.
     expect(url.searchParams.has('redirect_uri')).toBe(false)
@@ -159,7 +159,7 @@ describe('a session kept in the keystore', () => {
             user_id: 'u',
             choose_organization: false,
           }),
-          { status: 200, headers: { 'Set-Cookie': 'uo_session=s9; Path=/; HttpOnly' } },
+          { status: 200, headers: { 'Set-Cookie': 'b2bapp_session=s9; Path=/; HttpOnly' } },
         )
       }
       return new Response(null, { status: 404 })

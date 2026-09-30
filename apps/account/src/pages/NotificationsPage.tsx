@@ -93,6 +93,7 @@ export default function NotificationsPage() {
           in_app: false,
           push: false,
           email: false,
+          digest: false,
           ...prefs.channels[category],
           [channel]: value,
         },

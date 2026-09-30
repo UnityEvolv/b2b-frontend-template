@@ -36,12 +36,12 @@ function fakes(available = true) {
 
 describe('reading the identity service’s cookies', () => {
   it('reads name, value and expiry, Max-Age over Expires', () => {
-    expect(readSetCookie('uo_session=abc; Path=/; HttpOnly; Max-Age=60', 1000)).toEqual({
-      name: 'uo_session',
+    expect(readSetCookie('b2bapp_session=abc; Path=/; HttpOnly; Max-Age=60', 1000)).toEqual({
+      name: 'b2bapp_session',
       value: 'abc',
       expiresAt: 61_000,
     })
-    expect(readSetCookie('uo_session=; Max-Age=0', 1000)?.expiresAt).toBe(0)
+    expect(readSetCookie('b2bapp_session=; Max-Age=0', 1000)?.expiresAt).toBe(0)
     expect(
       readSetCookie('a=b; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Max-Age=10', 0)?.expiresAt,
     ).toBe(10_000)
@@ -67,10 +67,10 @@ describe('reading the identity service’s cookies', () => {
   })
 
   it('puts the kept cookies over what a request already carried', () => {
-    expect(mergeCookieHeader('a=1; uo_session=old', { uo_session: 'new' })).toBe(
-      'a=1; uo_session=new',
+    expect(mergeCookieHeader('a=1; b2bapp_session=old', { b2bapp_session: 'new' })).toBe(
+      'a=1; b2bapp_session=new',
     )
-    expect(mergeCookieHeader(undefined, { uo_session: 'x' })).toBe('uo_session=x')
+    expect(mergeCookieHeader(undefined, { b2bapp_session: 'x' })).toBe('b2bapp_session=x')
   })
 })
 
@@ -79,17 +79,17 @@ describe('the session in the keychain', () => {
     const { file, crypto } = fakes()
     let clock = 1000
     const vault = new SessionVault(file, crypto, () => clock)
-    vault.remember(['uo_session=s1; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=3600'])
-    expect(vault.cookies()).toEqual({ uo_session: 's1' })
+    vault.remember(['b2bapp_session=s1; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=3600'])
+    expect(vault.cookies()).toEqual({ b2bapp_session: 's1' })
     expect(file.stored()?.toString()).toMatch(/^enc:/)
 
     const again = new SessionVault(file, crypto, () => clock)
     again.load()
-    expect(again.cookies()).toEqual({ uo_session: 's1' })
+    expect(again.cookies()).toEqual({ b2bapp_session: 's1' })
 
     // A rotation replaces it; expiry drops it.
-    again.remember(['uo_session=s2; Max-Age=10'])
-    expect(again.cookies()).toEqual({ uo_session: 's2' })
+    again.remember(['b2bapp_session=s2; Max-Age=10'])
+    expect(again.cookies()).toEqual({ b2bapp_session: 's2' })
     clock += 11_000
     expect(again.cookies()).toEqual({})
     const later = new SessionVault(file, crypto, () => clock)
@@ -100,12 +100,12 @@ describe('the session in the keychain', () => {
   it('forgets on sign-out, which clears the cookie, and on forget', () => {
     const { file, crypto } = fakes()
     const vault = new SessionVault(file, crypto)
-    vault.remember(['uo_session=s1; Max-Age=3600'])
-    vault.remember(['uo_session=; Path=/; Max-Age=0'])
+    vault.remember(['b2bapp_session=s1; Max-Age=3600'])
+    vault.remember(['b2bapp_session=; Path=/; Max-Age=0'])
     expect(vault.cookies()).toEqual({})
     expect(file.stored()).toBeNull()
 
-    vault.remember(['uo_session=s1; Max-Age=3600'])
+    vault.remember(['b2bapp_session=s1; Max-Age=3600'])
     vault.forget()
     expect(vault.cookies()).toEqual({})
     expect(file.stored()).toBeNull()
@@ -114,8 +114,8 @@ describe('the session in the keychain', () => {
   it('writes nothing to disk without a keychain, and drops a file it cannot read', () => {
     const none = fakes(false)
     const vault = new SessionVault(none.file, none.crypto)
-    vault.remember(['uo_session=s1; Max-Age=3600'])
-    expect(vault.cookies()).toEqual({ uo_session: 's1' })
+    vault.remember(['b2bapp_session=s1; Max-Age=3600'])
+    expect(vault.cookies()).toEqual({ b2bapp_session: 's1' })
     expect(none.file.stored()).toBeNull()
 
     const bad = fakes()

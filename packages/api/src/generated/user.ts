@@ -75,7 +75,7 @@ export interface paths {
     put?: never
     /**
      * End the caller's own membership in this organization
-     * @description Ends access to this organization's offices and sessions; the caller's
+     * @description Ends access to this organization and its sessions; the caller's
      *     other organizations are untouched. An Owner cannot leave: ownership is
      *     transferred first. Rejoining takes a fresh invite. Audited in the
      *     organization left.
@@ -184,8 +184,8 @@ export interface paths {
     /**
      * Deactivate, suspend or reactivate one membership
      * @description Per membership: the person's other organizations are untouched.
-     *     Until the roles story, a platform operator's action; an org's Admin
-     *     then. Audited.
+     *     Needs the users permission (an Admin by default), or a platform
+     *     operator. Audited.
      */
     put: operations['setMembershipStatus']
     post?: never
@@ -229,7 +229,7 @@ export interface paths {
     get?: never
     put?: never
     /**
-     * A membership from an invite, an import, the self-serve owner or a room invite (services only)
+     * A membership from an invite, an import or the self-serve owner (services only)
      * @description The other ways a membership comes to exist. The user is created by
      *     email if unknown; a second org inviting the same email gets a
      *     second membership, never a second account. Idempotent by key.
@@ -321,27 +321,6 @@ export interface paths {
     patch?: never
     trace?: never
   }
-  '/v1/internal/organizations/{org_id}/memberships/{membership_id}/presence': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    /**
-     * Where the person is now, from the engine's identity adapter (realtime only)
-     * @description Written as a person moves; read at the next sign-in or reload to
-     *     put them back in the office and room they were in.
-     */
-    put: operations['setMembershipPresence']
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
   '/v1/internal/organizations/{org_id}/member-count': {
     parameters: {
       query?: never
@@ -351,29 +330,6 @@ export interface paths {
     }
     /** How many active members the org has, the number its plan caps (services only) */
     get: operations['countMembers']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/internal/organizations/{org_id}/memberships/{membership_id}/card': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /**
-     * The name and photo presence shows for a membership (realtime only)
-     * @description What the office draws beside a person: never taken from their own
-     *     client, so nobody can appear as somebody else. The photo link is
-     *     signed and expires; the realtime service asks again when a
-     *     credential is refreshed.
-     */
-    get: operations['getMembershipCard']
     put?: never
     post?: never
     delete?: never
@@ -451,31 +407,9 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** The groups the provider has pushed, with the offices each feeds */
+    /** The groups the provider has pushed, with their member counts */
     get: operations['listScimGroups']
     put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/organizations/{org_id}/scim/groups/{group_id}/offices': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    /**
-     * The offices a group feeds, replacing the list
-     * @description Everyone in the group becomes an Office User of each office; an
-     *     office taken off the list loses what the group granted (the page warns
-     *     first). Saving resumes a mapping paused by a dismissed halt.
-     */
-    put: operations['setScimGroupOffices']
     post?: never
     delete?: never
     options?: never
@@ -512,9 +446,10 @@ export interface paths {
     /**
      * Apply or dismiss the halted change
      * @description apply carries out what was held, as things stand now. dismiss leaves
-     *     things as they are: a group's offices stop following it until the
-     *     mapping is saved again, and the provider's word on the people it would
-     *     have deactivated is forgotten until it speaks again.
+     *     things as they are: a held group change is dropped, and made again
+     *     at the next push or reconciliation if it still takes too many people
+     *     at once; the provider's word on the people it would have deactivated
+     *     is forgotten until it speaks again.
      */
     post: operations['resolveScimHalt']
     delete?: never
@@ -742,8 +677,7 @@ export interface components {
       /** Format: uuid */
       group_id?: string
       group_name?: string
-      office_ids?: string[]
-      /** @description Who would lose the offices, or be deactivated. */
+      /** @description Who would lose what the group grants, or be deactivated. */
       memberships: string[]
     }
     ScimGroupList: {
@@ -754,13 +688,6 @@ export interface components {
       id: string
       display_name: string
       members: number
-      offices: components['schemas']['ScimGroupOffice'][]
-    }
-    ScimGroupOffice: {
-      /** Format: uuid */
-      office_id: string
-      /** @description Stopped by a dismissed halt until the mapping is saved again. */
-      paused: boolean
     }
     ScimLog: {
       entries: components['schemas']['ScimLogEntry'][]
@@ -788,7 +715,7 @@ export interface components {
      */
     MembershipStatus: 'active' | 'deactivated' | 'suspended' | 'left'
     /**
-     * @description member is an employee of the org; guest was invited into one room.
+     * @description member is an employee of the org; guest is a limited collaborator from outside it, who does not count toward the plan's user cap.
      * @enum {string}
      */
     MembershipKind: 'member' | 'guest'
@@ -796,7 +723,7 @@ export interface components {
      * @description How the membership came to exist.
      * @enum {string}
      */
-    MembershipSource: 'idp' | 'invite' | 'import' | 'owner' | 'room_invite' | 'scim'
+    MembershipSource: 'idp' | 'invite' | 'import' | 'owner' | 'scim'
     /** @description What the org's identity provider says about the person. Every field optional. */
     Directory: {
       job_title?: string
@@ -885,14 +812,12 @@ export interface components {
       theme: 'light' | 'dark' | 'system'
       /** @description A BCP 47 tag, or null to follow the device. */
       language?: string | null
-      hide_decorations: boolean
     }
     /** @description Only the fields sent change; null clears one. */
     ProfileUpdate: {
       /** @enum {string} */
       theme?: 'light' | 'dark' | 'system'
       language?: string | null
-      hide_decorations?: boolean
       display_name?: string | null
       time_zone?: string | null
       working_hours?: components['schemas']['WorkingHours'] | null
@@ -908,9 +833,6 @@ export interface components {
       status: components['schemas']['MembershipStatus']
       source: components['schemas']['MembershipSource']
       directory: components['schemas']['Directory']
-      /** Format: uuid */
-      last_office_id?: string
-      last_room_id?: string
       /** Format: date-time */
       last_active_at?: string
       /** Format: date-time */
@@ -958,22 +880,6 @@ export interface components {
       /** @default user */
       role: string
       source: components['schemas']['MembershipSource']
-    }
-    Presence: {
-      /** Format: uuid */
-      office_id: string
-      /** @description null when the person is in the office but no room. */
-      room_id?: string | null
-    }
-    MembershipCard: {
-      /** Format: uuid */
-      user_id: string
-      /** @description The name the person chose, else their account name. */
-      display_name: string
-      /** @description A signed link that expires. Absent when there is no photo. */
-      photo_url?: string
-      /** @description Someone from outside the org, on a room invite. */
-      guest: boolean
     }
     Error: {
       code: string
@@ -1545,35 +1451,6 @@ export interface operations {
       default: components['responses']['Error']
     }
   }
-  setMembershipPresence: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        org_id: components['parameters']['OrgId']
-        membership_id: components['parameters']['MembershipId']
-      }
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['Presence']
-      }
-    }
-    responses: {
-      /** @description Recorded */
-      204: {
-        headers: {
-          [name: string]: unknown
-        }
-        content?: never
-      }
-      401: components['responses']['Error']
-      403: components['responses']['Error']
-      404: components['responses']['Error']
-      default: components['responses']['Error']
-    }
-  }
   countMembers: {
     parameters: {
       query?: never
@@ -1597,33 +1474,6 @@ export interface operations {
         }
       }
       403: components['responses']['Error']
-      default: components['responses']['Error']
-    }
-  }
-  getMembershipCard: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        org_id: components['parameters']['OrgId']
-        membership_id: components['parameters']['MembershipId']
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description The card */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['MembershipCard']
-        }
-      }
-      401: components['responses']['Error']
-      403: components['responses']['Error']
-      404: components['responses']['Error']
       default: components['responses']['Error']
     }
   }
@@ -1701,10 +1551,7 @@ export interface operations {
   }
   listScimGroups: {
     parameters: {
-      query?: {
-        /** @description Only the groups that feed this office. */
-        office_id?: string
-      }
+      query?: never
       header?: never
       path: {
         org_id: components['parameters']['OrgId']
@@ -1723,39 +1570,6 @@ export interface operations {
         }
       }
       403: components['responses']['Error']
-      default: components['responses']['Error']
-    }
-  }
-  setScimGroupOffices: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        org_id: components['parameters']['OrgId']
-        group_id: string
-      }
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': {
-          office_ids: string[]
-        }
-      }
-    }
-    responses: {
-      /** @description The group as it now stands */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ScimGroupSummary']
-        }
-      }
-      400: components['responses']['Error']
-      403: components['responses']['Error']
-      404: components['responses']['Error']
       default: components['responses']['Error']
     }
   }

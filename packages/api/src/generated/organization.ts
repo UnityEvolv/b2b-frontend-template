@@ -43,7 +43,7 @@ export interface paths {
     /**
      * Change an organization's settings
      * @description Only the fields sent change. Sending null for display_name or domain
-     *     clears it. The plan is not a setting; the plan story changes it.
+     *     clears it. The plan is not a setting; billing changes it.
      */
     patch: operations['updateOrganization']
     trace?: never
@@ -321,149 +321,6 @@ export interface paths {
     patch?: never
     trace?: never
   }
-  '/v1/organizations/{org_id}/frames': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /**
-     * The organization's festival frames and how each is set (Admins, Owners)
-     * @description Every platform frame with its default and effective dates and whether
-     *     it is on, the organization's own frames, and the one decorations
-     *     switch. A platform frame the organization has never touched is on,
-     *     with its default dates; one with no default dates (celebration) is off
-     *     until it is given dates. Platform frame images are static paths the
-     *     web app ships; the organization's own are signed links good for an hour.
-     */
-    get: operations['getFrameSettings']
-    put?: never
-    /**
-     * Add one of the organization's own frames (Admins, Owners)
-     * @description The images are uploads made with links from the uploads endpoint. Each
-     *     is fetched and checked before the frame is created: a PNG or WebP of
-     *     at most 5 MB, with transparency, of the canvas shape it is for
-     *     (landscape 16:9, square 1:1, portrait 3:4, at the same resolutions a
-     *     background takes). A light image for every shape is required; a dark
-     *     one is optional and the light one is used in its place. The dates are
-     *     calendar dates in the organization's time zone, both included, and do
-     *     not repeat. At most 50 frames per organization.
-     */
-    post: operations['createOrgFrame']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/organizations/{org_id}/frames/uploads': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    put?: never
-    /**
-     * Links to upload the images of a new frame (Admins, Owners)
-     * @description One pre-signed PUT per image the client will send, each good for 15
-     *     minutes. The client PUTs the file's bytes to upload_url with the
-     *     Content-Type it declared here, then names the returned keys when it
-     *     creates the frame. Nothing is checked until then.
-     */
-    post: operations['createFrameUploads']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/organizations/{org_id}/frames/{frame_key}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    /**
-     * Turn a platform frame on or off, or change its yearly dates (Admins, Owners)
-     * @description Dates are month-day, MM-DD, and repeat every year; a start after the
-     *     end wraps the year (12-31 to 01-02). start_md and end_md go together:
-     *     both left out keeps the dates as they are, both null goes back to the
-     *     defaults. A frame with no default dates cannot be turned on without dates.
-     */
-    put: operations['setPlatformFrame']
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/organizations/{org_id}/frames/org/{frame_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    put?: never
-    post?: never
-    /** Remove one of the organization's own frames and its images (Admins, Owners) */
-    delete: operations['deleteOrgFrame']
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/organizations/{org_id}/decorations': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    /**
-     * Turn every frame on or off for the organization (Admins, Owners)
-     * @description Off shows no frame at all, whatever each frame's own setting. The settings are kept.
-     */
-    put: operations['setDecorations']
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/organizations/{org_id}/frame': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /**
-     * The one frame showing over the office on a date (any member)
-     * @description Dates are the organization's time zone. The organization's own frame
-     *     wins over a platform frame; among platform frames, the one most
-     *     recently turned on. None when decorations are off or nothing is on.
-     *     Platform frame images are static paths the web app ships; the
-     *     organization's own are signed links good for an hour.
-     */
-    get: operations['getActiveFrame']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
   '/v1/internal/domains/{domain}/organization': {
     parameters: {
       query?: never
@@ -604,23 +461,18 @@ export interface components {
       wrapped_key: string
       kms_key_version: string
     }
-    /**
-     * @description The plan band. What each band allows is read at the moment of every action.
-     * @enum {string}
-     */
-    Plan: 'free' | 'team-50' | 'team-200' | 'team-500' | 'enterprise'
+    /** @description The plan band, one of the bands the deployment registers (free, team, business and enterprise unless the product names others). What each band allows is read at the moment of every action. */
+    Plan: string
     PlanLimits: {
       /** Format: uuid */
       org_id: string
       plan: components['schemas']['Plan']
-      /** @description Cap on active memberships. 0 means no cap in the product. */
-      users: number
-      /** @description Cap on active offices. 0 means no cap in the product. */
-      offices: number
-      min_message_retention_seconds: number
-      max_message_retention_seconds: number
-      /** Format: int64 */
-      attachment_bytes: number
+      /** @description Sold by contract rather than self-serve; billing never moves an organization into or out of it. */
+      contractual: boolean
+      /** @description Every registered limit and its cap on this plan, by key (users is the one every deployment has). 0 means no cap in the product. */
+      limits: {
+        [key: string]: number
+      }
       /** @description The gated features this plan includes. Everything not gated is on every plan. */
       features: string[]
     }
@@ -637,14 +489,14 @@ export interface components {
     }
     /**
      * @description IANA time zone name, such as Asia/Kolkata. Never an offset. This is
-     *     the organization's zone: festival frames, scheduled switches, grace
-     *     periods and heat maps use it. A person's own zone is on their profile.
+     *     the organization's zone: scheduled switches and grace periods use
+     *     it. A person's own zone is on their profile.
      * @example Asia/Kolkata
      */
     TimeZone: string
     NewOrganization: {
       name: string
-      /** @description What people see in the office. Defaults to the name. */
+      /** @description What people see in the product. Defaults to the name. */
       display_name?: string
       /** @description The email domain the organization claims, such as acme.com. One organization per domain. */
       domain?: string
@@ -691,12 +543,6 @@ export interface components {
       display_name?: string | null
       domain?: string | null
       time_zone?: components['schemas']['TimeZone']
-      /**
-       * @description Whether people may give control of their screen during a share.
-       *     Off refuses every new grant, however it is asked for;
-       *     one already running ends with its share.
-       */
-      remote_control?: boolean
     }
     /** @enum {string} */
     OrganizationStatus: 'active' | 'suspended' | 'closing'
@@ -707,7 +553,7 @@ export interface components {
       audit_configurable: boolean
       classes: {
         /** @enum {string} */
-        class: 'identity' | 'audit' | 'usage' | 'messages' | 'transient' | 'backups'
+        class: 'identity' | 'audit' | 'transient' | 'backups'
         /** @description How long, in words, the same every time for every org. */
         kept: string
       }[]
@@ -727,6 +573,8 @@ export interface components {
       expires_at?: string
       /** @description While ready, a link that works for an hour. The same link is emailed for 7 days. */
       download_url?: string
+      /** @description The service whose part the last attempt could not gather. Pending, it is retried within the hour; after three attempts the export is failed. Absent once the export is made. */
+      blocked_by?: string
     }
     DataExportList: {
       exports: components['schemas']['DataExport'][]
@@ -756,8 +604,6 @@ export interface components {
        */
       purge_after?: string
       time_zone: components['schemas']['TimeZone']
-      /** @description Whether people may give control of their screen during a share. */
-      remote_control?: boolean
       /** Format: uuid */
       owner_user_id?: string
       /** Format: date-time */
@@ -769,162 +615,6 @@ export interface components {
       organizations: components['schemas']['Organization'][]
       /** @description Present when there is another page. */
       next_cursor?: string
-    }
-    /**
-     * @description A template canvas shape. Landscape is 16:9, square 1:1, portrait 3:4.
-     * @enum {string}
-     */
-    CanvasShape: 'landscape' | 'square' | 'portrait'
-    /** @enum {string} */
-    PlatformFrameKey:
-      'christmas' | 'new_year' | 'diwali' | 'holi' | 'eid' | 'easter' | 'halloween' | 'celebration'
-    /** @enum {string} */
-    FrameVariant: 'light' | 'dark'
-    FrameImage: {
-      /** @description A static path (platform frames) or a signed link (the organization's own). */
-      light: string
-      /** @description Absent when there is none; the light image is used in dark mode. */
-      dark?: string
-    }
-    FrameImages: {
-      landscape: components['schemas']['FrameImage']
-      square: components['schemas']['FrameImage']
-      portrait: components['schemas']['FrameImage']
-    }
-    PlatformFrame: {
-      key: components['schemas']['PlatformFrameKey']
-      name: string
-      /** @description An icon name from the web app's icon set. */
-      icon: string
-      /** @description Whether it shows on its dates. An enabled frame always has dates. */
-      enabled: boolean
-      /** @description Whether the organization has set its own dates. */
-      customized: boolean
-      /** @description MM-DD. Absent for a frame with no default dates. */
-      default_start_md?: string
-      /** @description MM-DD. Absent for a frame with no default dates. */
-      default_end_md?: string
-      /** @description MM-DD, the dates in effect. Absent when it has none. */
-      start_md?: string
-      /** @description MM-DD, the dates in effect. Absent when it has none. */
-      end_md?: string
-      /**
-       * Format: date-time
-       * @description When the organization last turned it on; absent when it is on by default.
-       */
-      enabled_at?: string
-      images: components['schemas']['FrameImages']
-    }
-    PlatformFrameUpdate: {
-      enabled: boolean
-      /** @description MM-DD. Left out keeps the dates; null goes back to the default. */
-      start_md?: string | null
-      /** @description MM-DD. Left out keeps the dates; null goes back to the default. */
-      end_md?: string | null
-    }
-    OrgFrame: {
-      /** Format: uuid */
-      id: string
-      name: string
-      icon: string
-      /** Format: date */
-      start_date: string
-      /** Format: date */
-      end_date: string
-      images: components['schemas']['FrameImages']
-      /** Format: date-time */
-      created_at: string
-    }
-    NewOrgFrameImage: {
-      /** @description The key of an upload from the uploads endpoint. */
-      light: string
-      dark?: string
-    }
-    NewOrgFrame: {
-      name: string
-      /** @description An icon name from the web app's icon set, lower-case letters, digits and dashes. confetti when left out. */
-      icon?: string
-      /** @description YYYY-MM-DD, in the organization's time zone. */
-      start_date: string
-      /** @description YYYY-MM-DD, included; on or after the start. */
-      end_date: string
-      images: {
-        landscape: components['schemas']['NewOrgFrameImage']
-        square: components['schemas']['NewOrgFrameImage']
-        portrait: components['schemas']['NewOrgFrameImage']
-      }
-    }
-    FrameSettings: {
-      decorations_enabled: boolean
-      /** @description The organization's time zone, which every frame date is in. */
-      time_zone: string
-      platform_frames: components['schemas']['PlatformFrame'][]
-      /** @description Newest first. */
-      org_frames: components['schemas']['OrgFrame'][]
-    }
-    Decorations: {
-      enabled: boolean
-    }
-    FrameUploadFile: {
-      shape: components['schemas']['CanvasShape']
-      variant: components['schemas']['FrameVariant']
-      /** @description image/png or image/webp. */
-      content_type: string
-      /**
-       * Format: int64
-       * @description Bytes, exactly, at most 5 MB; the upload must be this size.
-       */
-      size: number
-    }
-    FrameUploadRequest: {
-      /** @description 1 to 6 files, each shape and variant at most once. */
-      files: components['schemas']['FrameUploadFile'][]
-    }
-    FrameUpload: {
-      shape: components['schemas']['CanvasShape']
-      variant: components['schemas']['FrameVariant']
-      /** @description What to name in the new frame's images. */
-      key: string
-      /** @description PUT the bytes here, with the Content-Type below. */
-      upload_url: string
-      content_type: string
-      /** Format: date-time */
-      expires_at: string
-    }
-    FrameUploads: {
-      uploads: components['schemas']['FrameUpload'][]
-    }
-    ActiveFrame: {
-      /** @enum {string} */
-      kind: 'platform' | 'organization'
-      key?: components['schemas']['PlatformFrameKey']
-      /**
-       * Format: uuid
-       * @description The organization's own frame's id.
-       */
-      id?: string
-      name: string
-      icon: string
-      /**
-       * Format: date
-       * @description The first day of this showing.
-       */
-      start_date: string
-      /**
-       * Format: date
-       * @description The last day of this showing.
-       */
-      end_date: string
-      images: components['schemas']['FrameImages']
-    }
-    ActiveFrameResponse: {
-      /**
-       * Format: date
-       * @description The date the answer is for, in the organization's time zone.
-       */
-      date: string
-      /** @description The frame showing, or null when none is. */
-      frame: components['schemas']['ActiveFrame'] | null
     }
     Error: {
       /**
@@ -1670,218 +1360,6 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
-      default: components['responses']['Error']
-    }
-  }
-  getFrameSettings: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        org_id: components['parameters']['OrgId']
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description The frames and their settings */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['FrameSettings']
-        }
-      }
-      401: components['responses']['Error']
-      403: components['responses']['Error']
-      404: components['responses']['Error']
-      default: components['responses']['Error']
-    }
-  }
-  createOrgFrame: {
-    parameters: {
-      query?: never
-      header: {
-        /**
-         * @description A key the client makes up once per intended create and reuses on
-         *     every retry of it. A second request with the same key returns what
-         *     the first one made.
-         */
-        'Idempotency-Key': components['parameters']['IdempotencyKey']
-      }
-      path: {
-        org_id: components['parameters']['OrgId']
-      }
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['NewOrgFrame']
-      }
-    }
-    responses: {
-      /** @description The frame, whether created now or by the first request with this key */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['OrgFrame']
-        }
-      }
-      400: components['responses']['Error']
-      401: components['responses']['Error']
-      403: components['responses']['Error']
-      409: components['responses']['Error']
-      default: components['responses']['Error']
-    }
-  }
-  createFrameUploads: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        org_id: components['parameters']['OrgId']
-      }
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['FrameUploadRequest']
-      }
-    }
-    responses: {
-      /** @description One upload per file asked for, in the same order */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['FrameUploads']
-        }
-      }
-      400: components['responses']['Error']
-      401: components['responses']['Error']
-      403: components['responses']['Error']
-      default: components['responses']['Error']
-    }
-  }
-  setPlatformFrame: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        org_id: components['parameters']['OrgId']
-        frame_key: string
-      }
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['PlatformFrameUpdate']
-      }
-    }
-    responses: {
-      /** @description The frame as it now stands */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['PlatformFrame']
-        }
-      }
-      400: components['responses']['Error']
-      401: components['responses']['Error']
-      403: components['responses']['Error']
-      404: components['responses']['Error']
-      default: components['responses']['Error']
-    }
-  }
-  deleteOrgFrame: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        org_id: components['parameters']['OrgId']
-        frame_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Removed */
-      204: {
-        headers: {
-          [name: string]: unknown
-        }
-        content?: never
-      }
-      401: components['responses']['Error']
-      403: components['responses']['Error']
-      404: components['responses']['Error']
-      default: components['responses']['Error']
-    }
-  }
-  setDecorations: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        org_id: components['parameters']['OrgId']
-      }
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['Decorations']
-      }
-    }
-    responses: {
-      /** @description The switch as it now stands */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Decorations']
-        }
-      }
-      400: components['responses']['Error']
-      401: components['responses']['Error']
-      403: components['responses']['Error']
-      404: components['responses']['Error']
-      default: components['responses']['Error']
-    }
-  }
-  getActiveFrame: {
-    parameters: {
-      query?: {
-        /** @description A calendar date, YYYY-MM-DD; today in the organization's time zone when left out. */
-        date?: string
-      }
-      header?: never
-      path: {
-        org_id: components['parameters']['OrgId']
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description The frame, or null */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ActiveFrameResponse']
-        }
-      }
-      400: components['responses']['Error']
-      401: components['responses']['Error']
-      403: components['responses']['Error']
-      404: components['responses']['Error']
       default: components['responses']['Error']
     }
   }

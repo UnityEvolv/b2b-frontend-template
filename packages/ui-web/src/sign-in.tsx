@@ -75,7 +75,7 @@ function SignInForm() {
     setError(null)
     try {
       const method = await auth.signIn.methods(email.trim())
-      if (method === 'entra') {
+      if (method === 'sso') {
         // In the desktop app the provider's page opens in the person's own
         // browser, and the sign-in comes back into the app.
         const desktop = desktopBridge()

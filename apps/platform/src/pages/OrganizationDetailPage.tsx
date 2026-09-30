@@ -11,6 +11,7 @@ import {
   type TableColumn,
 } from '@unityevolv/unitykit'
 import type { Api, audit, identity, organization, user } from '@b2b-template/api'
+import { humanizeKey } from '@b2b-template/core'
 import { useApp } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -147,7 +148,7 @@ export default function OrganizationDetailPage() {
       toast.error(message(error) ?? t('detail.planFailed'))
       return
     }
-    toast.success(t('detail.planChanged', { plan: t(`plans.${data.plan}`) }))
+    toast.success(t('detail.planChanged', { plan: humanizeKey(data.plan) }))
     setTarget('')
     setPreview(null)
     reload()
@@ -290,7 +291,7 @@ export default function OrganizationDetailPage() {
 
         <div className="grid gap-6">
           <Card header={t('detail.plan')}>
-            <p className="mb-4 text-sm">{t('detail.planNow', { plan: t(`plans.${org.plan}`) })}</p>
+            <p className="mb-4 text-sm">{t('detail.planNow', { plan: humanizeKey(org.plan) })}</p>
             <Select
               label={t('detail.moveTo')}
               value={target}
@@ -302,7 +303,7 @@ export default function OrganizationDetailPage() {
             >
               {PLANS.filter((p) => p !== org.plan).map((p) => (
                 <option key={p} value={p}>
-                  {t(`plans.${p}`)}
+                  {humanizeKey(p)}
                 </option>
               ))}
             </Select>
@@ -321,7 +322,7 @@ export default function OrganizationDetailPage() {
                   </Alert>
                 )}
                 <Button disabled={busy} onClick={() => void changePlan()}>
-                  {t('detail.confirmPlan', { plan: t(`plans.${preview.to}`) })}
+                  {t('detail.confirmPlan', { plan: humanizeKey(preview.to) })}
                 </Button>
               </div>
             )}

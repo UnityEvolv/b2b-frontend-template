@@ -4,13 +4,6 @@
  */
 export const platform = {
   nav: { organizations: 'Organizations' },
-  plans: {
-    free: 'Free',
-    'team-50': 'Team 50',
-    'team-200': 'Team 200',
-    'team-500': 'Team 500',
-    enterprise: 'Enterprise',
-  },
   statuses: { active: 'Active', suspended: 'Suspended', closing: 'Closing' },
   memberStatuses: {
     active: 'Active',

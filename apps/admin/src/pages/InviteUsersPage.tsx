@@ -68,7 +68,7 @@ export default function InviteUsersPage() {
       })
       .then(({ data }) => {
         if (!current) return
-        setPending(data?.invites.filter((i) => i.kind === 'member') ?? [])
+        setPending(data?.invites ?? [])
         setLoadingPending(false)
       })
     return () => {

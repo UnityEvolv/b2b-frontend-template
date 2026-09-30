@@ -1,6 +1,6 @@
 import { isApiError } from '@b2b-template/api'
 
-import { identityApp, type AuthApp } from './identity-app'
+import type { AuthApp } from './auth'
 import { SignInRefused } from './errors'
 
 /**
@@ -13,10 +13,7 @@ import { SignInRefused } from './errors'
 export interface InvitePreview {
   org_id: string
   org_name: string
-  kind: 'member' | 'guest'
   role: string
-  room_id?: string
-  purpose?: string
   expires_at: string
   email_hint?: string
 }
@@ -25,7 +22,7 @@ export interface InviteAccepted {
   org_id: string
   membership_id: string
   user_id: string
-  next: 'sign_in_entra' | 'verify_email' | 'sign_in'
+  next: 'sign_in_sso' | 'verify_email' | 'sign_in'
 }
 
 export interface EmailVerified {
@@ -120,13 +117,13 @@ export function createAccountClient(options: AccountClientOptions): AccountClien
       call('POST', `/v1/invites/${encodeURIComponent(token)}/accept`, name ? { name } : {}),
     verifyEmail: (token) => call('POST', '/v1/email-verification/verify', { token }),
     resendVerification: (email) =>
-      call('POST', '/v1/email-verification/resend', { email, app: identityApp(options.app) }),
+      call('POST', '/v1/email-verification/resend', { email, app: options.app }),
     setPassword: (token, password) => call('POST', '/v1/local/password', { token, password }),
     forgotPassword: (email, captchaToken) =>
       call(
         'POST',
         '/v1/local/password/forgot',
-        { email, app: identityApp(options.app) },
+        { email, app: options.app },
         captchaToken ? { [options.captchaHeader]: captchaToken } : {},
       ),
     switchOrganization: (orgId) => call('POST', '/v1/session/switch', { org_id: orgId }),

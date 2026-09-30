@@ -1,4 +1,5 @@
 export interface Product {
+  readonly productId: string
   readonly productName: string
   readonly storagePrefix: string
   readonly urlScheme: string
@@ -20,3 +21,4 @@ export interface WebSecurity {
 export declare const PRODUCT: Product
 export declare function storageKey(name: string): string
 export declare function recoveryCodesFile(): string
+export declare function cookieName(name: string): string

@@ -12,25 +12,19 @@ import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const PATTERNS = [/unity[o]fis/i, /\b[o]fis\b/i, /\bU[O]-[0-9]/i, /unityevolv[.]com/i]
+export const PATTERNS = [
+  /unity[o]fis/i,
+  /\b[o]fis\b/i,
+  /\bU[O]-[0-9]/i,
+  /unityevolv[.]com/i,
+  // The original product's cookie and SCIM token names; the template's come
+  // from the product id (product-config's cookieName).
+  /\bu[o]_(session|signin|attempt)\b/i,
+  /\bu[o]scim/i,
+]
 
-/**
- * Files allowed to match, each with the reason. Keep this short: an entry is
- * a debt with a named way to pay it off.
- */
-export const ALLOWED = new Map([
-  // The identity service's app key for the member app is still the original
-  // product's. These change together with the backend's contract, then go.
-  ['packages/api/specs/identity.yaml', 'app key in the backend contract'],
-  ['packages/api/src/generated/identity.ts', 'generated from that contract'],
-  ['packages/client/src/identity-app.ts', 'maps the app key until then'],
-  ['packages/client/src/identity-app.test.ts', 'tests that mapping'],
-  ['packages/client/src/auth.test.ts', 'asserts the key sign-in sends'],
-])
-
-/** The lines of one file that match, as `path:line: text`. */
+/** The lines of one file that match, as `path:line: text`. No file is exempt. */
 export function findIdentifiers(path, text) {
-  if (ALLOWED.has(path)) return []
   const hits = []
   text.split('\n').forEach((line, index) => {
     if (PATTERNS.some((pattern) => pattern.test(line))) {

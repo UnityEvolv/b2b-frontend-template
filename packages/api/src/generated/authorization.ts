@@ -2,6 +2,29 @@
 // change the contract in the backend, and the sync brings it here.
 
 export interface paths {
+  '/v1/permission-groups': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * The configurable permission groups, for the roles page to render
+     * @description Every group registered in this deployment, the template's and the
+     *     product's, in order, with a label and description to show and the
+     *     roles that hold it by default; and the actions only an Owner may
+     *     ever take. The same for every org; any signed-in caller may read it.
+     */
+    get: operations['listPermissionGroups']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/v1/organizations/{org_id}/permissions': {
     parameters: {
       query?: never
@@ -13,8 +36,8 @@ export interface paths {
     get: operations['getPermissions']
     /**
      * Change which groups the Admin and Billing Admin roles hold (Owner only)
-     * @description Only the configurable groups may be named; Owner-only actions never
-     *     can. The answer carries warnings for anything the change leaves
+     * @description Only the registered groups (`GET /v1/permission-groups`) may be
+     *     named; Owner-only actions never can. The answer carries warnings for anything the change leaves
      *     nobody but the Owner able to do. Audited. Takes effect on the next
      *     action: nothing is cached.
      */
@@ -36,8 +59,8 @@ export interface paths {
     get?: never
     /**
      * Give a membership another org role (Owner only)
-     * @description Owner is not assigned here: ownership is transferred, in its own
-     *     story. The last Owner cannot be demoted. Audited.
+     * @description Owner is not assigned here: ownership is transferred instead
+     *     (the ownership-transfer endpoints). The last Owner cannot be demoted. Audited.
      */
     put: operations['setRole']
     post?: never
@@ -190,21 +213,25 @@ export interface components {
      */
     Role: 'owner' | 'admin' | 'billing_admin' | 'user' | 'guest'
     /**
-     * @description A configurable group, or an Owner-only action.
-     * @enum {string}
+     * @description A configurable group, `settings`, or an Owner-only action. The groups
+     *     are registered by the template (billing, users, audit, sso) and the
+     *     product, so they are validated by the service, not listed here.
+     * @example users
      */
-    Permission:
-      | 'settings'
-      | 'billing'
-      | 'users'
-      | 'offices'
-      | 'providers'
-      | 'audit'
-      | 'assign_roles'
-      | 'configure_permissions'
-      | 'transfer_ownership'
-      | 'delete_organization'
-      | 'claim_domain'
+    Permission: string
+    PermissionGroup: {
+      key: components['schemas']['Permission']
+      /** @example Single sign-on */
+      label: string
+      description: string
+      /** @description The configurable roles that hold it until the Owner decides otherwise. */
+      default_roles: components['schemas']['Role'][]
+    }
+    PermissionGroups: {
+      groups: components['schemas']['PermissionGroup'][]
+      /** @description What no configuration can grant. */
+      owner_only: components['schemas']['Permission'][]
+    }
     NewPermissionConfig: {
       /** @description The configurable groups the Admin role holds. */
       admin: components['schemas']['Permission'][]
@@ -291,6 +318,28 @@ export interface components {
 }
 export type $defs = Record<string, never>
 export interface operations {
+  listPermissionGroups: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The groups */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PermissionGroups']
+        }
+      }
+      401: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
   getPermissions: {
     parameters: {
       query?: never

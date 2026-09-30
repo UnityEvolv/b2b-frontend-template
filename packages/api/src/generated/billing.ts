@@ -261,8 +261,8 @@ export interface components {
         [key: string]: string
       }
     }
-    /** @enum {string} */
-    Band: 'free' | 'team-50' | 'team-200' | 'team-500' | 'enterprise'
+    /** @description A plan band, one of the bands the deployment registers. */
+    Band: string
     Price: {
       /**
        * Format: int64

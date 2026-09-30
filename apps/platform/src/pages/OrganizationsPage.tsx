@@ -9,6 +9,7 @@ import {
   type TableSort,
 } from '@unityevolv/unitykit'
 import type { organization } from '@b2b-template/api'
+import { humanizeKey } from '@b2b-template/core'
 import { useApp } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -100,7 +101,7 @@ export default function OrganizationsPage() {
       header: t('organizations.columns.domain'),
       cell: (o) => o.domain ?? t('organizations.none'),
     },
-    { key: 'plan', header: t('organizations.columns.plan'), cell: (o) => t(`plans.${o.plan}`) },
+    { key: 'plan', header: t('organizations.columns.plan'), cell: (o) => humanizeKey(o.plan) },
     {
       key: 'status',
       header: t('organizations.columns.status'),
@@ -143,7 +144,7 @@ export default function OrganizationsPage() {
           <option value="">{t('organizations.any')}</option>
           {PLANS.map((p) => (
             <option key={p} value={p}>
-              {t(`plans.${p}`)}
+              {humanizeKey(p)}
             </option>
           ))}
         </Select>

@@ -72,8 +72,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [ofis, admin, platform]
-            default: ofis
+            description: One of the configured web apps; the main app (account, unless the deployment names others) when left out.
         - name: client
           in: query
           schema:
@@ -118,8 +117,8 @@ paths:
         The sign-in page cannot know which organization someone belongs to
         before they say who they are, so it asks by address. A domain
         claimed by an organization with an identity provider signs in
-        through it (`entra`); anything else (a local organization, an
-        unknown domain, a guest) signs in with a password (`local`). Nothing
+        through it (`sso`, whatever the provider); anything else (a local organization or an
+        unknown domain) signs in with a password (`local`). Nothing
         else is said: no organization's name or existence is revealed to
         someone who has not signed in. Rate limited by address.
       security: []
@@ -142,7 +141,7 @@ paths:
                 properties:
                   method:
                     type: string
-                    enum: [entra, local]
+                    enum: [sso, local]
         '400':
           $ref: '#/components/responses/Error'
         default:
@@ -282,6 +281,7 @@ paths:
     get:
       operationId: getIdentityProvider
       summary: The organization's identity provider, without its secret
+      description: Needs the sso permission, as changing it does.
       security:
         - bearer: []
       tags: [identity-providers]
@@ -306,10 +306,15 @@ paths:
       operationId: setIdentityProvider
       summary: Configure the organization's identity provider
       description: |
-        The credentials are checked with a real round trip to the provider's
-        discovery document before anything is saved; the client secret is
-        encrypted under the organization's data key and never returned.
-        Audited. Until the roles story, a platform operator's action.
+        Any OpenID Connect provider, filled in from a preset. Nothing is
+        saved unless the settings pass the same test as
+        `POST .../identity-provider/test` (discovery, issuer, keys, and the
+        client id and secret at the token endpoint); a failure is 422 with
+        `fields` naming the inputs to fix. The client secret is encrypted
+        under the organization's data key and never returned; left out on a
+        change to the same provider and client id, the stored one is kept
+        and tested again. Audited. Needs the
+        sso permission (an Owner, an Admin with it, or a platform operator).
       security:
         - bearer: []
       tags: [identity-providers]
@@ -323,7 +328,7 @@ paths:
               $ref: '#/components/schemas/NewIdentityProvider'
       responses:
         '200':
-          description: The provider, verified and saved
+          description: The provider, tested and saved
           content:
             application/json:
               schema:
@@ -335,11 +340,80 @@ paths:
         '403':
           $ref: '#/components/responses/Error'
         '422':
-          description: The provider could not be reached with these settings
+          description: |
+            The settings failed the test: `identity_provider.test_failed`,
+            with `fields` naming each input to fix.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/organizations/{org_id}/identity-provider/test:
+    post:
+      operationId: testIdentityProvider
+      summary: Test identity provider settings without saving them
+      description: |
+        The round trip a save requires, reported check by check so the
+        admin page can show what passed: the discovery document is
+        fetched, its issuer matches, its signing keys load, and the token
+        endpoint accepts the client id and secret (an authorization-code
+        request with a code that cannot exist: a provider answers
+        `invalid_client` for wrong credentials and `invalid_grant` for
+        right ones). Nothing is stored. The same body as the PUT; the
+        secret may be left out when one is saved. Needs the sso permission.
+      security:
+        - bearer: []
+      tags: [identity-providers]
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewIdentityProvider'
+      responses:
+        '200':
+          description: The report; `ok` is whether a save would be accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityProviderTest'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/identity-provider-presets:
+    get:
+      operationId: listIdentityProviderPresets
+      summary: The presets a provider is filled in from
+      description: |
+        What each preset fills in, so the admin page's provider picker
+        needs no copy of it: the issuer (with `{tenant_id}` where Entra's
+        goes), the scopes, the claims, and which fields the preset asks for.
+      security:
+        - bearer: []
+      tags: [identity-providers]
+      responses:
+        '200':
+          description: The presets
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [presets]
+                properties:
+                  presets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IdentityProviderPreset'
+        '401':
+          $ref: '#/components/responses/Error'
         default:
           $ref: '#/components/responses/Error'
   /v1/sessions:
@@ -562,8 +636,7 @@ paths:
                   maxLength: 200
                 app:
                   type: string
-                  enum: [ofis, admin, platform]
-                  description: Which web app the link opens.
+                  description: Which web app the link opens, one of the configured apps (account, admin and platform unless the deployment names others).
                 verified:
                   type: boolean
                   default: false
@@ -691,7 +764,7 @@ paths:
                   maxLength: 320
                 app:
                   type: string
-                  enum: [ofis, admin, platform]
+                  description: One of the configured web apps (account, admin and platform unless the deployment names others).
       responses:
         '202':
           description: Accepted
@@ -742,9 +815,9 @@ paths:
       operationId: signInLocal
       summary: Sign in with email and password
       description: |
-        For organizations without an identity provider, and for guests
-        anywhere. Starts a session and answers with the access token, as a
-        refresh would; the session cookie is set. A wrong address and a
+        For organizations without an identity provider. Starts a session and
+        answers with the access token, as a refresh would; the session
+        cookie is set. A wrong address and a
         wrong password are refused alike. Failed attempts are throttled per
         account and per address; a person who types their password right is
         never slowed. An unverified account is refused until its email is
@@ -767,8 +840,7 @@ paths:
                   maxLength: 200
                 app:
                   type: string
-                  enum: [ofis, admin, platform]
-                  default: ofis
+                  description: One of the configured web apps; the main app (account, unless the deployment names others) when left out.
       responses:
         '200':
           description: Signed in
@@ -1241,7 +1313,7 @@ paths:
                   maxLength: 320
                 app:
                   type: string
-                  enum: [ofis, admin, platform]
+                  description: One of the configured web apps (account, admin and platform unless the deployment names others).
       responses:
         '202':
           description: Accepted
@@ -1300,7 +1372,7 @@ paths:
       description: |
         Newest first, cursor paginated, by status. The users permission
         lists every invite; any member lists the ones they sent with
-        `mine=true`, which is where a guest's inviter extends or revokes them.
+        `mine=true`, which is where an inviter extends or revokes them.
       security:
         - bearer: []
       tags: [invites]
@@ -1344,7 +1416,7 @@ paths:
     post:
       operationId: resendInvite
       summary: Send an open invite again, with a fresh link and expiry
-      description: The users permission, or the member who sent it. A guest invite's inviter extends it this way. Audited.
+      description: The users permission, or the member who sent it. Audited.
       security:
         - bearer: []
       tags: [invites]
@@ -1409,9 +1481,8 @@ paths:
       operationId: createInternalInvite
       summary: An invite made by another service (services only)
       description: |
-        The office service's guest invites (kind guest, one room, a purpose
-        and an expiry set by the inviter) and the organization service's
-        first-owner invite. Same rules as the organization's own endpoint.
+        Another service inviting someone into an organization. Same rules
+        as the organization's own endpoint.
       security:
         - bearer: []
       tags: [internal]
@@ -1475,8 +1546,7 @@ paths:
         One use. The membership is made (the user too, on first sight, with
         the name given); a second organization inviting a known address
         gets a second membership, never a second account. Refused when the
-        organization is at its plan's user cap, leaving the invite open;
-        guests do not count. The answer says what comes next: sign in
+        organization is at its plan's user cap, leaving the invite open. The answer says what comes next: sign in
         through the organization's identity provider, verify the email and
         set a password, or sign in with the password the person already has.
       security: []
@@ -1525,8 +1595,7 @@ paths:
         Every live session carrying that membership moves at once: to
         another of the person's organizations by the landing rule, to the
         chooser, or, when none remain, it is revoked. Either way the person's
-        open sockets in that organization are told and closed, so nobody is
-        left standing in a room they have been removed from.
+        open connections in that organization are told and closed.
       security:
         - bearer: []
       tags: [internal]
@@ -2047,9 +2116,7 @@ components:
           description: user, admin, billing_admin; owner only by a platform operator.
         app:
           type: string
-          enum: [ofis, admin, platform]
-          default: ofis
-          description: Which web app the link opens.
+          description: Which web app the link opens, one of the configured apps; the main app (account, unless the deployment names others) when left out.
         expires_in_hours:
           type: integer
           minimum: 1
@@ -2057,7 +2124,7 @@ components:
           default: 168
     NewInternalInvite:
       type: object
-      required: [org_id, email, kind, app]
+      required: [org_id, email]
       properties:
         org_id:
           type: string
@@ -2065,22 +2132,12 @@ components:
         email:
           type: string
           maxLength: 320
-        kind:
-          type: string
-          enum: [member, guest]
         role:
           type: string
           default: user
-        room_id:
-          type: string
-          format: uuid
-          description: Required for a guest.
-        purpose:
-          type: string
-          maxLength: 200
         app:
           type: string
-          enum: [ofis, admin, platform]
+          description: Which web app the link opens, one of the configured apps; the main app when left out.
         expires_in_hours:
           type: integer
           minimum: 1
@@ -2092,7 +2149,7 @@ components:
           description: The member who asked, when one did.
     Invite:
       type: object
-      required: [invite_id, org_id, email, kind, role, status, expires_at, created_at]
+      required: [invite_id, org_id, email, role, status, expires_at, created_at]
       properties:
         invite_id:
           type: string
@@ -2102,15 +2159,7 @@ components:
           format: uuid
         email:
           type: string
-        kind:
-          type: string
-          enum: [member, guest]
         role:
-          type: string
-        room_id:
-          type: string
-          format: uuid
-        purpose:
           type: string
         status:
           type: string
@@ -2142,22 +2191,14 @@ components:
           type: string
     InvitePreview:
       type: object
-      required: [org_id, org_name, kind, role, expires_at]
+      required: [org_id, org_name, role, expires_at]
       properties:
         org_id:
           type: string
           format: uuid
         org_name:
           type: string
-        kind:
-          type: string
-          enum: [member, guest]
         role:
-          type: string
-        room_id:
-          type: string
-          format: uuid
-        purpose:
           type: string
         expires_at:
           type: string
@@ -2180,9 +2221,9 @@ components:
           format: uuid
         next:
           type: string
-          enum: [sign_in_entra, verify_email, sign_in]
+          enum: [sign_in_sso, verify_email, sign_in]
           description: |
-            sign_in_entra: the organization's identity provider signs the person in.
+            sign_in_sso: the organization's identity provider signs the person in.
             verify_email: a verification link was sent; verify, then set a password.
             sign_in: the person already has a password; sign in with it.
     MfaChallenge:
@@ -2253,45 +2294,159 @@ components:
           description: "With verified, when the account has no password yet: what POST /v1/local/password takes with the first one. One use, fifteen minutes."
     NewIdentityProvider:
       type: object
-      required: [type, tenant_id, client_id, client_secret]
+      required: [preset, client_id]
+      description: |
+        An OpenID Connect provider. The preset fills in what is left out:
+        see `GET /v1/identity-provider-presets` and docs/sso.md.
       properties:
-        type:
+        preset:
           type: string
-          enum: [entra]
+          description: "`entra`, `google` or `generic`; checked by the server."
+          maxLength: 20
+        issuer:
+          type: string
+          description: |
+            generic only (required there): the issuer URL, whose
+            `/.well-known/openid-configuration` is the discovery document.
+            https, except where the deployment allows plain http (a laptop).
+            Left out for entra and google, whose issuer the preset derives.
+          maxLength: 500
         tenant_id:
           type: string
-          description: The Entra tenant id (a GUID) or verified domain.
+          description: "entra only (required there): the tenant id (a GUID) or a verified domain. Not common, organizations or consumers."
           maxLength: 200
+        hosted_domain:
+          type: string
+          description: "google only (required there): the Workspace domain; identity tokens must carry it in hd."
+          maxLength: 253
         client_id:
           type: string
           maxLength: 200
         client_secret:
           type: string
+          description: Required the first time; left out on a change, the stored secret is kept, but only while the preset, issuer (tenant, hosted domain) and client id stay the same.
           maxLength: 1000
+        scopes:
+          type: array
+          description: The scopes asked for; must include openid. The preset's when left out.
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 200
+        email_claim:
+          type: string
+          description: The identity-token claim the address is read from. The preset's when left out.
+          maxLength: 100
+        name_claim:
+          type: string
+          description: The claim the display name is read from. The preset's when left out.
+          maxLength: 100
+        require_email_verified:
+          type: boolean
+          description: |
+            Refuse a token that does not say email_verified=true. A token that
+            says false is refused either way. The preset's when left out.
     IdentityProvider:
       type: object
-      required: [org_id, type, tenant_id, client_id, issuer, status, redirect_uri]
+      required: [org_id, preset, issuer, client_id, client_secret_set, scopes, email_claim, name_claim, require_email_verified, status, redirect_uri]
       properties:
         org_id:
           type: string
           format: uuid
-        type:
+        preset:
           type: string
-        tenant_id:
-          type: string
-        client_id:
-          type: string
+          description: "`entra`, `google` or `generic`."
         issuer:
           type: string
+          description: The issuer as its discovery document names it.
+        tenant_id:
+          type: string
+          description: entra only.
+        hosted_domain:
+          type: string
+          description: google only.
+        client_id:
+          type: string
+        client_secret_set:
+          type: boolean
+          description: A secret is stored. The secret itself is never returned.
+        scopes:
+          type: array
+          items:
+            type: string
+        email_claim:
+          type: string
+        name_claim:
+          type: string
+        require_email_verified:
+          type: boolean
         status:
           type: string
           enum: [active, disabled]
         verified_at:
           type: string
           format: date-time
+          description: When the settings last passed the test before saving.
         redirect_uri:
           type: string
-          description: What to register on the app registration as the redirect URI.
+          description: What to register with the provider as the redirect URI.
+    IdentityProviderTest:
+      type: object
+      required: [ok, checks, redirect_uri]
+      properties:
+        ok:
+          type: boolean
+          description: Every check passed; a save with these settings would be accepted.
+        issuer:
+          type: string
+          description: The issuer the discovery document named, once it was fetched.
+        redirect_uri:
+          type: string
+          description: What to register with the provider as the redirect URI.
+        checks:
+          type: array
+          description: In order; a check after a failed one is not run and not listed.
+          items:
+            $ref: '#/components/schemas/IdentityProviderCheck'
+    IdentityProviderCheck:
+      type: object
+      required: [check, ok, message]
+      properties:
+        check:
+          type: string
+          description: "`discovery`, `issuer`, `keys` or `client`."
+        ok:
+          type: boolean
+        field:
+          type: string
+          description: When it failed, the input to fix (issuer, tenant_id, client_id, client_secret).
+        message:
+          type: string
+          description: A sentence for the admin. Never a secret or a token.
+    IdentityProviderPreset:
+      type: object
+      required: [preset, issuer, scopes, email_claim, name_claim, require_email_verified, fields]
+      properties:
+        preset:
+          type: string
+        issuer:
+          type: string
+          description: "The issuer the preset uses: `{tenant_id}` stands for Entra's tenant; empty for generic, which asks for it."
+        scopes:
+          type: array
+          items:
+            type: string
+        email_claim:
+          type: string
+        name_claim:
+          type: string
+        require_email_verified:
+          type: boolean
+        fields:
+          type: array
+          description: The inputs the preset asks for besides the client id and secret.
+          items:
+            type: string
     Error:
       type: object
       required: [code, message]

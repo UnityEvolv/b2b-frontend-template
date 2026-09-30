@@ -110,14 +110,11 @@ export function InviteScreen({
       {preview && !error && done === null ? (
         <View style={{ gap: 16 }}>
           <Body>
-            {t(preview.kind === 'guest' ? 'invite.guestOf' : 'invite.memberOf', {
+            {t('invite.memberOf', {
               org: preview.org_name,
               role: t(`roles.${preview.role}` as 'roles.user'),
             })}
           </Body>
-          {preview.purpose ? (
-            <Body muted>{t('invite.purpose', { purpose: preview.purpose })}</Body>
-          ) : null}
           {preview.email_hint ? (
             <Body muted>{t('invite.for', { email: preview.email_hint })}</Body>
           ) : null}

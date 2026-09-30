@@ -55,7 +55,7 @@ describe('createApi', () => {
       name: string
       display_name?: string
       domain?: string
-      plan: 'free' | 'team-50' | 'team-200' | 'team-500' | 'enterprise'
+      plan: string
       user_cap?: number
       status: 'active' | 'suspended' | 'closing'
       suspended_at?: string
@@ -63,7 +63,6 @@ describe('createApi', () => {
       closing_at?: string
       purge_after?: string
       time_zone: string
-      remote_control?: boolean
       owner_user_id?: string
       created_at: string
       last_modified_at: string

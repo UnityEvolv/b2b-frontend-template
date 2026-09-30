@@ -15,6 +15,12 @@
 
 /** @type {import('./index.d.mts').Product} */
 export const PRODUCT = Object.freeze({
+  /**
+   * The product's id, the same as the backend's PRODUCT_ID: lower case
+   * letters, digits and hyphens. The identity service names its cookies
+   * after it (see `cookieName`).
+   */
+  productId: 'b2bapp',
   /** What people see: page titles, the brand, notification titles. */
   productName: 'B2B App',
   /** The prefix of every key kept on a device: `b2bapp:theme`, `b2bapp.session`. */
@@ -53,4 +59,15 @@ export function storageKey(name) {
 /** The file a person saves their recovery codes to. */
 export function recoveryCodesFile() {
   return `${PRODUCT.storagePrefix}-recovery-codes.txt`
+}
+
+/**
+ * A cookie the identity service sets, by the backend's rule:
+ * `<id>_<name>` with any hyphen in the id as an underscore, so
+ * `cookieName('session')` is `b2bapp_session`. A deployment that sets the
+ * backend's COOKIE_PREFIX to something other than its PRODUCT_ID sets
+ * productId here to that prefix.
+ */
+export function cookieName(name) {
+  return `${PRODUCT.productId.replace(/-/g, '_')}_${name}`
 }

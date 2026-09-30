@@ -106,7 +106,7 @@ describe('createAuth', () => {
     const fake = fakeIdentity()
     fake.entraDomains.add('acme.com')
     const auth = createAuth({ app: 'admin', apiOrigin: origin, fetch: fake.fetch })
-    await expect(auth.signIn.methods('ada@acme.com')).resolves.toBe('entra')
+    await expect(auth.signIn.methods('ada@acme.com')).resolves.toBe('sso')
     const url = new URL(auth.signIn.entraStartUrl('ada@acme.com', '/users'))
     expect(url.origin + url.pathname).toBe(`${origin}/identity/v1/sign-in/start`)
     expect(url.searchParams.get('app')).toBe('admin')
