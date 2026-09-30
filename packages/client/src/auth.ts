@@ -128,6 +128,11 @@ export interface Auth {
   }
   /** The bearer token for a request now, refreshed when it is about to expire. */
   getToken(): Promise<string | null>
+  /**
+   * The live session events stream (`GET /v1/session/events` on the
+   * identity service), opened with the session cookie: see `openLiveSession`.
+   */
+  eventsUrl: string
 }
 
 /** A device-local cache, which may not exist. A failure is a miss. */
@@ -180,9 +185,10 @@ const REFRESH_MARGIN_MS = 60_000
 /**
  * The reason the shell's session is signed out when it is, for the sign-in
  * page: `not_admin` when this app refused a valid sign-in for its role,
- * `not_staff` when the platform app refused someone who is not staff.
+ * `not_staff` when the platform app refused someone who is not staff,
+ * `signed_out` when the server ended the session while the app was open.
  */
-export type SignedOutReason = 'not_admin' | 'not_staff'
+export type SignedOutReason = 'not_admin' | 'not_staff' | 'signed_out'
 
 export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutReason | null } {
   const origins = serviceOrigins(options.apiOrigin, options.serviceOrigin, options.envPrefix)
@@ -367,6 +373,12 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
       if (error) throw new Error('preferences not saved')
     },
     signOut: signOutHere,
+    async forget() {
+      // The server has ended it already: nothing to ask, only to drop.
+      await cookies?.write(null)
+      token = null
+      reason = 'signed_out'
+    },
   }
 
   const refusal = async (response: Response): Promise<never> => {
@@ -475,5 +487,14 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
     },
   }
 
-  return { api, sessionSource, signIn, account, orgs, getToken, reason: () => reason }
+  return {
+    api,
+    sessionSource,
+    signIn,
+    account,
+    orgs,
+    getToken,
+    eventsUrl: identityUrl('/v1/session/events'),
+    reason: () => reason,
+  }
 }

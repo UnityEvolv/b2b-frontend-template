@@ -69,6 +69,15 @@ export { MfaSettingsPage, MfaSetupPage } from './mfa-pages'
 export { PublicCard } from './public-card'
 export { Brand, type BrandProps, type BrandSize } from './brand'
 export { OrgSwitcher, type OrgChoice } from './org-switcher'
+/** Live session events: the shell answers the core's; a product listens for its own. */
+export { LiveSessionProvider, useLiveEvent } from './live'
+export {
+  CORE_LIVE_EVENTS,
+  type LiveEvent,
+  type LiveEventType,
+  type LiveEventTypes,
+  type LiveHandler,
+} from '@b2b-template/client'
 export { createAccountClient, type AccountClient } from './account'
 export { I18nProvider } from './i18n'
 export { missingCapabilities, type Capability, type CapabilityEnvironment } from './capabilities'

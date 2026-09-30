@@ -156,6 +156,9 @@ export const common = {
     emailHelp:
       'Your work address. If your organization has its own sign-in, you will be sent there next.',
     continue: 'Continue',
+    // The server ended the session while the app was open: revoked from
+    // another device, by an administrator, or it expired. Neutral on purpose.
+    signedOut: 'You were signed out. Sign in again to continue.',
     orgs: {
       label: 'Organization: {{name}}. Switch organization',
       heading: 'Your organizations',

@@ -24,6 +24,20 @@ export {
 } from './auth'
 export { identityApp, type IdentityApp } from './identity-app'
 export {
+  backoffDelay,
+  CORE_LIVE_EVENTS,
+  openLiveSession,
+  type CoreLiveEventType,
+  type EventSourceFactory,
+  type EventSourceLike,
+  type LiveEvent,
+  type LiveEventType,
+  type LiveEventTypes,
+  type LiveHandler,
+  type LiveSession,
+  type LiveSessionOptions,
+} from './live'
+export {
   createAccountClient,
   type AccountClient,
   type AccountClientOptions,

@@ -56,6 +56,11 @@ export interface SessionSource {
   /** Saved on the server, so the choice follows the person to every device. */
   savePreferences(changes: Partial<Preferences>): Promise<void>
   signOut(): Promise<void>
+  /**
+   * The server ended the session (a live `session.revoked`): forget it on
+   * this device without asking the server again. Absent: nothing to forget.
+   */
+  forget?(): Promise<void>
 }
 
 export type SessionState =
@@ -72,6 +77,8 @@ export interface SessionContextValue {
   signOut(): Promise<void>
   /** Load the session again: after a sign-in, or when it changed elsewhere. */
   reload(): void
+  /** The server ended the session: forget it here and show the signed-out state. */
+  ended(): Promise<void>
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
@@ -136,6 +143,14 @@ export function SessionProvider({
     setState({ status: 'signed-out' })
   }, [source])
 
+  const ended = useCallback(async () => {
+    try {
+      await source.forget?.()
+    } finally {
+      setState({ status: 'signed-out' })
+    }
+  }, [source])
+
   const reload = useCallback(() => {
     setState({ status: 'loading' })
     setAttempt((n) => n + 1)
@@ -148,8 +163,8 @@ export function SessionProvider({
   )
 
   const value = useMemo(
-    () => ({ state, permissions, savePreferences, signOut, reload }),
-    [state, permissions, savePreferences, signOut, reload],
+    () => ({ state, permissions, savePreferences, signOut, reload, ended }),
+    [state, permissions, savePreferences, signOut, reload, ended],
   )
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }
@@ -181,6 +196,9 @@ export function memorySessionSource(
       }
     },
     async signOut() {
+      session = null
+    },
+    async forget() {
       session = null
     },
   }

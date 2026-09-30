@@ -19,6 +19,7 @@ import { NAMESPACES } from '@b2b-template/i18n'
 
 import { granted, useApp, type AppRoute, type NavT } from './app'
 import { Brand } from './brand'
+import { LiveSessionProvider } from './live'
 import { OrgSwitcher } from './org-switcher'
 import { PageLoading } from './pages'
 import { useSession } from './session'
@@ -104,7 +105,8 @@ function UserMenu() {
 
 /**
  * The frame every signed-in page renders inside: unitykit's shell, the brand,
- * the navigation the person is allowed to see, and the account menu.
+ * the navigation the person is allowed to see, the account menu, and the live
+ * session events that sign the person out when the server ends the session.
  */
 export function AppLayout() {
   const { t } = useTranslation()
@@ -193,5 +195,6 @@ export function AppLayout() {
       </AppShell>
     </>
   )
-  return Shell ? <Shell>{page}</Shell> : page
+  // The live session events, for the app's shell and its pages too.
+  return <LiveSessionProvider>{Shell ? <Shell>{page}</Shell> : page}</LiveSessionProvider>
 }

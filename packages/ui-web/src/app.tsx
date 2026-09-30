@@ -3,7 +3,7 @@ import type { Resources } from '@b2b-template/i18n'
 import type { TFunction } from 'i18next'
 import { createContext, useContext, type ComponentType, type ReactNode } from 'react'
 
-import type { Auth } from './auth'
+import type { Auth, SignedOutReason } from './auth'
 import type { Capability } from './capabilities'
 import type { CaptchaConfig } from './captcha'
 import type { ErrorTrackingConfig } from './error-tracking'
@@ -83,7 +83,7 @@ export interface AppDefinition {
   signInPath: string
   sessionSource: SessionSource
   /** Sign-in and the API behind the session. Absent for a development session. */
-  auth?: Auth & { reason(): 'not_admin' | 'not_staff' | null }
+  auth?: Auth & { reason(): SignedOutReason | null }
   /** Where unhandled errors go. From the build's configuration; absent on a laptop. */
   errorTracking?: ErrorTrackingConfig
   /** The public CAPTCHA site key for public forms. From the build's configuration; absent on a laptop. */

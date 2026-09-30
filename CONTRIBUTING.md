@@ -78,6 +78,12 @@ tools/
 - **Security headers.** Extra origins and browser features the product's
   pages need are declared in `product-config` (`webSecurity`); the headers
   in `deploy/web` are generated from that and checked in CI.
+- **Live session events.** Every signed-in web app keeps the identity
+  service's event stream (`/identity/v1/session/events`) open. The shell
+  answers the core's events itself: `session.revoked` signs the person out,
+  `membership.changed` and `org.suspended` load the session again. A product
+  declares its own event types on `LiveEventTypes` in `@b2b-template/client`
+  and listens with `useLiveEvent(type, handler)` from `ui-web`.
 - **Deployment configuration.** Hostnames, the API base URL, error tracking
   and CAPTCHA keys come from the build's environment, never from code.
 

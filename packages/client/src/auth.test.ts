@@ -106,6 +106,27 @@ describe('a session kept in the keystore', () => {
     expect(await again.sessionSource.load()).toBeNull()
   })
 
+  it('forgets a session the server ended without asking the server, and says why', async () => {
+    const service = fakeService()
+    const keystore = memoryCookieStore()
+    const auth = createAuth({
+      app: 'account',
+      apiOrigin: 'https://api.example.test',
+      fetch: service.fetch,
+      cookies: keystore,
+    })
+    await auth.signIn.local('ada@example.com', 'correct horse battery')
+    expect(await auth.sessionSource.load()).not.toBeNull()
+    const asked = service.seen.length
+
+    await auth.sessionSource.forget?.()
+    expect(keystore.current()).toBeNull()
+    expect(service.seen).toHaveLength(asked)
+    expect(auth.reason()).toBe('signed_out')
+    expect(await auth.getToken()).toBeNull()
+    expect(auth.eventsUrl).toBe('https://api.example.test/identity/v1/session/events')
+  })
+
   it('points the system browser at the provider with the app and the challenge', () => {
     const auth = createAuth({ app: 'account', apiOrigin: 'https://api.example.test' })
     const url = new URL(auth.signIn.entraStartUrl('ada@acme.com', '/home', 'mobile', 'abc'))

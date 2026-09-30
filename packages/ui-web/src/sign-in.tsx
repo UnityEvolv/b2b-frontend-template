@@ -150,7 +150,12 @@ function SignInForm() {
           <Brand />
         </div>
         <h1 className="mb-4 text-2xl font-semibold">{t('signIn.title')}</h1>
-        {refused && !error && (
+        {refused === 'signed_out' && !error && (
+          <Alert variant="info" className="mb-4">
+            {t('signIn.signedOut')}
+          </Alert>
+        )}
+        {refused && refused !== 'signed_out' && !error && (
           <Alert variant="warn" className="mb-4">
             {t(refused === 'not_staff' ? 'signIn.errors.notStaff' : 'signIn.errors.notAdmin')}
           </Alert>
