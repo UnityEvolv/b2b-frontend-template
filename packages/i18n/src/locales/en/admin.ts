@@ -470,12 +470,11 @@ export const admin = {
       explain:
         'What new members start with. Everyone can change their own; nothing here overrides a choice someone made.',
       category: 'About',
-      channels: { in_app: 'In the app', push: 'Push', email: 'Email' },
-      categories: {
-        mention: 'Mentions',
-        direct_message: 'Direct messages',
-        admin_billing: 'Billing and plan (admins)',
-        admin_directory: 'Directory sync (admins)',
+      channels: {
+        in_app: 'In the app',
+        push: 'Push',
+        email: 'Email at once',
+        digest: 'Daily digest',
       },
       previews: 'Pushes may show message text',
       previewsHelp:
@@ -493,11 +492,6 @@ export const admin = {
     toggle: '{{group}} for {{role}}',
     saved: 'Saved.',
     saveFailed: 'The change was refused.',
-    groups: {
-      billing: 'Billing',
-      users: 'User management',
-      audit: 'Audit log',
-    },
     transferTitle: 'Transfer ownership',
     transferIntro:
       'The person you choose must accept. When they do, they become the Owner and you become an Admin.',

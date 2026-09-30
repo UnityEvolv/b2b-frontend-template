@@ -5,8 +5,21 @@ export type Billing = billing.components['schemas']['Billing']
 export type Band = billing.components['schemas']['Band']
 export type Invoice = billing.components['schemas']['Invoice']
 
-/** The bands an org can move between itself; enterprise is by contract. */
-export const BANDS: Band[] = ['free', 'team-50', 'team-200', 'team-500']
+/**
+ * The bands an org may move to itself, as the billing service answers: every
+ * band with a price, cheapest first, and the band above its own. The bands
+ * are the deployment's registry; none is named here, and a contractual band
+ * never has a self-serve price.
+ */
+export function offeredBands(account: Pick<Billing, 'band' | 'prices' | 'next_band'>): Band[] {
+  const amount = (band: Band) => account.prices[band]?.amount ?? Number.MAX_SAFE_INTEGER
+  const bands = new Set([
+    ...Object.keys(account.prices),
+    ...(account.next_band ? [account.next_band] : []),
+  ])
+  bands.delete(account.band)
+  return [...bands].sort((a, b) => amount(a) - amount(b))
+}
 
 /** Minor units as money, in the reader's language. */
 export function money(amount: number, currency: string, language: string): string {

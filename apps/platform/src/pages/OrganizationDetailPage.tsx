@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 
-import { PLANS, type Plan } from './organizations'
+import { isBandName, type Plan } from './organizations'
 
 type Organization = organization.components['schemas']['Organization']
 type PlanChange = organization.components['schemas']['PlanChange']
@@ -66,6 +66,7 @@ export default function OrganizationDetailPage() {
   const [members, setMembers] = useState<Membership[]>([])
   const [events, setEvents] = useState<AuditEvent[]>([])
   const [provider, setProvider] = useState<Provider | null | undefined>(undefined)
+  const [draft, setDraft] = useState('')
   const [target, setTarget] = useState<Plan | ''>('')
   const [preview, setPreview] = useState<PlanChange | null>(null)
   const [reason, setReason] = useState('')
@@ -111,11 +112,15 @@ export default function OrganizationDetailPage() {
       .GET('/v1/organizations/{org_id}/plan-change', {
         params: { path: { org_id: orgId }, query: { plan: target } },
       })
-      .then(({ data }) => current && setPreview(data ?? null))
+      .then(({ data, error }) => {
+        if (!current) return
+        setPreview(data ?? null)
+        if (!data) toast.error(message(error) ?? t('detail.planFailed'))
+      })
     return () => {
       current = false
     }
-  }, [api, orgId, target])
+  }, [api, orgId, target, t])
 
   if (missing) {
     return (
@@ -150,6 +155,7 @@ export default function OrganizationDetailPage() {
     }
     toast.success(t('detail.planChanged', { plan: humanizeKey(data.plan) }))
     setTarget('')
+    setDraft('')
     setPreview(null)
     reload()
   }
@@ -292,21 +298,24 @@ export default function OrganizationDetailPage() {
         <div className="grid gap-6">
           <Card header={t('detail.plan')}>
             <p className="mb-4 text-sm">{t('detail.planNow', { plan: humanizeKey(org.plan) })}</p>
-            <Select
-              label={t('detail.moveTo')}
-              value={target}
-              placeholder={t('detail.choosePlan')}
-              onChange={(e) => {
-                setPreview(null)
-                setTarget(e.target.value as Plan | '')
-              }}
-            >
-              {PLANS.filter((p) => p !== org.plan).map((p) => (
-                <option key={p} value={p}>
-                  {humanizeKey(p)}
-                </option>
-              ))}
-            </Select>
+            <div className="flex flex-wrap items-end gap-2">
+              <Input
+                label={t('detail.moveTo')}
+                help={t('detail.planHelp')}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+              />
+              <Button
+                variant="secondary"
+                disabled={!isBandName(draft.trim()) || draft.trim() === org.plan}
+                onClick={() => {
+                  setPreview(null)
+                  setTarget(draft.trim())
+                }}
+              >
+                {t('detail.reviewPlan')}
+              </Button>
+            </div>
             {preview && (
               <div className="mt-4 space-y-3">
                 {preview.consequences.length === 0 ? (

@@ -18,16 +18,16 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 
-import { BANDS, daysUntil, money, useBilling, type Band, type Invoice } from './billing'
+import { daysUntil, money, offeredBands, useBilling, type Band, type Invoice } from './billing'
 
 type Consequence = organization.components['schemas']['PlanConsequence']
-
-const rank = (b: string) => BANDS.indexOf(b as Band)
 
 /**
  * The billing page: what the org is on and paying, and changing
  * either. Card details never pass through here: the provider's hosted form
- * takes them. Everything the page does the API checks again.
+ * takes them. Everything the page does the API checks again. The bands, their
+ * prices and caps are read from the billing service each time the page is:
+ * nothing about a plan is kept here.
  */
 export default function BillingPage() {
   const { t, i18n } = useTranslation('admin')
@@ -39,6 +39,8 @@ export default function BillingPage() {
   const [choice, setChoice] = useState<Band | ''>('')
   const [confirm, setConfirm] = useState<{
     band: Band
+    /** Takes effect now (an upgrade), or at the period's end. */
+    now: boolean
     amount?: string
     consequences: Consequence[]
   } | null>(null)
@@ -101,24 +103,32 @@ export default function BillingPage() {
     else refused(error)
   }
 
+  // The service says which way a move goes: an upgrade applies now, anything
+  // else at the period's end, with the checklist of what it closes.
   const ask = async (band: Band) => {
-    if (rank(band) > rank(account.band)) {
-      const { data } = await api.billing.GET('/v1/organizations/{org_id}/billing/band-preview', {
-        params: { path: { org_id: orgId }, query: { band } },
-      })
+    const { data, error } = await api.billing.GET(
+      '/v1/organizations/{org_id}/billing/band-preview',
+      { params: { path: { org_id: orgId }, query: { band } } },
+    )
+    if (!data) {
+      refused(error)
+      return
+    }
+    if (data.applies === 'now') {
       setConfirm({
         band,
+        now: true,
         consequences: [],
-        ...(data && data.currency
+        ...(data.currency
           ? { amount: money(data.amount_today, data.currency, i18n.language) }
           : {}),
       })
       return
     }
-    const { data } = await api.organization.GET('/v1/organizations/{org_id}/plan-change', {
+    const { data: plan } = await api.organization.GET('/v1/organizations/{org_id}/plan-change', {
       params: { path: { org_id: orgId }, query: { plan: band } },
     })
-    setConfirm({ band, consequences: data?.consequences ?? [] })
+    setConfirm({ band, now: false, consequences: plan?.consequences ?? [] })
   }
 
   const change = async () => {
@@ -133,11 +143,7 @@ export default function BillingPage() {
     setChoice('')
     if (data) {
       setAccount(data)
-      toast.success(
-        rank(confirm.band) > rank(account.band)
-          ? t('billing.plan.upgraded')
-          : t('billing.plan.scheduled'),
-      )
+      toast.success(confirm.now ? t('billing.plan.upgraded') : t('billing.plan.scheduled'))
     } else refused(error)
   }
 
@@ -297,7 +303,7 @@ export default function BillingPage() {
             onChange={(e) => setChoice(e.target.value as Band)}
           >
             <option value="">{t('billing.plan.choose')}</option>
-            {BANDS.filter((b) => b !== account.band).map((b) => (
+            {offeredBands(account).map((b) => (
               <option key={b} value={b}>
                 {humanizeKey(b)} {price(b)}
               </option>
@@ -363,7 +369,7 @@ export default function BillingPage() {
           </>
         }
       >
-        {confirm && rank(confirm.band) > rank(account.band) ? (
+        {confirm?.now ? (
           <p>
             {confirm.amount
               ? t('billing.confirm.up', { amount: confirm.amount })

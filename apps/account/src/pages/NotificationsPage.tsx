@@ -1,7 +1,13 @@
 import { Alert, Button, Card, Checkbox, Input, Spinner, Toggle, toast } from '@unityevolv/unitykit'
 import type { notification } from '@b2b-template/api'
-import { humanizeKey } from '@b2b-template/core'
-import { useOrg } from '@b2b-template/ui-web'
+import {
+  channelsIn,
+  useNotificationCategories,
+  useOrg,
+  withChoice,
+  type ChoiceChannel,
+  type NotificationCategory,
+} from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
@@ -9,17 +15,9 @@ import { useSearchParams } from 'react-router'
 import { disablePush, enablePush, pushState, type PushState } from '../notify/push'
 
 type Preferences = notification.components['schemas']['NotificationPreferences']
-/** The channels the template offers; a product adding one adds its strings too. */
-type Channel = Extract<notification.components['schemas']['Channel'], 'in_app' | 'push' | 'email'>
-
-/** The categories the strings name; anything else the server sends gets a readable fallback. */
-const PEOPLE = ['mention', 'direct_message'] as const
-const ADMIN = ['admin_billing', 'admin_directory'] as const
-type Known = (typeof PEOPLE | typeof ADMIN)[number]
-const known = (category: string): category is Known =>
-  (PEOPLE as readonly string[]).includes(category) ||
-  (ADMIN as readonly string[]).includes(category)
-const CHANNELS: Channel[] = ['in_app', 'push', 'email']
+/** The channels a test notification goes out on. */
+type Channel = notification.components['schemas']['Channel']
+const TEST_CHANNELS: Channel[] = ['in_app', 'push', 'email']
 const DAYS = [1, 2, 3, 4, 5, 6, 7] as const
 
 const toTime = (minute: number) =>
@@ -34,7 +32,11 @@ const fromTime = (value: string): number | null => {
 /**
  * Notification preferences: what reaches the person and when, on every
  * device, stored on their membership. An unsubscribe link from an
- * email lands here and turns its category's email off.
+ * email lands here and turns its category's email off, or the digest.
+ *
+ * The rows are the categories the deployment registers, with the
+ * notification service's labels: the members' for everyone, the admins' for
+ * an admin too. Each offers only the channels it may use.
  */
 export default function NotificationsPage() {
   const { t, i18n } = useTranslation('account')
@@ -47,6 +49,7 @@ export default function NotificationsPage() {
   const api = org?.api
   const orgId = org?.orgId
   const admin = org?.role === 'owner' || org?.role === 'admin' || org?.role === 'billing_admin'
+  const categories = useNotificationCategories(api)
 
   useEffect(() => {
     if (!api || !orgId) return
@@ -79,26 +82,14 @@ export default function NotificationsPage() {
   }, [api, orgId])
 
   if (!api || !orgId) return null
-  if (!prefs) return <Spinner block size="lg" label={t('prefs.loading')} />
+  if (!prefs || !categories) return <Spinner block size="lg" label={t('prefs.loading')} />
 
-  const channels = CHANNELS
-  const choice = (category: string, channel: Channel) =>
-    prefs.channels[category]?.[channel] ?? false
-  const set = (category: string, channel: Channel, value: boolean) =>
-    setPrefs({
-      ...prefs,
-      channels: {
-        ...prefs.channels,
-        [category]: {
-          in_app: false,
-          push: false,
-          email: false,
-          digest: false,
-          ...prefs.channels[category],
-          [channel]: value,
-        },
-      },
-    })
+  const rows = categories.filter((c) => c.audience === 'member' || admin)
+  const channels = channelsIn(rows)
+  const choice = (category: NotificationCategory, channel: ChoiceChannel) =>
+    (prefs.channels[category.id] ?? category.default_channels)[channel]
+  const set = (category: NotificationCategory, channel: ChoiceChannel, value: boolean) =>
+    setPrefs({ ...prefs, channels: withChoice(prefs.channels, category, channel, value) })
 
   const save = async () => {
     setSaving(true)
@@ -147,17 +138,17 @@ export default function NotificationsPage() {
   const weekday = new Intl.DateTimeFormat(i18n.language, { weekday: 'short' })
   // 2026-09-21 is a Monday: ISO day n is that date plus n - 1.
   const dayName = (d: number) => weekday.format(new Date(Date.UTC(2026, 8, 20 + d)))
-  const label = (category: string) =>
-    known(category) ? t(`prefs.categories.${category}`) : humanizeKey(category)
-  // The known categories first, then any the server has that the strings do not.
-  const extra = Object.keys(prefs.channels).filter((c) => !known(c))
-  const rows = [...(admin ? [...PEOPLE, ...ADMIN] : [...PEOPLE]), ...extra]
+  const label = (id: string) => categories.find((c) => c.id === id)?.label ?? id
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-2xl font-semibold">{t('prefs.title')}</h1>
       {unsubscribed && (
-        <Alert variant="ok">{t('prefs.unsubscribed', { category: label(unsubscribed) })}</Alert>
+        <Alert variant="ok">
+          {unsubscribed === 'digest'
+            ? t('prefs.unsubscribedDigest')
+            : t('prefs.unsubscribed', { category: label(unsubscribed) })}
+        </Alert>
       )}
 
       <Card header={t('prefs.what')}>
@@ -177,20 +168,27 @@ export default function NotificationsPage() {
           </thead>
           <tbody>
             {rows.map((category) => (
-              <tr key={category} className="border-t border-border">
+              <tr key={category.id} className="border-t border-border">
                 <th scope="row" className="py-2 text-left font-normal">
-                  {label(category)}
+                  <span className="block">{category.label}</span>
+                  {category.description && (
+                    <span className="block text-xs text-muted-foreground">
+                      {category.description}
+                    </span>
+                  )}
                 </th>
                 {channels.map((c) => (
                   <td key={c} className="py-2 text-center">
-                    <Checkbox
-                      aria-label={t('prefs.cell', {
-                        category: label(category),
-                        channel: t(`prefs.channels.${c}`),
-                      })}
-                      checked={choice(category, c)}
-                      onChange={(event) => set(category, c, event.target.checked)}
-                    />
+                    {category.channels.includes(c) && (
+                      <Checkbox
+                        aria-label={t('prefs.cell', {
+                          category: category.label,
+                          channel: t(`prefs.channels.${c}`),
+                        })}
+                        checked={choice(category, c)}
+                        onChange={(event) => set(category, c, event.target.checked)}
+                      />
+                    )}
                   </td>
                 ))}
               </tr>
@@ -325,7 +323,7 @@ export default function NotificationsPage() {
       <Card header={t('prefs.test.title')}>
         <p className="mb-2 text-sm text-muted-foreground">{t('prefs.test.explain')}</p>
         <div className="flex flex-wrap gap-2">
-          {channels.map((c) => (
+          {TEST_CHANNELS.map((c) => (
             <Button key={c} size="sm" variant="secondary" onClick={() => void test(c)}>
               {t(`prefs.test.${c}`)}
             </Button>

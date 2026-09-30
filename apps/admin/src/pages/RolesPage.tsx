@@ -18,10 +18,8 @@ import { useTranslation } from 'react-i18next'
 type Config = authorization.components['schemas']['PermissionConfig']
 type Permission = authorization.components['schemas']['Permission']
 type Transfer = authorization.components['schemas']['OwnershipTransfer']
+type Group = authorization.components['schemas']['PermissionGroup']
 type Membership = user.components['schemas']['Membership']
-
-/** The groups an Owner hands to the Admin and Billing Admin roles. */
-export const CONFIGURABLE: Permission[] = ['billing', 'users', 'audit']
 
 /** The configuration with one group switched on or off for one role. */
 export function toggled(
@@ -38,12 +36,15 @@ export function toggled(
 /**
  * What the Admin and Billing Admin roles may do, and handing over ownership.
  * Owner only: the route asks for configure_permissions, which no
- * other role can hold.
+ * other role can hold. The groups, their names and what they cover are the
+ * authorization service's registry (the template's and the product's), read
+ * with the page: nothing here lists them.
  */
 export default function RolesPage() {
   const { t } = useTranslation('admin')
   const org = useOrg()
   const [config, setConfig] = useState<Config | null>(null)
+  const [groups, setGroups] = useState<Group[] | null>(null)
   const [transfers, setTransfers] = useState<Transfer[]>([])
   const [members, setMembers] = useState<Membership[]>([])
   const [target, setTarget] = useState('')
@@ -57,6 +58,7 @@ export default function RolesPage() {
     if (!api || !orgId) return
     let current = true
     void Promise.all([
+      api.authorization.GET('/v1/permission-groups'),
       api.authorization.GET('/v1/organizations/{org_id}/permissions', {
         params: { path: { org_id: orgId } },
       }),
@@ -66,8 +68,9 @@ export default function RolesPage() {
       api.user.GET('/v1/organizations/{org_id}/memberships', {
         params: { path: { org_id: orgId }, query: { status: 'active', limit: 200 } },
       }),
-    ]).then(([c, tr, m]) => {
+    ]).then(([g, c, tr, m]) => {
       if (!current) return
+      setGroups(g.data?.groups ?? [])
       setConfig(c.data ?? null)
       setTransfers(tr.data?.transfers ?? [])
       setMembers(m.data?.memberships.filter((x) => x.kind !== 'guest' && x.role !== 'owner') ?? [])
@@ -77,7 +80,7 @@ export default function RolesPage() {
     }
   }, [api, orgId, version])
 
-  if (!org || !config) return <Spinner block size="lg" label={t('detail.loading')} />
+  if (!org || !config || !groups) return <Spinner block size="lg" label={t('detail.loading')} />
 
   const save = async (role: 'admin' | 'billing_admin', group: Permission, on: boolean) => {
     setBusy(true)
@@ -126,17 +129,17 @@ export default function RolesPage() {
     reload()
   }
 
-  type Row = { group: Permission }
-  const rows: Row[] = CONFIGURABLE.map((group) => ({ group }))
+  type Row = Group
+  const rows: Row[] = groups
   const cell = (role: 'admin' | 'billing_admin') => (row: Row) => (
     <Checkbox
       aria-label={t('roles.toggle', {
         role: t(`roles.${role}` as never, { ns: 'common' }),
-        group: t(`roles.groups.${row.group}` as never),
+        group: row.label,
       })}
-      checked={config[role].includes(row.group)}
+      checked={config[role].includes(row.key)}
       disabled={busy}
-      onChange={(event) => void save(role, row.group, event.target.checked)}
+      onChange={(event) => void save(role, row.key, event.target.checked)}
     />
   )
   const columns: TableColumn<Row>[] = [
@@ -144,7 +147,14 @@ export default function RolesPage() {
       key: 'group',
       header: t('roles.group'),
       card: 'title',
-      cell: (r) => t(`roles.groups.${r.group}` as never),
+      cell: (r) => (
+        <span>
+          <span className="block">{r.label}</span>
+          {r.description && (
+            <span className="block text-xs text-muted-foreground">{r.description}</span>
+          )}
+        </span>
+      ),
     },
     {
       key: 'owner',
@@ -170,7 +180,7 @@ export default function RolesPage() {
           {warning}
         </Alert>
       ))}
-      <Table caption={t('roles.title')} columns={columns} rows={rows} rowKey={(r) => r.group} />
+      <Table caption={t('roles.title')} columns={columns} rows={rows} rowKey={(r) => r.key} />
 
       <Card header={t('roles.transferTitle')} className="mt-8 max-w-xl">
         <p className="mb-4 text-sm">{t('roles.transferIntro')}</p>

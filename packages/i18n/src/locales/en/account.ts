@@ -162,13 +162,8 @@ export const account = {
     channels: {
       in_app: 'In the app',
       push: 'Push',
-      email: 'Email',
-    },
-    categories: {
-      mention: 'Mentions',
-      direct_message: 'Direct messages',
-      admin_billing: 'Billing and plan',
-      admin_directory: 'Directory sync',
+      email: 'Email at once',
+      digest: 'Daily digest',
     },
     push: {
       title: 'Push on this browser',
@@ -223,6 +218,7 @@ export const account = {
     testNoDevice: 'No device of yours gets pushes. Turn push on for this browser first.',
     testFailed: 'The test could not be sent.',
     unsubscribed: 'Email about {{category}} is off.',
+    unsubscribedDigest: 'The daily digest is off.',
     save: 'Save',
     saved: 'Saved. It applies on every device.',
     failed: 'Your settings could not be saved.',

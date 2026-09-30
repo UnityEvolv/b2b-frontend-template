@@ -108,3 +108,14 @@ export {
   useOrg,
   type OrgContext,
 } from './org'
+
+/** The notification categories the deployment registers, for the preferences grids. */
+export {
+  channelsIn,
+  CHOICE_CHANNELS,
+  useNotificationCategories,
+  withChoice,
+  type ChannelChoice,
+  type ChoiceChannel,
+  type NotificationCategory,
+} from './notification-categories'

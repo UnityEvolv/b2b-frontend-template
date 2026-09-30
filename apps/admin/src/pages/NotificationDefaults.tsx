@@ -1,24 +1,18 @@
 import { Button, Card, Checkbox, Spinner, Toggle, toast } from '@unityevolv/unitykit'
 import type { notification } from '@b2b-template/api'
-import { humanizeKey } from '@b2b-template/core'
-import { useOrg } from '@b2b-template/ui-web'
+import { channelsIn, useNotificationCategories, useOrg, withChoice } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 type Settings = notification.components['schemas']['OrgNotificationSettings']
-type Channel = 'in_app' | 'push' | 'email'
-
-/** The categories the strings name; anything else the server sends gets a readable fallback. */
-const CATEGORIES = ['mention', 'direct_message', 'admin_billing', 'admin_directory'] as const
-type Known = (typeof CATEGORIES)[number]
-const known = (category: string): category is Known =>
-  (CATEGORIES as readonly string[]).includes(category)
-const CHANNELS: Channel[] = ['in_app', 'push', 'email']
 
 /**
  * The org's notification defaults, small on purpose: what new
  * members start with, and whether pushes may show message text at all. An
- * Owner's call; people own their own noise from there.
+ * Owner's call; people own their own noise from there. The rows are the
+ * categories the deployment registers, members' and admins' alike, with the
+ * notification service's labels; a category offers only the channels it may
+ * use.
  */
 export function NotificationDefaults() {
   const { t } = useTranslation('admin')
@@ -27,6 +21,7 @@ export function NotificationDefaults() {
   const api = org?.api
   const orgId = org?.orgId
   const owner = org?.role === 'owner'
+  const categories = useNotificationCategories(owner ? api : undefined)
 
   useEffect(() => {
     if (!api || !orgId || !owner) return
@@ -60,14 +55,11 @@ export function NotificationDefaults() {
     }
   }
 
-  const label = (category: string) =>
-    known(category) ? t(`settings.notifications.categories.${category}`) : humanizeKey(category)
-  // The known categories first, then any the server has that the strings do not.
-  const rows = [...CATEGORIES, ...Object.keys(settings?.channels ?? {}).filter((c) => !known(c))]
+  const channels = channelsIn(categories ?? [])
 
   return (
     <Card header={t('settings.notifications.title')}>
-      {!settings ? (
+      {!settings || !categories ? (
         <Spinner block size="sm" label={t('settings.notifications.title')} />
       ) : (
         <>
@@ -81,7 +73,7 @@ export function NotificationDefaults() {
                 <th scope="col" className="py-1 text-left">
                   {t('settings.notifications.category')}
                 </th>
-                {CHANNELS.map((c) => (
+                {channels.map((c) => (
                   <th key={c} scope="col" className="py-1 text-center">
                     {t(`settings.notifications.channels.${c}`)}
                   </th>
@@ -89,33 +81,35 @@ export function NotificationDefaults() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((category) => (
-                <tr key={category} className="border-t border-border">
+              {categories.map((category) => (
+                <tr key={category.id} className="border-t border-border">
                   <th scope="row" className="py-1 text-left font-normal">
-                    {label(category)}
+                    <span className="block">{category.label}</span>
+                    {category.description && (
+                      <span className="block text-xs text-muted-foreground">
+                        {category.description}
+                      </span>
+                    )}
                   </th>
-                  {CHANNELS.map((c) => (
+                  {channels.map((c) => (
                     <td key={c} className="py-1 text-center">
-                      <Checkbox
-                        aria-label={`${label(category)}: ${t(`settings.notifications.channels.${c}`)}`}
-                        checked={settings.channels[category]?.[c] ?? false}
-                        onChange={(event) =>
-                          setSettings({
-                            ...settings,
-                            channels: {
-                              ...settings.channels,
-                              [category]: {
-                                in_app: false,
-                                push: false,
-                                email: false,
-                                digest: false,
-                                ...settings.channels[category],
-                                [c]: event.target.checked,
-                              },
-                            },
-                          })
-                        }
-                      />
+                      {category.channels.includes(c) && (
+                        <Checkbox
+                          aria-label={`${category.label}: ${t(`settings.notifications.channels.${c}`)}`}
+                          checked={(settings.channels[category.id] ?? category.default_channels)[c]}
+                          onChange={(event) =>
+                            setSettings({
+                              ...settings,
+                              channels: withChoice(
+                                settings.channels,
+                                category,
+                                c,
+                                event.target.checked,
+                              ),
+                            })
+                          }
+                        />
+                      )}
                     </td>
                   ))}
                 </tr>

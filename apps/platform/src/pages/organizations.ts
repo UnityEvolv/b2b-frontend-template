@@ -4,8 +4,14 @@ type Schemas = organization.components['schemas']
 export type Plan = Schemas['Plan']
 export type OrgStatus = Schemas['OrganizationStatus']
 
-/** Every plan band, lowest first: the keys the pages translate. */
-export const PLANS: Plan[] = ['free', 'team-50', 'team-200', 'team-500', 'enterprise']
+/**
+ * Whether a string can be a plan band's name. The bands are the deployment's
+ * registry, which the organization service checks; this only keeps anything
+ * that could never be one out of the URL.
+ */
+export function isBandName(value: string): value is Plan {
+  return /^[A-Za-z0-9_-]{1,60}$/.test(value)
+}
 
 /** Both organization statuses: the keys the pages translate. */
 export const STATUSES: OrgStatus[] = ['active', 'suspended']
@@ -41,7 +47,7 @@ export function readView(params: URLSearchParams): ListView {
   const limit = Number(params.get('limit'))
   return {
     q: params.get('q') ?? '',
-    plan: plan && PLANS.includes(plan) ? plan : '',
+    plan: plan && isBandName(plan) ? plan : '',
     status: status && STATUSES.includes(status) ? status : '',
     sort,
     order: order === 'asc' || order === 'desc' ? order : defaultOrder(sort),

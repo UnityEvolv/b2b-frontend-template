@@ -15,7 +15,14 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 
-import { PAGE_SIZES, PLANS, readView, STATUSES, writeView, type ListView } from './organizations'
+import {
+  isBandName,
+  PAGE_SIZES,
+  readView,
+  STATUSES,
+  writeView,
+  type ListView,
+} from './organizations'
 
 type Organization = organization.components['schemas']['Organization']
 
@@ -136,18 +143,15 @@ export default function OrganizationsPage() {
           value={q}
           onChange={(event) => setQ(event.target.value)}
         />
-        <Select
+        <Input
           label={t('organizations.columns.plan')}
+          help={t('organizations.planHelp')}
           value={view.plan}
-          onChange={(e) => change({ plan: e.target.value as ListView['plan'] })}
-        >
-          <option value="">{t('organizations.any')}</option>
-          {PLANS.map((p) => (
-            <option key={p} value={p}>
-              {humanizeKey(p)}
-            </option>
-          ))}
-        </Select>
+          onChange={(e) => {
+            const plan = e.target.value.trim()
+            change({ plan: isBandName(plan) ? plan : '' })
+          }}
+        />
         <Select
           label={t('organizations.columns.status')}
           value={view.status}
