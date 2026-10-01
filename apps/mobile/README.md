@@ -6,7 +6,8 @@ same packages: `@b2b-template/api` (the typed client), `@b2b-template/client`,
 
 Sign-in (with a second factor), invitations and account links from emails,
 the notification feed, the profile and sessions, and switching or leaving an
-organization.
+organization. [docs/mobile-and-desktop.md](../../docs/mobile-and-desktop.md)
+compares it with the desktop shell and lists the known gaps.
 
 ## Run
 

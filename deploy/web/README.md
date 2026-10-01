@@ -1,7 +1,10 @@
 # Serving the web apps
 
 Each web app is a container: its static build behind nginx, sending the
-security headers from `headers.json` on every response.
+security headers from `headers.json` on every response. What the headers are
+and why is in [docs/security.md](../../docs/security.md); the backend's
+[operations.md](https://github.com/UnityEvolv/b2b-backend-template/blob/main/docs/operations.md)
+deploys these images with the services.
 
 ```sh
 docker build --build-arg APP=account -f deploy/web.Dockerfile -t web-account .

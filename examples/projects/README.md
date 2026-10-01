@@ -6,6 +6,9 @@ an organization's projects, the members each is shared with, and a cover
 image per project. It is built only through the template's public extension
 points. It edits no template page, and no file of the template names it.
 
+[docs/building-an-app.md](../../docs/building-an-app.md) walks through it
+step by step; this page is the reference.
+
 Delete this directory and the template is exactly as it was.
 `tools/build-guards/without-examples.mjs` proves it on every pull request (the
 `without-examples` job in `.github/workflows/ci.yml`).

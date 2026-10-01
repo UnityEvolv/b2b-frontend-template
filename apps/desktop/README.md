@@ -1,7 +1,8 @@
 # Desktop
 
 The Electron shell around the account web app. It wraps the web build; it
-never duplicates a page.
+never duplicates a page. [docs/mobile-and-desktop.md](../../docs/mobile-and-desktop.md)
+compares it with the phone app and lists the known gaps.
 
 ```sh
 npm run dev -w @b2b-template/app-desktop        # window on the account dev server (start it first: npm run dev -w @b2b-template/app-account)

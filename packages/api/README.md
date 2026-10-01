@@ -49,10 +49,20 @@ edit to generated code, or a spec copied without regenerating, cannot land.
 
 ### From the backend automatically
 
-The backend repository gets a workflow that, when a contract changes on its
-`main`, runs this same sync and opens a pull request here with the regenerated
-client. Its token lives only in the upstream backend's secrets and the
-workflow is skipped on forks; this repository needs no secret for it. The pull
-request is an ordinary one: CI checks it, and code the new types break is fixed
-on that branch before it merges. (The workflow is added on the backend side;
-until it lands, sync by hand as above.)
+The backend's
+[api-client.yml](https://github.com/UnityEvolv/b2b-backend-template/blob/main/.github/workflows/api-client.yml)
+workflow runs this same sync when a contract changes on its `main` and opens
+a pull request here with the regenerated client. Its token,
+`FRONTEND_SYNC_TOKEN`, lives only in the upstream backend's secrets
+([operations.md](https://github.com/UnityEvolv/b2b-backend-template/blob/main/docs/operations.md#frontend_sync_token)),
+and the workflow is skipped on forks; this repository needs no secret for it.
+A product points that workflow at its own frontend repository, or deletes it
+and syncs by hand as above. The pull request is an ordinary one: CI checks
+it, and code the new types break is fixed on that branch before it merges.
+
+## See also
+
+- [docs/architecture.md](../../docs/architecture.md#the-api-client): where
+  the client sits, and how pages use it.
+- [docs/building-an-app.md](../../docs/building-an-app.md#2-the-generated-client):
+  generating a client for a product's own service, as the example does.

@@ -8,6 +8,8 @@ Thank you for helping. This file covers how to propose a change.
   be agreed before you write code.
 - Security problems are reported privately. See [SECURITY.md](SECURITY.md).
 - Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
+- New to the codebase? Start with the [README](README.md) and
+  [docs/architecture.md](docs/architecture.md).
 
 ## Making a change
 
@@ -41,6 +43,7 @@ The template is the generic half of a B2B product: accounts, organisations,
 members, roles, billing, notifications and the apps around them. A product is
 built on top of it and does not edit the template's code. These are the rules
 that keep that true. Most are enforced by lint or a check in `npm run check`.
+[docs/architecture.md](docs/architecture.md) explains the shape behind them.
 
 ### Layout
 
@@ -72,7 +75,8 @@ tools/
 - **Identity.** The product's name, wordmark, logo, storage prefix and URL
   scheme live in `packages/product-config`. Nothing else names the product.
   The phone and the desktop shell repeat those defaults where their build
-  tools cannot read JavaScript, and a test fails when they drift.
+  tools cannot read JavaScript, and a test fails when they drift
+  ([docs/rebranding.md](docs/rebranding.md)).
 - **Apps, routes and menus.** A product adds its own app, or routes and menu
   entries, to the shared shell in `ui-web`. It never forks a template page.
 - **Strings.** A product's own namespace is declared on `ProductResources` in
@@ -81,7 +85,8 @@ tools/
   product's pages as it does in the template's.
 - **Security headers.** Extra origins and browser features the product's
   pages need are declared in `product-config` (`webSecurity`); the headers
-  in `deploy/web` are generated from that and checked in CI.
+  in `deploy/web` are generated from that and checked in CI
+  ([docs/security.md](docs/security.md)).
 - **Live session events.** Every signed-in web app keeps the identity
   service's event stream (`/identity/v1/session/events`) open. The shell
   answers the core's events itself: `session.revoked` signs the person out,
@@ -93,7 +98,8 @@ tools/
   plan refusal and live event. It is a workspace like the apps, and its own
   checks run from `npm run check:examples`. Delete `examples/` and the
   template is exactly as it was; CI proves it on every pull request
-  (`npm run check:without-examples`).
+  (`npm run check:without-examples`). [docs/building-an-app.md](docs/building-an-app.md)
+  walks through it.
 - **Deployment configuration.** Hostnames, the API base URL, error tracking
   and CAPTCHA keys come from the build's environment, never from code.
 
