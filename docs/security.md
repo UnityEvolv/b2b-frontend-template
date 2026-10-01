@@ -19,6 +19,61 @@ and the plan's limits on every request, and the pages show the refusal when
 it comes (a 403 with `{ code, message }`). A change to the frontend can never
 grant access; a page that forgot a check only shows a button that fails.
 
+## UI gates
+
+The rule the other way round: anything the UI offers, the person may do.
+Each gate below asks the same permission the backend checks, from the
+session's permissions (`can`), the org role (`mayManage`, `mayInvite`,
+`assignableRoles` in `@b2b-template/ui-web`, which mirror `authz.MayManage`),
+or the app's sign-in (`roles`, `orgs`). Refusals that depend on data rather
+than on who is asking (the last Owner, the plan's cap or features, a taken
+domain) are left to the server and shown in its words.
+
+Groups: `users`, `audit`, `sso` (Admin by default), `billing` (Billing
+Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
+`assign_roles`, `configure_permissions`, `transfer_ownership`,
+`delete_organization`. An Owner holds them all.
+
+**Admin app** (sign-in admits Owner, Admin and Billing Admin)
+
+| control or route | backend check | UI gate |
+| --- | --- | --- |
+| Users nav, `/users` list | user `ListMemberships`: a member of the org | none (every role the app admits) |
+| Invite people, Import from a sheet (Users page, empty state) | identity `CreateInvite`: `users` and `MayManage(role, invitee)`; user `ImportUsers`, `ReadImportColumns`: `users`, each row's role `MayManage` | `mayInvite`: `can('users')` and a role that may hand one out |
+| `/users/invite`, `/users/import` | as above; `ListInvites`, resend, revoke: `users` (or the inviter) | route `permission: 'users'`; both pages refuse a role with no `assignableRoles` |
+| `/users/:id` | user `GetMembership`: a member of the org | none |
+| Role select | authorization `SetRole`: `assign_roles` (Owner); not on oneself | `can('assign_roles')`, disabled on one's own membership and on a guest |
+| Deactivate, Reactivate | user `SetMembershipStatus`: `users` and `MayManage(role, target)` | `can('users')` and `mayManage(role, target)` |
+| Reset two-step sign-in | identity `ResetMemberMfa`: `users` | `can('users')` |
+| Sessions card, Sign out everywhere | identity `ListMemberSessions`, `RevokeMemberSessions`: `users` | `can('users')` |
+| Activity card | audit `ListAuditEvents`: `audit` | `can('audit')` |
+| Audit log nav, `/audit`, export | audit list and export: `audit` | route `permission: 'audit'` |
+| Settings nav, `/settings`: general, domain claim and verify, session policy | organization `UpdateOrganization`, `GetDomain`, `SetDomain`, `VerifyDomain`, identity `SetSessionPolicy`: `settings` | route `permission: 'settings'` |
+| Single sign-on card (test, save) | identity provider endpoints: `sso` | `can('sso')` (inside `/settings`) |
+| Notification defaults | notification `SetOrgNotificationSettings`: `settings` and the Owner role | `role === 'owner'` |
+| Exports, Close organization | organization `CreateOrgExport`, `ListOrgExports`: `delete_organization` as Owner; `CloseOrganization`: `delete_organization` | `role === 'owner'` |
+| Billing nav, `/billing`: card, band, trial, cancel pending; the banner | billing `StartSetup`, `ChangeBand`, `StartTrial`, `CancelPending`: `billing` | route `permission: 'billing'`; banner `can('billing')` |
+| Automatic upgrade toggle | billing `SetAutoUpgrade`: `billing` and the Owner role | `can_manage_auto_upgrade` from the billing service |
+| SCIM nav, `/scim`: tokens, halt | user SCIM admin: `settings`, and a plan with SCIM to change anything | route `permission: 'settings'`; buttons need `available` |
+| Roles nav, `/roles`: permission matrix, ownership transfer | authorization `SetPermissions`: `configure_permissions`; `RequestOwnershipTransfer`, cancel: the Owner | route `permission: 'configure_permissions'` |
+| `/settings/security` (own second factor) | identity: the caller's own | signed in |
+
+**Platform app** (sign-in admits members of the platform org only)
+
+| control or route | backend check | UI gate |
+| --- | --- | --- |
+| Organizations nav, `/organizations`, `/organizations/:id` | organization `ListOrganizations`, and reads: platform operator | app `orgs: [PLATFORM_ORG]` |
+| `/organizations/new` (create, invite the Owner) | organization `CreateOrganization`: platform; identity `CreateInvite`: platform | app `orgs` |
+| Plan, status (suspend, reactivate), close, retention | organization `ChangePlan`, `SetOrganizationStatus`, `CloseOrganization`, `SetRetention`: platform | app `orgs`; retention only on a contractual plan |
+
+**Account app** (any signed-in person)
+
+| control or route | backend check | UI gate |
+| --- | --- | --- |
+| Profile, photo, email change, sign out other sessions, your data, deleting the account | user, identity and organization `/v1/me/*`: the caller's own | signed in |
+| Notifications nav, preferences, push | notification preferences: the caller's own in the org | signed in; admins' categories shown to admin roles |
+| Security nav (own second factor) | identity: the caller's own | signed in |
+
 ## Sessions and tokens
 
 - **Web:** the session is an HTTP-only cookie on the API's host
