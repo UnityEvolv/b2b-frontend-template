@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { isBandName, looksLikeEmail, normalizeDomain, readView, writeView } from './organizations'
+import {
+  isBandName,
+  looksLikeEmail,
+  normalizeDomain,
+  planChoices,
+  readView,
+  writeView,
+} from './organizations'
 
 describe('the list view in the URL', () => {
   it('reads defaults from an empty URL and writes nothing back', () => {
@@ -36,6 +43,22 @@ describe('plan bands', () => {
     expect(isBandName('scale_up')).toBe(true)
     expect(isBandName('')).toBe(false)
     expect(isBandName('a band')).toBe(false)
+  })
+  it('offers the catalogue’s bands by label, and keeps one the view names that it lacks', () => {
+    const bands = [
+      { name: 'free', label: 'Free', contractual: false, limits: {}, features: [] },
+      { name: 'enterprise', label: '', contractual: true, limits: {}, features: [] },
+    ]
+    expect(planChoices({ bands }, '')).toEqual([
+      { name: 'free', label: 'Free', contractual: false },
+      { name: 'enterprise', label: 'Enterprise', contractual: true },
+    ])
+    expect(planChoices({ bands }, 'legacy_gold').at(-1)).toEqual({
+      name: 'legacy_gold',
+      label: 'Legacy gold',
+      contractual: false,
+    })
+    expect(planChoices(null, '')).toEqual([])
   })
 })
 

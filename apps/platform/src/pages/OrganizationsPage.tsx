@@ -9,15 +9,14 @@ import {
   type TableSort,
 } from '@unityevolv/unitykit'
 import type { organization } from '@b2b-template/api'
-import { humanizeKey } from '@b2b-template/core'
-import { useApp } from '@b2b-template/ui-web'
+import { bandLabel, useApp, usePlanCatalogue } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 
 import {
-  isBandName,
   PAGE_SIZES,
+  planChoices,
   readView,
   STATUSES,
   writeView,
@@ -44,6 +43,7 @@ export default function OrganizationsPage() {
   const [failed, setFailed] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const api = auth?.api
+  const catalogue = usePlanCatalogue(api)
   const key = params.toString()
 
   // A changed question starts again from the first page.
@@ -108,7 +108,11 @@ export default function OrganizationsPage() {
       header: t('organizations.columns.domain'),
       cell: (o) => o.domain ?? t('organizations.none'),
     },
-    { key: 'plan', header: t('organizations.columns.plan'), cell: (o) => humanizeKey(o.plan) },
+    {
+      key: 'plan',
+      header: t('organizations.columns.plan'),
+      cell: (o) => bandLabel(catalogue, o.plan),
+    },
     {
       key: 'status',
       header: t('organizations.columns.status'),
@@ -143,15 +147,18 @@ export default function OrganizationsPage() {
           value={q}
           onChange={(event) => setQ(event.target.value)}
         />
-        <Input
+        <Select
           label={t('organizations.columns.plan')}
-          help={t('organizations.planHelp')}
           value={view.plan}
-          onChange={(e) => {
-            const plan = e.target.value.trim()
-            change({ plan: isBandName(plan) ? plan : '' })
-          }}
-        />
+          onChange={(e) => change({ plan: e.target.value })}
+        >
+          <option value="">{t('organizations.any')}</option>
+          {planChoices(catalogue, view.plan).map((b) => (
+            <option key={b.name} value={b.name}>
+              {b.label}
+            </option>
+          ))}
+        </Select>
         <Select
           label={t('organizations.columns.status')}
           value={view.status}

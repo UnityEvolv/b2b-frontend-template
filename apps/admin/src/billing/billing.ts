@@ -6,19 +6,15 @@ export type Band = billing.components['schemas']['Band']
 export type Invoice = billing.components['schemas']['Invoice']
 
 /**
- * The bands an org may move to itself, as the billing service answers: every
- * band with a price, cheapest first, and the band above its own. The bands
- * are the deployment's registry; none is named here, and a contractual band
- * never has a self-serve price.
+ * The bands an org may move to itself, as the billing service lists them:
+ * lowest first, the lowest (unpriced) band too, so a downgrade to it is
+ * offered, and never the band it is on. The bands are the deployment's
+ * registry; none is named here, and billing never lists a contractual one.
  */
-export function offeredBands(account: Pick<Billing, 'band' | 'prices' | 'next_band'>): Band[] {
-  const amount = (band: Band) => account.prices[band]?.amount ?? Number.MAX_SAFE_INTEGER
-  const bands = new Set([
-    ...Object.keys(account.prices),
-    ...(account.next_band ? [account.next_band] : []),
-  ])
-  bands.delete(account.band)
-  return [...bands].sort((a, b) => amount(a) - amount(b))
+export function offeredBands(account: Pick<Billing, 'band' | 'bands' | 'next_band'>): Band[] {
+  const bands = [...account.bands]
+  if (account.next_band && !bands.includes(account.next_band)) bands.push(account.next_band)
+  return bands.filter((b) => b !== account.band)
 }
 
 /** Minor units as money, in the reader's language. */

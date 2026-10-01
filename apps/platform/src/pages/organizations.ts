@@ -1,4 +1,5 @@
 import type { organization } from '@b2b-template/api'
+import { humanizeKey } from '@b2b-template/core'
 
 type Schemas = organization.components['schemas']
 export type Plan = Schemas['Plan']
@@ -11,6 +12,27 @@ export type OrgStatus = Schemas['OrganizationStatus']
  */
 export function isBandName(value: string): value is Plan {
   return /^[A-Za-z0-9_-]{1,60}$/.test(value)
+}
+
+/**
+ * The bands a plan picker offers: every band in the catalogue, lowest first,
+ * by its label. A band the view already names that the catalogue does not
+ * (a link from before a band was retired) stays, by its name, so the picker
+ * shows what the list is filtered by.
+ */
+export function planChoices(
+  catalogue: Pick<Schemas['PlanCatalogue'], 'bands'> | null,
+  current: string,
+): { name: Plan; label: string; contractual: boolean }[] {
+  const bands = (catalogue?.bands ?? []).map((b) => ({
+    name: b.name,
+    label: b.label || humanizeKey(b.name),
+    contractual: b.contractual,
+  }))
+  if (current && !bands.some((b) => b.name === current)) {
+    bands.push({ name: current, label: humanizeKey(current), contractual: false })
+  }
+  return bands
 }
 
 /** Both organization statuses: the keys the pages translate. */

@@ -19,15 +19,16 @@ describe('billing helpers', () => {
     expect(daysUntil('2026-09-20T00:00:00Z', now)).toBe(0)
   })
 
-  it('offers the priced bands cheapest first and the next one up, never the current band', () => {
-    const price = (amount: number) => ({ amount, currency: 'usd', interval: 'month' })
+  it('offers every band billing lists, lowest first, the unpriced one too, never the current band', () => {
     expect(
-      offeredBands({
-        band: 'team',
-        prices: { business: price(9900), team: price(4900), scale: price(19900) },
-        next_band: 'business',
-      }),
-    ).toEqual(['business', 'scale'])
-    expect(offeredBands({ band: 'free', prices: {}, next_band: 'team' })).toEqual(['team'])
+      offeredBands({ band: 'team', bands: ['free', 'team', 'business'], next_band: 'business' }),
+    ).toEqual(['free', 'business'])
+    expect(offeredBands({ band: 'free', bands: ['free', 'team'], next_band: 'team' })).toEqual([
+      'team',
+    ])
+    // A product's ladder starts where it likes; the band above is offered even when unlisted.
+    expect(offeredBands({ band: 'starter', bands: ['starter'], next_band: 'growth' })).toEqual([
+      'growth',
+    ])
   })
 })

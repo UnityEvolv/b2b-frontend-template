@@ -119,3 +119,17 @@ export {
   type ChoiceChannel,
   type NotificationCategory,
 } from './notification-categories'
+
+/** The plan catalogue and the org's plan, read from the organization service when a page opens. */
+export {
+  bandLabel,
+  planFeatures,
+  planLimits,
+  sentenceCase,
+  useOrganizationPlan,
+  usePlanCatalogue,
+  type OrganizationPlan,
+  type PlanBand,
+  type PlanCatalogue,
+  type PlanLimitRow,
+} from '@b2b-template/client'

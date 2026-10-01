@@ -1,6 +1,5 @@
 import { Alert, Button } from '@unityevolv/unitykit'
-import { humanizeKey } from '@b2b-template/core'
-import { useOrg, useSession } from '@b2b-template/ui-web'
+import { bandLabel, useOrg, usePlanCatalogue, useSession } from '@b2b-template/ui-web'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
 
@@ -18,6 +17,8 @@ export function BillingBanner() {
   const { pathname } = useLocation()
   const allowed = permissions.can('billing')
   const { account, setAccount } = useBilling(org?.api, org?.orgId, allowed)
+  // The catalogue names a pending band; it is read only when there is one.
+  const catalogue = usePlanCatalogue(account?.pending_band ? org?.api : undefined)
 
   if (!account || !org) return null
   const onPage = pathname.startsWith('/billing')
@@ -55,7 +56,7 @@ export function BillingBanner() {
     return (
       <Alert variant="info" className="mb-4">
         {t('billing.banner.pending', {
-          band: humanizeKey(account.pending_band),
+          band: bandLabel(catalogue, account.pending_band),
           date: account.period_end ? new Date(account.period_end).toLocaleDateString() : '',
         })}{' '}
         <Button size="sm" variant="ghost" onClick={() => void cancel()}>

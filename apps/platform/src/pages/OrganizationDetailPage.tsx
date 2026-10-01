@@ -11,13 +11,12 @@ import {
   type TableColumn,
 } from '@unityevolv/unitykit'
 import type { Api, audit, identity, organization, user } from '@b2b-template/api'
-import { humanizeKey } from '@b2b-template/core'
-import { useApp } from '@b2b-template/ui-web'
+import { bandLabel, useApp, usePlanCatalogue } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 
-import { isBandName, type Plan } from './organizations'
+import { planChoices, type Plan } from './organizations'
 
 type Organization = organization.components['schemas']['Organization']
 type PlanChange = organization.components['schemas']['PlanChange']
@@ -74,6 +73,8 @@ export default function OrganizationDetailPage() {
   const [version, setVersion] = useState(0)
   const [audit, setAudit] = useState<number | null>(null)
   const api = auth?.api
+  const catalogue = usePlanCatalogue(api)
+  const label = (band: string) => bandLabel(catalogue, band)
 
   useEffect(() => {
     if (!api || !orgId) return
@@ -153,7 +154,7 @@ export default function OrganizationDetailPage() {
       toast.error(message(error) ?? t('detail.planFailed'))
       return
     }
-    toast.success(t('detail.planChanged', { plan: humanizeKey(data.plan) }))
+    toast.success(t('detail.planChanged', { plan: label(data.plan) }))
     setTarget('')
     setDraft('')
     setPreview(null)
@@ -300,20 +301,28 @@ export default function OrganizationDetailPage() {
 
         <div className="grid gap-6">
           <Card header={t('detail.plan')}>
-            <p className="mb-4 text-sm">{t('detail.planNow', { plan: humanizeKey(org.plan) })}</p>
+            <p className="mb-4 text-sm">{t('detail.planNow', { plan: label(org.plan) })}</p>
             <div className="flex flex-wrap items-end gap-2">
-              <Input
+              <Select
                 label={t('detail.moveTo')}
-                help={t('detail.planHelp')}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-              />
+              >
+                <option value="">{t('detail.choosePlan')}</option>
+                {planChoices(catalogue, '')
+                  .filter((b) => b.name !== org.plan)
+                  .map((b) => (
+                    <option key={b.name} value={b.name}>
+                      {b.contractual ? t('detail.contractual', { plan: b.label }) : b.label}
+                    </option>
+                  ))}
+              </Select>
               <Button
                 variant="secondary"
-                disabled={!isBandName(draft.trim()) || draft.trim() === org.plan}
+                disabled={!draft || draft === org.plan}
                 onClick={() => {
                   setPreview(null)
-                  setTarget(draft.trim())
+                  setTarget(draft)
                 }}
               >
                 {t('detail.reviewPlan')}
@@ -334,7 +343,7 @@ export default function OrganizationDetailPage() {
                   </Alert>
                 )}
                 <Button disabled={busy} onClick={() => void changePlan()}>
-                  {t('detail.confirmPlan', { plan: humanizeKey(preview.to) })}
+                  {t('detail.confirmPlan', { plan: label(preview.to) })}
                 </Button>
               </div>
             )}
@@ -397,7 +406,7 @@ export default function OrganizationDetailPage() {
             <Select
               label={t('detail.auditMonths')}
               value={String(audit ?? 13)}
-              disabled={org.plan !== 'enterprise'}
+              disabled={!catalogue?.bands.find((b) => b.name === org.plan)?.contractual}
               onChange={(e) => void setAuditMonths(Number(e.target.value))}
             >
               {AUDIT_MONTHS.map((m) => (

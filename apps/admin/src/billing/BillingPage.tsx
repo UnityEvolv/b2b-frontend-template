@@ -12,8 +12,15 @@ import {
   type TableColumn,
 } from '@unityevolv/unitykit'
 import type { organization } from '@b2b-template/api'
-import { humanizeKey } from '@b2b-template/core'
-import { useOrg } from '@b2b-template/ui-web'
+import {
+  bandLabel,
+  planFeatures,
+  planLimits,
+  sentenceCase,
+  useOrg,
+  useOrganizationPlan,
+  usePlanCatalogue,
+} from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
@@ -25,9 +32,11 @@ type Consequence = organization.components['schemas']['PlanConsequence']
 /**
  * The billing page: what the org is on and paying, and changing
  * either. Card details never pass through here: the provider's hosted form
- * takes them. Everything the page does the API checks again. The bands, their
- * prices and caps are read from the billing service each time the page is:
- * nothing about a plan is kept here.
+ * takes them. Everything the page does the API checks again. The bands on
+ * offer and their prices come from the billing service; their labels, what
+ * the plan allows and what the org uses from the organization service's plan
+ * catalogue and the org's plan, each read when the page opens: nothing about
+ * a plan is kept here.
  */
 export default function BillingPage() {
   const { t, i18n } = useTranslation('admin')
@@ -35,6 +44,10 @@ export default function BillingPage() {
   const api = org?.api
   const orgId = org?.orgId
   const { account, setAccount, failed, reload } = useBilling(api, orgId, true)
+  const catalogue = usePlanCatalogue(api)
+  const { plan, reload: reloadPlan } = useOrganizationPlan(api, orgId)
+  const label = (band: string) =>
+    plan?.plan === band && plan.label ? plan.label : bandLabel(catalogue, band)
   const [invoices, setInvoices] = useState<Invoice[] | null>(null)
   const [choice, setChoice] = useState<Band | ''>('')
   const [confirm, setConfirm] = useState<{
@@ -143,6 +156,7 @@ export default function BillingPage() {
     setChoice('')
     if (data) {
       setAccount(data)
+      void reloadPlan()
       toast.success(confirm.now ? t('billing.plan.upgraded') : t('billing.plan.scheduled'))
     } else refused(error)
   }
@@ -153,6 +167,7 @@ export default function BillingPage() {
     })
     if (data) {
       setAccount(data)
+      void reloadPlan()
       toast.success(t('billing.trial.started'))
     } else refused(error)
   }
@@ -248,7 +263,7 @@ export default function BillingPage() {
 
       <Card header={t('billing.plan.title')}>
         <p className="text-lg font-semibold">
-          {humanizeKey(account.band)}{' '}
+          {label(account.band)}{' '}
           <span className="text-sm font-normal text-muted-foreground">{price(account.band)}</span>
         </p>
         <p className="text-sm">{t(`billing.states.${account.state}`)}</p>
@@ -265,30 +280,54 @@ export default function BillingPage() {
             {t('billing.plan.nextCharge', { date: date(account.period_end) })}
           </p>
         )}
+        {plan && (
+          <>
+            <h2 className="mt-3 text-sm font-medium">{t('billing.plan.limits')}</h2>
+            <ul className="mt-1 space-y-1 text-sm" aria-label={t('billing.plan.limits')}>
+              {planLimits(plan, catalogue).map((l) => (
+                <li key={l.key}>
+                  {t('billing.plan.limit', {
+                    label: sentenceCase(l.label),
+                    value:
+                      l.used === undefined
+                        ? l.cap
+                          ? String(l.cap)
+                          : t('billing.plan.noLimit')
+                        : l.cap
+                          ? t('billing.plan.used', { used: String(l.used), cap: String(l.cap) })
+                          : t('billing.plan.usedNoLimit', { used: String(l.used) }),
+                  })}
+                </li>
+              ))}
+            </ul>
+            {plan.features.length > 0 && (
+              <>
+                <h2 className="mt-3 text-sm font-medium">{t('billing.plan.features')}</h2>
+                <ul className="mt-1 list-disc pl-5 text-sm" aria-label={t('billing.plan.features')}>
+                  {planFeatures(plan, catalogue).map((f) => (
+                    <li key={f.key}>{sentenceCase(f.label)}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </>
+        )}
         <ul className="mt-3 space-y-1 text-sm">
-          <li>
-            {account.users_cap
-              ? t('billing.plan.users', {
-                  active: String(account.active_members),
-                  cap: String(account.users_cap),
-                })
-              : t('billing.plan.usersNoCap', { active: String(account.active_members) })}
-          </li>
           {account.next_band && (
             <li className="text-muted-foreground">
               {price(account.next_band)
                 ? t('billing.plan.next', {
-                    band: humanizeKey(account.next_band),
+                    band: label(account.next_band),
                     price: price(account.next_band),
                   })
-                : t('billing.plan.nextNoPrice', { band: humanizeKey(account.next_band) })}
+                : t('billing.plan.nextNoPrice', { band: label(account.next_band) })}
             </li>
           )}
         </ul>
         {account.pending_band && (
           <Alert variant="info" className="mt-3">
             {t('billing.banner.pending', {
-              band: humanizeKey(account.pending_band),
+              band: label(account.pending_band),
               date: date(account.period_end),
             })}{' '}
             <Button size="sm" variant="ghost" onClick={() => void cancelPending()}>
@@ -305,7 +344,7 @@ export default function BillingPage() {
             <option value="">{t('billing.plan.choose')}</option>
             {offeredBands(account).map((b) => (
               <option key={b} value={b}>
-                {humanizeKey(b)} {price(b)}
+                {label(b)} {price(b)}
               </option>
             ))}
           </Select>
@@ -357,7 +396,7 @@ export default function BillingPage() {
       <Modal
         open={confirm !== null}
         onOpenChange={(open) => !open && setConfirm(null)}
-        title={confirm ? t('billing.confirm.title', { band: humanizeKey(confirm.band) }) : ''}
+        title={confirm ? t('billing.confirm.title', { band: label(confirm.band) }) : ''}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirm(null)}>
