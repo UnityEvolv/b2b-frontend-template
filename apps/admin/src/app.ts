@@ -99,6 +99,12 @@ export const definition: AppDefinition = {
       nav: { key: 'settings', icon: 'settings', label: (t) => t('admin:nav.settings') },
     },
     {
+      path: '/sso',
+      page: () => import('./pages/SsoPage'),
+      permission: 'sso',
+      nav: { key: 'sso', icon: 'unlock', label: (t) => t('admin:nav.sso') },
+    },
+    {
       path: '/billing',
       page: () => import('./billing/BillingPage'),
       permission: 'billing',

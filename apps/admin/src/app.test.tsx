@@ -70,4 +70,26 @@ describe('the admin app’s routes', () => {
     visit('/users', ['billing'])
     expect(await screen.findByRole('heading', { name: '/users' }, { timeout: 5000 })).toBeTruthy()
   })
+
+  // The identity service asks for sso alone; a role may hold it without settings.
+  it('opens single sign-on to whoever holds sso, without settings', async () => {
+    visit('/sso', ['sso'])
+    expect(await screen.findByRole('heading', { name: '/sso' }, { timeout: 5000 })).toBeTruthy()
+  })
+
+  it('refuses single sign-on to settings without sso', async () => {
+    visit('/sso', ['settings', 'users'])
+    expect(
+      await screen.findByText('You do not have access to this page', {}, { timeout: 5000 }),
+    ).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: '/sso' })).toBeNull()
+  })
+
+  it('lists single sign-on in the nav for sso, and not for settings alone', async () => {
+    visit('/users', ['sso'])
+    expect(
+      await screen.findByRole('link', { name: 'Single sign-on' }, { timeout: 5000 }),
+    ).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull()
+  })
 })

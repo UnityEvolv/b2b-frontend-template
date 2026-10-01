@@ -78,6 +78,7 @@ export const admin = {
     users: 'Users',
     audit: 'Audit log',
     settings: 'Settings',
+    sso: 'Single sign-on',
     roles: 'Roles',
     billing: 'Billing',
     scim: 'Directory sync',
@@ -246,6 +247,9 @@ export const admin = {
     signIn: 'Sign in',
     invalid: 'This link does not reopen an organization. Ask for a new one from the sign-in page.',
     gone: 'The 30 days are over and the organization is being deleted.',
+  },
+  sso: {
+    title: 'Single sign-on',
   },
   billing: {
     title: 'Billing',

@@ -14,7 +14,6 @@ import { useOrg } from '@b2b-template/ui-web'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { IdentityProviderSettings } from './IdentityProviderSettings'
 import { NotificationDefaults } from './NotificationDefaults'
 import { OrgDataSettings } from './OrgDataSettings'
 
@@ -35,9 +34,10 @@ const reason = (error: unknown, fallback: string) =>
   (error as { message?: string } | undefined)?.message ?? fallback
 
 /**
- * The organization itself: its name, domain, time zone, how people
- * sign in, and how long sessions last. Owner and Admin, through the settings
- * permission; the API refuses anyone else on its own.
+ * The organization itself: its name, domain, time zone, whether a second
+ * factor is required, and how long sessions last. Owner and Admin, through
+ * the settings permission; the API refuses anyone else on its own. Single
+ * sign-on has its own page, under the sso permission.
  */
 export default function OrgSettingsPage() {
   const { t } = useTranslation('admin')
@@ -209,8 +209,6 @@ export default function OrgSettingsPage() {
             </form>
           )}
         </Card>
-
-        <IdentityProviderSettings />
 
         <Card header={t('settings.sessions.title')}>
           <form onSubmit={savePolicy} noValidate className="space-y-4">

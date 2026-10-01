@@ -49,7 +49,7 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | Activity card | audit `ListAuditEvents`: `audit` | `can('audit')` |
 | Audit log nav, `/audit`, export | audit list and export: `audit` | route `permission: 'audit'` |
 | Settings nav, `/settings`: general, domain claim and verify, session policy | organization `UpdateOrganization`, `GetDomain`, `SetDomain`, `VerifyDomain`, identity `SetSessionPolicy`: `settings` | route `permission: 'settings'` |
-| Single sign-on card (test, save) | identity provider endpoints: `sso` | `can('sso')` (inside `/settings`) |
+| Single sign-on nav, `/sso`: identity provider test, save | identity provider endpoints: `sso` | route `permission: 'sso'` |
 | Notification defaults | notification `SetOrgNotificationSettings`: `settings` and the Owner role | `role === 'owner'` |
 | Exports, Close organization | organization `CreateOrgExport`, `ListOrgExports`: `delete_organization` as Owner; `CloseOrganization`: `delete_organization` | `role === 'owner'` |
 | Billing nav, `/billing`: card, band, trial, cancel pending; the banner | billing `StartSetup`, `ChangeBand`, `StartTrial`, `CancelPending`: `billing` | route `permission: 'billing'`; banner `can('billing')`; with `provider_configured` false (`StartSetup` and priced bands answer 503) no card, automatic upgrade or priced band, only the trial and the lowest band |
