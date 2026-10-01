@@ -326,8 +326,9 @@ export interface paths {
     get: operations['getDomain']
     /**
      * Start claiming a domain
-     * @description The settings permission. The domain waits until a TXT record proves
-     *     it (`POST …/domain/verify`); until then it counts for nothing. A
+     * @description The Owner only (`claim_domain`; an Admin is refused 403). The domain
+     *     waits until a TXT record proves it (`POST …/domain/verify`); until
+     *     then it counts for nothing. A
      *     domain another organization holds is refused. A platform operator
      *     may set a domain directly through the organization's settings.
      */
@@ -348,7 +349,10 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** Look for the TXT record and claim the pending domain */
+    /**
+     * Look for the TXT record and claim the pending domain
+     * @description The Owner only (`claim_domain`; an Admin is refused 403), as starting the claim is.
+     */
     post: operations['verifyDomain']
     delete?: never
     options?: never

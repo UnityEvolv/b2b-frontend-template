@@ -652,14 +652,14 @@ export interface paths {
     }
     /**
      * A member's live sessions, for an admin
-     * @description The users permission, for a member of the organization. The device and times, never an address.
+     * @description The users permission, for a member of the organization the caller manages (an Admin, Users and Guests only; 403 otherwise). The device and times, never an address.
      */
     get: operations['listMemberSessions']
     put?: never
     post?: never
     /**
      * Sign a member out everywhere, for an admin
-     * @description The users permission, for a member of the organization. Every session ends and is pushed to their sockets. Audited.
+     * @description The users permission, for a member of the organization the caller manages (an Admin, Users and Guests only; 403 otherwise). Every session ends and is pushed to their sockets. Audited.
      */
     delete: operations['revokeMemberSessions']
     options?: never
@@ -680,7 +680,8 @@ export interface paths {
     /**
      * Reset a member's second factor when they lose their device
      * @description The users permission in the organization, for a person who is a
-     *     member of it. Their authenticator and recovery codes are removed and
+     *     member of it and whom the caller manages (an Admin, Users and Guests
+     *     only; 403 otherwise). Their authenticator and recovery codes are removed and
      *     every session of theirs ends; they set up a new one at their next
      *     sign-in (at once, if the organization requires it). Audited.
      */
@@ -779,7 +780,7 @@ export interface paths {
     put?: never
     /**
      * Send an open invite again, with a fresh link and expiry
-     * @description The users permission, or the member who sent it. Audited.
+     * @description The users permission for a role the caller may invite (an Admin, Users only; 403 otherwise), or the member who sent it. Audited.
      */
     post: operations['resendInvite']
     delete?: never
@@ -800,7 +801,7 @@ export interface paths {
     post?: never
     /**
      * Withdraw an open invite
-     * @description The users permission, or the member who sent it. The link stops working. Audited.
+     * @description The users permission for a role the caller may invite (an Admin, Users only; 403 otherwise), or the member who sent it. The link stops working. Audited.
      */
     delete: operations['revokeInvite']
     options?: never
