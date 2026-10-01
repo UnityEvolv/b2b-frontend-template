@@ -33,6 +33,8 @@ const entry = (id: string, category: string, extra: Record<string, unknown> = {}
   id,
   category,
   kind: 'updated',
+  heading: '',
+  line: '',
   data: {},
   link: '/',
   count: 1,
@@ -59,9 +61,14 @@ function renderBell() {
       const only = url.searchParams.get('category')
       asked.push(only)
       const all = [
-        entry('e-1', 'project_updates', { count: 3 }),
-        entry('e-2', 'security', { data: { heading: 'A new sign-in from Firefox' } }),
-        entry('e-3', 'admin_notices'),
+        entry('e-1', 'project_updates', { count: 3, heading: '3 projects were archived' }),
+        entry('e-2', 'security', {
+          heading: 'A new sign-in',
+          line: 'Firefox on Windows, near Leeds.',
+          data: { heading: 'Not what the bell says' },
+        }),
+        // No copy and no heading: the category's label names it, and the app counts it.
+        entry('e-3', 'admin_notices', { count: 2 }),
       ]
       return json({ entries: all.filter((e) => !only || e.category === only), unread: 3 })
     }
@@ -84,15 +91,18 @@ function renderBell() {
 }
 
 describe('NotificationBell', () => {
-  it('names each entry by its heading or its registered category, a product’s too', async () => {
+  it('says each entry in the server’s words, its category’s label only without them', async () => {
     const { user } = renderBell()
     await user.click(
       await screen.findByRole('button', { name: /Notifications, 3 unread/ }, { timeout: 5000 }),
     )
     const dialog = await screen.findByRole('dialog', { name: 'Notifications' })
-    expect(await within(dialog).findByText('Project updates (3)')).toBeTruthy()
-    expect(within(dialog).getByText('A new sign-in from Firefox')).toBeTruthy()
-    expect(within(dialog).getByText('Admin notices', { selector: 'span' })).toBeTruthy()
+    expect(await within(dialog).findByText('3 projects were archived')).toBeTruthy()
+    expect(within(dialog).queryByText('Project updates (3)')).toBeNull()
+    expect(within(dialog).getByText('A new sign-in')).toBeTruthy()
+    expect(within(dialog).getByText('Firefox on Windows, near Leeds.')).toBeTruthy()
+    expect(within(dialog).queryByText('Not what the bell says')).toBeNull()
+    expect(await within(dialog).findByText('Admin notices (2)')).toBeTruthy()
     expect(within(dialog).queryByRole('button', { name: 'Mentions' })).toBeNull()
   })
 
@@ -113,9 +123,7 @@ describe('NotificationBell', () => {
 
     await user.selectOptions(filter, 'project_updates')
     await vi.waitFor(() => expect(asked).toContain('project_updates'))
-    await vi.waitFor(() =>
-      expect(within(dialog).queryByText('Admin notices', { selector: 'span' })).toBeNull(),
-    )
-    expect(within(dialog).getByText('Project updates (3)')).toBeTruthy()
+    await vi.waitFor(() => expect(within(dialog).queryByText('Admin notices (2)')).toBeNull())
+    expect(within(dialog).getByText('3 projects were archived')).toBeTruthy()
   })
 })

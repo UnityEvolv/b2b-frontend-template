@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import { desktopNotices, entryPath, type Entry } from './feed'
 
-const entry = (id: string, read: boolean, link = '/settings/notifications'): Entry =>
+const entry = (id: string, read: boolean, link = '/settings/notifications', line = ''): Entry =>
   ({
     id,
     category: 'security',
     kind: 'new_sign_in',
     heading: 'New sign-in',
-    line: '',
+    line,
     data: {},
     link,
     count: 1,
@@ -25,13 +25,21 @@ describe('the feed', () => {
     expect(entryPath('/a\\b')).toBe('/')
   })
 
-  it('makes a desktop notice of each unread entry not seen before', () => {
+  it('makes a desktop notice of each unread entry not seen before, its line as the body', () => {
     const notices = desktopNotices(
-      [entry('a', false), entry('b', true), entry('c', false, 'https://evil.example')],
+      [
+        entry('a', false),
+        entry('b', true),
+        entry('c', false, 'https://evil.example'),
+        entry('d', false, '/', 'From Firefox on Windows.'),
+      ],
       new Set(['a']),
       (e) => `summary ${e.id}`,
       'Open the app',
     )
-    expect(notices).toEqual([{ title: 'summary c', body: 'Open the app', path: '/' }])
+    expect(notices).toEqual([
+      { title: 'summary c', body: 'Open the app', path: '/' },
+      { title: 'summary d', body: 'From Firefox on Windows.', path: '/' },
+    ])
   })
 })

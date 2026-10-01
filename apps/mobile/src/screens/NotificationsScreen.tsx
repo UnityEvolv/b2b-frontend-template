@@ -1,5 +1,5 @@
 import type { notification } from '@b2b-template/api'
-import { feedHeading, useNotificationCategories } from '@b2b-template/client'
+import { feedWords, useNotificationCategories } from '@b2b-template/client'
 import { formatDateTime } from '@b2b-template/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -16,8 +16,9 @@ const POLL_MS = 60_000
 
 /**
  * The notification feed: what happened while the person was away, newest
- * first, from the same notification API as the web app's bell, each named by
- * its own heading or its category's label in the registry. Reading an entry
+ * first, from the same notification API as the web app's bell, each in the
+ * heading and line the notification service renders for it (an entry with no
+ * heading is named by its category's label in the registry). Reading an entry
  * here reads it on every device.
  */
 export function NotificationsScreen() {
@@ -66,9 +67,12 @@ export function NotificationsScreen() {
   }
 
   const summary = (e: Entry): string => {
-    if (e.kind === 'test') return t('account:notify.kinds.test')
-    const heading = feedHeading(e, categories) ?? t('account:notify.kinds.other')
-    return t('account:notify.batched', { heading, count: e.count })
+    const words = feedWords(e, categories)
+    if (words.heading && words.counted) return words.heading
+    return t('account:notify.batched', {
+      heading: words.heading ?? t('account:notify.kinds.other'),
+      count: e.count,
+    })
   }
 
   if (!org) return null
@@ -91,7 +95,9 @@ export function NotificationsScreen() {
         <Row
           key={e.id}
           title={summary(e)}
-          subtitle={formatDateTime(e.occurred_at, locale)}
+          subtitle={[e.line.trim(), formatDateTime(e.occurred_at, locale)]
+            .filter(Boolean)
+            .join(' · ')}
           leading={<Icon name={e.read ? 'bell' : 'info'} />}
           {...(e.read ? {} : { onPress: () => void read({ ids: [e.id] }) })}
           {...(e.read ? {} : { accessibilityHint: t('account:notify.unread') })}

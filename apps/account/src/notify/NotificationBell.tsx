@@ -1,5 +1,5 @@
 import { Badge, Button, Icon, Popover, Select, Spinner } from '@unityevolv/unitykit'
-import { categoryOf, feedHeading } from '@b2b-template/client'
+import { categoryOf, feedWords } from '@b2b-template/client'
 import { desktopBridge, useNotificationCategories, useOrg } from '@b2b-template/ui-web'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -10,9 +10,10 @@ import { desktopNotices, entryPath, useFeed, type Category, type Entry } from '.
 /**
  * The bell: what happened while the person was not looking, newest first and
  * grouped by day, a batch as one line that opens to its items. Opening an
- * entry goes where it points and reads it, on every device. Each entry is
- * named by its own heading or its category's label, and the feed narrows to
- * one category, from the registry the notification service keeps.
+ * entry goes where it points and reads it, on every device. Each entry says
+ * the heading and line the notification service renders for it; only an entry
+ * with no heading is named by its category's label. The feed narrows to one
+ * category, from the registry the notification service keeps.
  */
 export function NotificationBell() {
   const { t, i18n } = useTranslation('account')
@@ -37,9 +38,12 @@ export function NotificationBell() {
 
   const summary = useCallback(
     (e: Entry): string => {
-      if (e.kind === 'test') return t('notify.kinds.test')
-      const heading = feedHeading(e, categories) ?? t('notify.kinds.other')
-      return t('notify.batched', { heading, count: e.count })
+      const words = feedWords(e, categories)
+      if (words.heading && words.counted) return words.heading
+      return t('notify.batched', {
+        heading: words.heading ?? t('notify.kinds.other'),
+        count: e.count,
+      })
     },
     [categories, t],
   )
@@ -157,6 +161,11 @@ export function NotificationBell() {
                         >
                           {summary(e)}
                         </span>
+                        {e.line.trim() && (
+                          <span className="block text-xs text-muted-foreground">
+                            {e.line.trim()}
+                          </span>
+                        )}
                         <time className="text-xs text-muted-foreground" dateTime={e.occurred_at}>
                           {time.format(new Date(e.occurred_at))}
                         </time>
@@ -186,12 +195,8 @@ export function NotificationBell() {
                       <ul className="mb-2 ml-6 space-y-1">
                         {e.items.map((item, i) => (
                           <li key={i} className="text-xs text-muted-foreground">
-                            {summary({
-                              ...e,
-                              count: 1,
-                              kind: String(item.kind ?? e.kind),
-                              data: (item.data as Record<string, unknown>) ?? e.data,
-                            })}
+                            {/* An item has no words of its own; its category names it. */}
+                            {categoryOf(e, categories)?.label ?? t('notify.kinds.other')}
                             {typeof item.at === 'string' && ` · ${time.format(new Date(item.at))}`}
                           </li>
                         ))}

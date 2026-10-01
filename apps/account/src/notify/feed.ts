@@ -84,7 +84,8 @@ export function entryPath(link: string): string {
 
 /**
  * The system notifications new feed entries make in the desktop app: each
- * unread entry not seen before, with its summary as the title.
+ * unread entry not seen before, with its summary as the title and its line
+ * as the body (the fallback body when the line is empty).
  */
 export function desktopNotices(
   entries: readonly Entry[],
@@ -94,5 +95,5 @@ export function desktopNotices(
 ): DesktopNotice[] {
   return entries
     .filter((e) => !e.read && !seen.has(e.id))
-    .map((e) => ({ title: summary(e), body, path: entryPath(e.link) }))
+    .map((e) => ({ title: summary(e), body: e.line.trim() || body, path: entryPath(e.link) }))
 }

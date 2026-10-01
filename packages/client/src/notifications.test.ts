@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { categoryOf, feedHeading, type FeedEntry, type NotificationCategory } from './notifications'
+import { categoryOf, feedWords, type FeedEntry, type NotificationCategory } from './notifications'
 
 const category = (id: string, label: string): NotificationCategory => ({
   id,
@@ -13,13 +13,13 @@ const category = (id: string, label: string): NotificationCategory => ({
   batched: false,
 })
 
-const entry = (category: string, data: Record<string, unknown> = {}): FeedEntry => ({
+const entry = (category: string, heading = '', line = ''): FeedEntry => ({
   id: 'e-1',
   category,
   kind: 'updated',
-  heading: '',
-  line: '',
-  data,
+  heading,
+  line,
+  data: {},
   link: '/',
   count: 1,
   items: [],
@@ -27,22 +27,36 @@ const entry = (category: string, data: Record<string, unknown> = {}): FeedEntry 
   read: false,
 })
 
-describe('feed headings', () => {
+describe('feed words', () => {
   const registry = [
     category('security', 'Security'),
     category('project_updates', 'Project updates'),
   ]
 
-  it('names an entry by its own heading, else by its registered category', () => {
+  it('says an entry in the words the server renders, a batch counted by it', () => {
     expect(
-      feedHeading(entry('project_updates', { heading: 'Apollo was archived' }), registry),
-    ).toBe('Apollo was archived')
-    expect(feedHeading(entry('project_updates'), registry)).toBe('Project updates')
+      feedWords(
+        entry('project_updates', '3 projects were archived', 'Apollo, Hermes and Zeus.'),
+        registry,
+      ),
+    ).toEqual({
+      heading: '3 projects were archived',
+      line: 'Apollo, Hermes and Zeus.',
+      counted: true,
+    })
     expect(categoryOf(entry('project_updates'), registry)?.label).toBe('Project updates')
   })
 
+  it('names an entry with no heading by its registered category, which the app counts', () => {
+    expect(feedWords(entry('project_updates', '  '), registry)).toEqual({
+      heading: 'Project updates',
+      line: '',
+      counted: false,
+    })
+  })
+
   it('says nothing for a category the registry does not name, or before it loads', () => {
-    expect(feedHeading(entry('retired'), registry)).toBeNull()
-    expect(feedHeading(entry('security'), null)).toBeNull()
+    expect(feedWords(entry('retired'), registry).heading).toBeNull()
+    expect(feedWords(entry('security'), null).heading).toBeNull()
   })
 })

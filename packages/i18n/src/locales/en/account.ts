@@ -147,7 +147,6 @@ export const account = {
     batched_one: '{{heading}}',
     batched_other: '{{heading}} ({{count}})',
     kinds: {
-      test: 'Notifications are working',
       other: 'Something needs your attention',
     },
   },

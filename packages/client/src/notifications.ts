@@ -25,17 +25,33 @@ export function useNotificationCategories(api: Api | undefined): NotificationCat
   return categories
 }
 
+/** A feed entry in words, as an app shows it. */
+export interface FeedWords {
+  /** The heading, or null when neither the entry nor the registry says, for the app's own fallback. */
+  heading: string | null
+  /** The sentence under it; empty when there is none. */
+  line: string
+  /**
+   * Whether the heading is the server's, which counts a batch itself; a
+   * category's label does not, so the app adds the count.
+   */
+  counted: boolean
+}
+
 /**
- * What a feed entry is called, from the API alone: the heading the entry
- * carries, else its category's label in the registry. Null when neither says,
- * for the app's own fallback.
+ * What a feed entry says, from the API alone: the heading and line the
+ * notification service renders from the category's copy. Only when the
+ * heading is empty is the entry named by its category's label in the
+ * registry.
  */
-export function feedHeading(
+export function feedWords(
   entry: FeedEntry,
   categories: readonly NotificationCategory[] | null,
-): string | null {
-  const heading = typeof entry.data.heading === 'string' ? entry.data.heading.trim() : ''
-  return heading || categories?.find((c) => c.id === entry.category)?.label || null
+): FeedWords {
+  const heading = entry.heading.trim()
+  const line = entry.line.trim()
+  if (heading) return { heading, line, counted: true }
+  return { heading: categoryOf(entry, categories)?.label || null, line, counted: false }
 }
 
 /** The registered category an entry is in, when the registry names it. */

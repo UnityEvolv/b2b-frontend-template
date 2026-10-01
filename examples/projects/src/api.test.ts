@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { categoryOf, feedHeading, type FeedEntry } from '@b2b-template/client'
+import { categoryOf, feedWords, type FeedEntry } from '@b2b-template/client'
 import { matchRoutes } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
@@ -107,16 +107,23 @@ describe('the project_shared notification', () => {
     id: 'e-1',
     category: 'project_shared',
     kind: 'project_shared',
+    heading: 'Ada shared Apollo with you',
+    line: 'Open it to see what is in it.',
     data: { project: 'Apollo', project_id: 'p-1' },
     link: '/projects/0190a000-0000-7000-8000-0000000000f1',
     count: 1,
     items: [],
     occurred_at: '2026-10-01T09:00:00Z',
     read: false,
-  } as unknown as FeedEntry
+  } as FeedEntry
 
-  it('is named by the registry, as the bell names every category', () => {
-    expect(feedHeading(entry, [category])).toBe('Shared projects')
+  it('says the words the server renders from the product’s copy, the registry naming it only without them', () => {
+    expect(feedWords(entry, [category])).toEqual({
+      heading: 'Ada shared Apollo with you',
+      line: 'Open it to see what is in it.',
+      counted: true,
+    })
+    expect(feedWords({ ...entry, heading: '' }, [category]).heading).toBe('Shared projects')
     expect(categoryOf(entry, [category])?.audience).toBe('member')
   })
 

@@ -99,9 +99,10 @@ export {
 } from './session'
 export {
   categoryOf,
-  feedHeading,
+  feedWords,
   useNotificationCategories,
   type FeedEntry,
+  type FeedWords,
   type NotificationCategory,
 } from './notifications'
 export {
