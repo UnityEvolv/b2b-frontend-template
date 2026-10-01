@@ -52,7 +52,7 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | Single sign-on card (test, save) | identity provider endpoints: `sso` | `can('sso')` (inside `/settings`) |
 | Notification defaults | notification `SetOrgNotificationSettings`: `settings` and the Owner role | `role === 'owner'` |
 | Exports, Close organization | organization `CreateOrgExport`, `ListOrgExports`: `delete_organization` as Owner; `CloseOrganization`: `delete_organization` | `role === 'owner'` |
-| Billing nav, `/billing`: card, band, trial, cancel pending; the banner | billing `StartSetup`, `ChangeBand`, `StartTrial`, `CancelPending`: `billing` | route `permission: 'billing'`; banner `can('billing')` |
+| Billing nav, `/billing`: card, band, trial, cancel pending; the banner | billing `StartSetup`, `ChangeBand`, `StartTrial`, `CancelPending`: `billing` | route `permission: 'billing'`; banner `can('billing')`; with `provider_configured` false (`StartSetup` and priced bands answer 503) no card, automatic upgrade or priced band, only the trial and the lowest band |
 | Automatic upgrade toggle | billing `SetAutoUpgrade`: `billing` and the Owner role | `can_manage_auto_upgrade` from the billing service |
 | SCIM nav, `/scim`: tokens, halt | user SCIM admin: `settings`, and a plan with SCIM to change anything | route `permission: 'settings'`; buttons need `available` |
 | Roles nav, `/roles`: permission matrix, ownership transfer | authorization `SetPermissions`: `configure_permissions`; `RequestOwnershipTransfer`, cancel: the Owner | route `permission: 'configure_permissions'` |

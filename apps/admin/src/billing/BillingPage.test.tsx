@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { createApi } from '@b2b-template/api'
 import { createI18n } from '@b2b-template/i18n'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -9,6 +10,11 @@ import { describe, expect, it, vi } from 'vitest'
 import BillingPage from './BillingPage'
 
 const org = vi.hoisted(() => ({ current: null as unknown }))
+const toasts = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }))
+vi.mock('@unityevolv/unitykit', async (original) => ({
+  ...(await original<Record<string, unknown>>()),
+  toast: toasts,
+}))
 vi.mock('@b2b-template/ui-web', async (original) => ({
   ...(await original<Record<string, unknown>>()),
   useOrg: () => org.current,
@@ -63,12 +69,37 @@ const catalogue = {
   ],
 }
 
-function renderBilling() {
+const notConfigured = {
+  code: 'billing.provider_not_configured',
+  message: 'Paid plans are not available here: no payment provider is configured.',
+}
+
+/**
+ * The page against a mocked API. provider says whether the deployment has a
+ * payment provider; billing overrides the account read; preview answers
+ * band-preview.
+ */
+function renderBilling({
+  provider = true,
+  billing = {},
+  preview,
+}: {
+  provider?: boolean
+  billing?: Record<string, unknown>
+  preview?: () => Response
+} = {}) {
   const calls: string[] = []
   const fetch = async (input: Request) => {
     const path = new URL(input.url).pathname
     calls.push(path)
     if (path.endsWith('/billing/invoices')) return json({ invoices: [] })
+    if (path.endsWith('/billing/band-preview') && preview) return preview()
+    if (path.endsWith('/billing/setup') && !provider) {
+      return new Response(JSON.stringify(notConfigured), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
     if (path.endsWith('/billing')) {
       const price = (amount: number) => ({ amount, currency: 'usd', interval: 'month' })
       return json({
@@ -82,7 +113,9 @@ function renderBilling() {
         users_cap: 25,
         next_band: 'scale_up',
         bands: ['free', 'team', 'scale_up'],
-        prices: { team: price(4900), scale_up: price(19900) },
+        prices: provider ? { team: price(4900), scale_up: price(19900) } : {},
+        provider_configured: provider,
+        ...billing,
       })
     }
     if (path.endsWith('/v1/plans')) return json(catalogue)
@@ -148,5 +181,64 @@ describe('BillingPage', () => {
     )
     expect(calls).toContain('/organization/v1/plans')
     expect(calls).toContain('/organization/v1/organizations/org-1/plan')
+  })
+
+  it('offers no priced band and no card setup when no payment provider is configured', async () => {
+    renderBilling({
+      provider: false,
+      billing: { band: 'scale_up', state: 'trialing', trial_available: true, next_band: undefined },
+    })
+    expect(
+      await screen.findByText('Paid plans are not available on this deployment.', undefined, {
+        timeout: 5000,
+      }),
+    ).toBeTruthy()
+    const picker = screen.getByRole('combobox')
+    const options = within(picker)
+      .getAllByRole('option')
+      .map((o) => (o as HTMLOptionElement).value)
+    // Only the lowest band, to end the trial early or move down.
+    expect(options).toEqual(['', 'free'])
+    expect(screen.queryByRole('button', { name: /payment method/ })).toBeNull()
+    expect(screen.queryByRole('checkbox')).toBeNull()
+    expect(screen.getByRole('button', { name: /trial/ })).toBeTruthy()
+  })
+
+  it('offers no picker at all on the lowest band without a provider', async () => {
+    renderBilling({ provider: false, billing: { band: 'free', state: 'free', next_band: 'team' } })
+    await screen.findByText('Paid plans are not available on this deployment.', undefined, {
+      timeout: 5000,
+    })
+    expect(screen.queryByRole('combobox')).toBeNull()
+    expect(screen.queryByText(/Next plan up/)).toBeNull()
+  })
+
+  it('offers card setup and every band when a provider is configured, with no notice', async () => {
+    renderBilling()
+    expect(
+      await screen.findByRole('button', { name: 'Add payment method' }, { timeout: 5000 }),
+    ).toBeTruthy()
+    expect(screen.getByRole('checkbox')).toBeTruthy()
+    expect(screen.queryByText('Paid plans are not available on this deployment.')).toBeNull()
+  })
+
+  it('says the service’s words and reads the account again when told no provider is configured', async () => {
+    toasts.error.mockClear()
+    const calls = renderBilling({
+      preview: () =>
+        new Response(JSON.stringify(notConfigured), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+    })
+    const user = userEvent.setup()
+    const picker = await screen.findByRole('combobox', {}, { timeout: 5000 })
+    await user.selectOptions(picker, 'scale_up')
+    const reads = calls.filter((c) => c.endsWith('/billing')).length
+    await user.click(screen.getByRole('button', { name: 'Review change' }))
+    await waitFor(() => expect(toasts.error).toHaveBeenCalledWith(notConfigured.message))
+    await waitFor(() =>
+      expect(calls.filter((c) => c.endsWith('/billing')).length).toBeGreaterThan(reads),
+    )
   })
 })

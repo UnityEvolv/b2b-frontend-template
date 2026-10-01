@@ -25,7 +25,15 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 
-import { daysUntil, money, offeredBands, useBilling, type Band, type Invoice } from './billing'
+import {
+  daysUntil,
+  money,
+  offeredBands,
+  PROVIDER_NOT_CONFIGURED,
+  useBilling,
+  type Band,
+  type Invoice,
+} from './billing'
 
 type Consequence = organization.components['schemas']['PlanConsequence']
 
@@ -36,7 +44,8 @@ type Consequence = organization.components['schemas']['PlanConsequence']
  * offer and their prices come from the billing service; their labels, what
  * the plan allows and what the org uses from the organization service's plan
  * catalogue and the org's plan, each read when the page opens: nothing about
- * a plan is kept here.
+ * a plan is kept here. A deployment with no payment provider offers no
+ * priced band and no card: the trial and the lowest band still work.
  */
 export default function BillingPage() {
   const { t, i18n } = useTranslation('admin')
@@ -103,8 +112,16 @@ export default function BillingPage() {
   const date = (at?: string) =>
     at ? new Date(at).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : ''
 
-  const refused = (error: unknown) =>
-    toast.error((error as { message?: string } | undefined)?.message ?? t('billing.changeFailed'))
+  // The service's words for a refusal. Told no provider is configured (the
+  // page was open before the deployment changed), read the account again so
+  // the priced choices go.
+  const refused = (error: unknown) => {
+    const e = error as { code?: string; message?: string } | undefined
+    toast.error(e?.message ?? t('billing.changeFailed'))
+    if (e?.code === PROVIDER_NOT_CONFIGURED) void reload()
+  }
+  const paid = account.provider_configured
+  const offered = offeredBands(account)
 
   const addCard = async () => {
     setBusy(true)
@@ -260,6 +277,7 @@ export default function BillingPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-2xl font-semibold">{t('billing.title')}</h1>
+      {!paid && <Alert variant="info">{t('billing.noProvider')}</Alert>}
 
       <Card header={t('billing.plan.title')}>
         <p className="text-lg font-semibold">
@@ -313,7 +331,7 @@ export default function BillingPage() {
           </>
         )}
         <ul className="mt-3 space-y-1 text-sm">
-          {account.next_band && (
+          {paid && account.next_band && (
             <li className="text-muted-foreground">
               {price(account.next_band)
                 ? t('billing.plan.next', {
@@ -336,21 +354,25 @@ export default function BillingPage() {
           </Alert>
         )}
         <div className="mt-4 flex flex-wrap items-end gap-2">
-          <Select
-            label={t('billing.plan.change')}
-            value={choice}
-            onChange={(e) => setChoice(e.target.value as Band)}
-          >
-            <option value="">{t('billing.plan.choose')}</option>
-            {offeredBands(account).map((b) => (
-              <option key={b} value={b}>
-                {label(b)} {price(b)}
-              </option>
-            ))}
-          </Select>
-          <Button disabled={!choice || busy} onClick={() => choice && void ask(choice)}>
-            {t('billing.plan.review')}
-          </Button>
+          {offered.length > 0 && (
+            <>
+              <Select
+                label={t('billing.plan.change')}
+                value={choice}
+                onChange={(e) => setChoice(e.target.value as Band)}
+              >
+                <option value="">{t('billing.plan.choose')}</option>
+                {offered.map((b) => (
+                  <option key={b} value={b}>
+                    {label(b)} {price(b)}
+                  </option>
+                ))}
+              </Select>
+              <Button disabled={!choice || busy} onClick={() => choice && void ask(choice)}>
+                {t('billing.plan.review')}
+              </Button>
+            </>
+          )}
           {account.trial_available && (
             <Button variant="secondary" onClick={() => void trial()}>
               {t('billing.trial.start')}
@@ -359,28 +381,32 @@ export default function BillingPage() {
         </div>
       </Card>
 
-      <Card header={t('billing.payment.title')}>
-        <p className="mb-2 text-sm">
-          {account.card
-            ? t('billing.payment.card', { brand: account.card.brand, last4: account.card.last4 })
-            : t('billing.payment.none')}
-        </p>
-        <p className="mb-3 text-xs text-muted-foreground">{t('billing.payment.hosted')}</p>
-        <Button size="sm" disabled={busy} onClick={() => void addCard()}>
-          {account.card ? t('billing.payment.replace') : t('billing.payment.add')}
-        </Button>
-        <div className="mt-4">
-          <Toggle
-            label={t('billing.auto.label')}
-            help={
-              account.can_manage_auto_upgrade ? t('billing.auto.help') : t('billing.auto.ownerOnly')
-            }
-            checked={account.auto_upgrade}
-            disabled={!account.can_manage_auto_upgrade}
-            onChange={(e) => void autoUpgrade(e.target.checked)}
-          />
-        </div>
-      </Card>
+      {paid && (
+        <Card header={t('billing.payment.title')}>
+          <p className="mb-2 text-sm">
+            {account.card
+              ? t('billing.payment.card', { brand: account.card.brand, last4: account.card.last4 })
+              : t('billing.payment.none')}
+          </p>
+          <p className="mb-3 text-xs text-muted-foreground">{t('billing.payment.hosted')}</p>
+          <Button size="sm" disabled={busy} onClick={() => void addCard()}>
+            {account.card ? t('billing.payment.replace') : t('billing.payment.add')}
+          </Button>
+          <div className="mt-4">
+            <Toggle
+              label={t('billing.auto.label')}
+              help={
+                account.can_manage_auto_upgrade
+                  ? t('billing.auto.help')
+                  : t('billing.auto.ownerOnly')
+              }
+              checked={account.auto_upgrade}
+              disabled={!account.can_manage_auto_upgrade}
+              onChange={(e) => void autoUpgrade(e.target.checked)}
+            />
+          </div>
+        </Card>
+      )}
 
       <Card header={t('billing.invoices.title')}>
         <Table

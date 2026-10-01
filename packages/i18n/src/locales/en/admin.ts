@@ -255,6 +255,7 @@ export const admin = {
     perInterval: '{{price}} per {{interval}}',
     invoicedNote:
       'Your organisation is invoiced under its contract. To change the plan or how you pay, contact your account manager.',
+    noProvider: 'Paid plans are not available on this deployment.',
     states: {
       free: 'On the free plan.',
       trialing: 'On a free trial.',

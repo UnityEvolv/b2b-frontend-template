@@ -10,12 +10,21 @@ export type Invoice = billing.components['schemas']['Invoice']
  * lowest first, the lowest (unpriced) band too, so a downgrade to it is
  * offered, and never the band it is on. The bands are the deployment's
  * registry; none is named here, and billing never lists a contractual one.
+ * With no payment provider configured nothing priced can be bought, so only
+ * the lowest band is offered (the service refuses the others).
  */
-export function offeredBands(account: Pick<Billing, 'band' | 'bands' | 'next_band'>): Band[] {
+export function offeredBands(
+  account: Pick<Billing, 'band' | 'bands' | 'next_band' | 'provider_configured'>,
+): Band[] {
+  if (!account.provider_configured)
+    return account.bands.slice(0, 1).filter((b) => b !== account.band)
   const bands = [...account.bands]
   if (account.next_band && !bands.includes(account.next_band)) bands.push(account.next_band)
   return bands.filter((b) => b !== account.band)
 }
+
+/** The billing service's code for a priced change asked of a deployment with no payment provider. */
+export const PROVIDER_NOT_CONFIGURED = 'billing.provider_not_configured'
 
 /** Minor units as money, in the reader's language. */
 export function money(amount: number, currency: string, language: string): string {
