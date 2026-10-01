@@ -305,6 +305,14 @@ export interface components {
        *     at the organization service's GET /v1/plans.
        */
       bands: components['schemas']['Band'][]
+      /**
+       * @description Whether a payment provider is configured here. When false, no
+       *     band with a price can be bought: startSetup, changeBand to any band
+       *     but the lowest, and band-preview of any band but the lowest answer
+       *     503 `billing.provider_not_configured`, and prices is empty. The
+       *     trial, and moving from a trial to the lowest band, still work.
+       */
+      provider_configured: boolean
       /** @description The price of each band the payment provider sells, by band. A band in bands with no entry here costs nothing. */
       prices: {
         [key: string]: components['schemas']['Price']
@@ -403,6 +411,15 @@ export interface operations {
         }
       }
       403: components['responses']['Error']
+      /** @description No payment provider is configured here (`billing.provider_not_configured`). */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
       default: components['responses']['Error']
     }
   }
@@ -435,6 +452,15 @@ export interface operations {
       400: components['responses']['Error']
       403: components['responses']['Error']
       409: components['responses']['Error']
+      /** @description No payment provider is configured here (`billing.provider_not_configured`). */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
       default: components['responses']['Error']
     }
   }
@@ -462,6 +488,15 @@ export interface operations {
       }
       400: components['responses']['Error']
       403: components['responses']['Error']
+      /** @description No payment provider is configured here (`billing.provider_not_configured`). */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
       default: components['responses']['Error']
     }
   }
