@@ -35,8 +35,10 @@ export function assignableRoles(role: string): string[] {
 
 /**
  * Whether a member holding `actor` may change one holding `target`
- * (deactivate or reactivate them), as the backend's `authz.MayManage` rules
- * it: an Owner anyone, an Admin Users and Guests, nobody else anyone. The
+ * (deactivate or reactivate them, end their sessions, reset their second
+ * factor, resend or withdraw an invite to that role), as the backend's
+ * `authz.MayManage` rules it: an Owner anyone, themselves included; an Admin
+ * Users and Guests, so not themselves; nobody else anyone. The
  * users permission is asked separately, with `permissions.can('users')`.
  */
 export function mayManage(actor: string, target: string): boolean {

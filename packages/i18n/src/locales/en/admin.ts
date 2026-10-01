@@ -18,7 +18,8 @@ export const admin = {
       'The sheet holds {{rows}} people. Tell us which column is which; we guessed where we could.',
     fields: { email: 'Email', name: 'Name', role: 'Role' },
     required: 'Required',
-    roleHelp: 'Optional. Everyone is a User unless a column says otherwise.',
+    roleHelp:
+      'Optional. Everyone is a User unless a column says otherwise. Roles you may give: {{roles}}.',
     noColumn: 'Choose a column',
     sample: 'The first rows of the sheet',
     check: 'Check every row',
@@ -449,6 +450,8 @@ export const admin = {
       verify: 'Verify now',
       verified: 'Domain verified.',
       verifiedBadge: 'Verified',
+      unclaimed: 'No domain is claimed.',
+      ownerOnly: 'Only an Owner claims and verifies the domain.',
     },
     identity: {
       title: 'Sign-in',

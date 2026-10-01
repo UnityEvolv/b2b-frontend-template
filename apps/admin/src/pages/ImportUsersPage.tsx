@@ -56,6 +56,12 @@ export default function ImportUsersPage() {
   if (assignableRoles(org.role).length === 0) {
     return <Alert variant="warn">{t('invite.notAllowed')}</Alert>
   }
+  // A row naming a role this one may not hand out comes back failed
+  // (role_invalid, in the server's words) in the report below; the help
+  // says beforehand which roles a sheet may name.
+  const givable = assignableRoles(org.role)
+    .map((r) => t(`roles.${r}` as never, { ns: 'common' }))
+    .join(', ')
 
   /** The import, checked only on a dry run, sent otherwise. */
   const runImport = async (dryRun: boolean): Promise<Result | null> => {
@@ -230,7 +236,11 @@ export default function ImportUsersPage() {
               <Select
                 key={field}
                 label={t(`import.fields.${field}`)}
-                help={REQUIRED_FIELDS.includes(field) ? t('import.required') : t('import.roleHelp')}
+                help={
+                  REQUIRED_FIELDS.includes(field)
+                    ? t('import.required')
+                    : t('import.roleHelp', { roles: givable })
+                }
                 value={mapping[field]}
                 placeholder={t('import.noColumn')}
                 onChange={(e) => setMapping((m) => ({ ...m, [field]: e.target.value }))}

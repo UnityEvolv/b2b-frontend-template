@@ -10,7 +10,7 @@ import {
   type TableColumn,
 } from '@unityevolv/unitykit'
 import type { identity, user } from '@b2b-template/api'
-import { assignableRoles, useOrg } from '@b2b-template/ui-web'
+import { assignableRoles, mayManage, useOrg, useSession } from '@b2b-template/ui-web'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -40,11 +40,15 @@ function asSheet(addresses: string[], role: string): Blob {
  * anything is sent (the bulk import's dry run: malformed, duplicate, already
  * a member, and the plan's user cap, naming the next plan), so the form says
  * what would fail rather than failing after submission. Then the invites go,
- * and pending ones can be resent or withdrawn below.
+ * and pending ones can be resent or withdrawn below: by whoever sent one, or
+ * with the users permission by a role that may manage the invite's (an
+ * Admin a User's only), as the identity service asks.
  */
 export default function InviteUsersPage() {
   const { t } = useTranslation('admin')
   const org = useOrg()
+  const { permissions } = useSession()
+  const canUsers = permissions.can('users')
   const roles = org ? assignableRoles(org.role) : []
   const [text, setText] = useState('')
   const [role, setRole] = useState(roles[roles.length - 1] ?? 'user')
@@ -138,6 +142,11 @@ export default function InviteUsersPage() {
     loadPending()
   }
 
+  /** Whether this member may resend or withdraw the invite. */
+  const mayAct = (invite: Invite) =>
+    (canUsers && mayManage(org.role, invite.role)) ||
+    invite.invited_by_membership_id === org.membershipId
+
   const valid = checked?.filter((r) => r.status === 'would_invite').length ?? 0
   const pendingColumns: TableColumn<Invite>[] = [
     { key: 'email', header: t('users.columns.email'), card: 'title' },
@@ -154,16 +163,17 @@ export default function InviteUsersPage() {
     {
       key: 'actions',
       header: t('invite.actions'),
-      cell: (i) => (
-        <span className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={() => void act(i, 'resend')}>
-            {t('invite.resend')}
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => void act(i, 'revoke')}>
-            {t('invite.revoke')}
-          </Button>
-        </span>
-      ),
+      cell: (i) =>
+        mayAct(i) && (
+          <span className="flex gap-2">
+            <Button size="sm" variant="ghost" onClick={() => void act(i, 'resend')}>
+              {t('invite.resend')}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => void act(i, 'revoke')}>
+              {t('invite.revoke')}
+            </Button>
+          </span>
+        ),
     },
   ]
 

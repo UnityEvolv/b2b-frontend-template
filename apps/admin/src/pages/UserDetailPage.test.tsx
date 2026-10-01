@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createApi } from '@b2b-template/api'
 import { createI18n } from '@b2b-template/i18n'
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -43,7 +43,16 @@ async function renderAs(
     }
     if (path.endsWith('/sessions')) {
       sessions.push(path)
-      return json({ sessions: [] })
+      return json({
+        sessions: [
+          {
+            session_id: 's-1',
+            user_agent: 'Firefox',
+            created_at: '2026-09-30T09:00:00Z',
+            last_seen_at: '2026-09-30T10:00:00Z',
+          },
+        ],
+      })
     }
     if (path.endsWith('/audit-events')) return json({ events: [] })
     return new Response(null, { status: 404 })
@@ -72,30 +81,76 @@ async function renderAs(
 
 const button = (name: string) => screen.queryByRole('button', { name })
 
+/** Every action on the member that the identity and user services gate on MayManage. */
+const MANAGED = ['Deactivate', 'Reset two-step sign-in', 'Sign out everywhere']
+
+async function expectManaged(sessions: string[]) {
+  expect(await screen.findByText('Signed in on')).toBeTruthy()
+  for (const name of MANAGED) expect(await screen.findByRole('button', { name })).toBeTruthy()
+  expect(sessions).toHaveLength(1)
+}
+
+function expectNotManaged(sessions: string[]) {
+  for (const name of MANAGED) expect(button(name)).toBeNull()
+  expect(screen.queryByText('Signed in on')).toBeNull()
+  expect(sessions).toEqual([])
+}
+
 describe('one person, as the API lets each role act on them', () => {
   it('offers a Billing Admin no status, second-factor or session action', async () => {
     const { sessions } = await renderAs('billing_admin', ['billing'])
-    expect(button('Deactivate')).toBeNull()
-    expect(button('Reset two-step sign-in')).toBeNull()
-    expect(screen.queryByText('Signed in on')).toBeNull()
-    expect(sessions).toEqual([])
+    expectNotManaged(sessions)
     expect(screen.getByRole('combobox', { name: /Role/ })).toHaveProperty('disabled', true)
   })
 
-  it('lets an Admin reset another Admin’s second factor but not deactivate them', async () => {
-    await renderAs('admin', ['settings', 'users'], { targetRole: 'admin' })
-    expect(button('Deactivate')).toBeNull()
-    expect(button('Reset two-step sign-in')).toBeTruthy()
+  it('offers a Billing Admin granted users none either, on anyone', async () => {
+    for (const targetRole of ['user', 'billing_admin']) {
+      const { sessions } = await renderAs('billing_admin', ['billing', 'users'], { targetRole })
+      expectNotManaged(sessions)
+      cleanup()
+    }
   })
 
-  it('lets an Admin with the users permission deactivate a User', async () => {
-    await renderAs('admin', ['settings', 'users'])
-    expect(button('Deactivate')).toBeTruthy()
-    expect(await screen.findByText('Signed in on')).toBeTruthy()
+  it('lets an Admin with the users permission act on a User and a Guest', async () => {
+    for (const targetRole of ['user', 'guest']) {
+      const { sessions } = await renderAs('admin', ['settings', 'users'], { targetRole })
+      await expectManaged(sessions)
+      cleanup()
+    }
   })
 
-  it('gives an Owner the role, but not on their own membership', async () => {
-    await renderAs('owner', OWNER, { target: 'm-1', targetRole: 'owner' })
+  it('offers an Admin nothing on an Owner, an Admin or a Billing Admin, and asks for no sessions', async () => {
+    for (const targetRole of ['owner', 'admin', 'billing_admin']) {
+      const { sessions } = await renderAs('admin', ['settings', 'users'], { targetRole })
+      expectNotManaged(sessions)
+      cleanup()
+    }
+  })
+
+  it('offers an Admin nothing on their own membership', async () => {
+    const { sessions } = await renderAs('admin', ['settings', 'users'], {
+      target: 'm-1',
+      targetRole: 'admin',
+    })
+    expectNotManaged(sessions)
+  })
+
+  it('offers an Admin without the users permission nothing, even on a User', async () => {
+    const { sessions } = await renderAs('admin', ['settings'])
+    expectNotManaged(sessions)
+  })
+
+  it('lets an Owner act on anyone', async () => {
+    for (const targetRole of ['owner', 'admin', 'billing_admin', 'user']) {
+      const { sessions } = await renderAs('owner', OWNER, { targetRole })
+      await expectManaged(sessions)
+      cleanup()
+    }
+  })
+
+  it('lets an Owner act on themselves, but not change their own role', async () => {
+    const { sessions } = await renderAs('owner', OWNER, { target: 'm-1', targetRole: 'owner' })
+    await expectManaged(sessions)
     expect(screen.getByRole('combobox', { name: /Role/ })).toHaveProperty('disabled', true)
   })
 })

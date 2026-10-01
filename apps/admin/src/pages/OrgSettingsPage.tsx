@@ -10,7 +10,7 @@ import {
   toast,
 } from '@unityevolv/unitykit'
 import type { identity, organization } from '@b2b-template/api'
-import { useOrg } from '@b2b-template/ui-web'
+import { useOrg, useSession } from '@b2b-template/ui-web'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -37,11 +37,15 @@ const reason = (error: unknown, fallback: string) =>
  * The organization itself: its name, domain, time zone, whether a second
  * factor is required, and how long sessions last. Owner and Admin, through
  * the settings permission; the API refuses anyone else on its own. Single
- * sign-on has its own page, under the sso permission.
+ * sign-on has its own page, under the sso permission. Claiming and
+ * verifying the domain is the Owner's alone (claim_domain), as the
+ * organization service checks it; an Admin sees the claim and no action.
  */
 export default function OrgSettingsPage() {
   const { t } = useTranslation('admin')
   const org = useOrg()
+  const { permissions } = useSession()
+  const canClaim = permissions.can('claim_domain')
   const [record, setRecord] = useState<Org | null>(null)
   const [claim, setClaim] = useState<Claim | null>(null)
   const [policy, setPolicy] = useState<Policy | null>(null)
@@ -193,7 +197,16 @@ export default function OrgSettingsPage() {
                   <code className="break-all">{claim.txt_value}</code>
                 </dd>
               </dl>
-              <Button onClick={() => void verify()}>{t('settings.domain.verify')}</Button>
+              {canClaim ? (
+                <Button onClick={() => void verify()}>{t('settings.domain.verify')}</Button>
+              ) : (
+                <p className="text-base-content/70">{t('settings.domain.ownerOnly')}</p>
+              )}
+            </div>
+          ) : !canClaim ? (
+            <div className="space-y-1 text-sm">
+              <p>{t('settings.domain.unclaimed')}</p>
+              <p className="text-base-content/70">{t('settings.domain.ownerOnly')}</p>
             </div>
           ) : (
             <form onSubmit={startClaim} noValidate className="space-y-3">

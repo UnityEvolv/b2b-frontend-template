@@ -33,9 +33,13 @@ export default function UserDetailPage() {
   // activity card is not shown rather than shown empty.
   const { permissions } = useSession()
   const canAudit = permissions.can('audit')
-  // Status, the second factor and sessions are the users permission's, as
-  // the user and identity services check it; roles are the Owner's alone.
+  // Status, the second factor and sessions are the users permission's, and
+  // only over a member this role may manage (authz.MayManage: an Owner
+  // anyone, themselves included; an Admin Users and Guests, so not
+  // themselves), as the user and identity services check them; roles are
+  // the Owner's alone.
   const canUsers = permissions.can('users')
+  const role = org?.role
   const canAssign = permissions.can('assign_roles')
   const [member, setMember] = useState<Membership | null>(null)
   const [sessions, setSessions] = useState<Session[] | null>(null)
@@ -66,7 +70,7 @@ export default function UserDetailPage() {
       }
       setMember(data)
       const [s, e] = await Promise.all([
-        canUsers
+        canUsers && role && mayManage(role, data.role)
           ? api.identity.GET('/v1/organizations/{org_id}/members/{user_id}/sessions', {
               params: { path: { org_id: orgId, user_id: data.user.id } },
             })
@@ -82,14 +86,15 @@ export default function UserDetailPage() {
     return () => {
       current = false
     }
-  }, [api, orgId, membershipId, version, canUsers])
+  }, [api, orgId, membershipId, version, canUsers, role])
 
   if (!org) return <EmptyState icon="users" titleAs="h2" title={t('users.empty')} />
   if (missing) return <EmptyState icon="search" titleAs="h2" title={t('detail.missing')} />
   if (!member) return <Spinner block size="lg" label={t('detail.loading')} />
 
-  // The user service also asks whether this role may manage that one.
-  const canChangeStatus = canUsers && mayManage(org.role, member.role)
+  // The user and identity services also ask whether this role may manage
+  // that one, for status, the second factor and sessions alike.
+  const canManage = canUsers && mayManage(org.role, member.role)
   const self = member.id === org.membershipId
   const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' })
   /** The server's reason, in its own words; the codes are stable, the message is for people. */
@@ -204,18 +209,17 @@ export default function UserDetailPage() {
                 </option>
               ))}
             </Select>
-            {canUsers && (
+            {canManage && (
               <div className="flex flex-wrap gap-2">
-                {canChangeStatus &&
-                  (member.status === 'active' ? (
-                    <Button variant="danger" onClick={() => void changeStatus('deactivated')}>
-                      {t('detail.deactivate')}
-                    </Button>
-                  ) : (
-                    <Button onClick={() => void changeStatus('active')}>
-                      {t('detail.reactivate')}
-                    </Button>
-                  ))}
+                {member.status === 'active' ? (
+                  <Button variant="danger" onClick={() => void changeStatus('deactivated')}>
+                    {t('detail.deactivate')}
+                  </Button>
+                ) : (
+                  <Button onClick={() => void changeStatus('active')}>
+                    {t('detail.reactivate')}
+                  </Button>
+                )}
                 <Button variant="secondary" onClick={() => setConfirmMfa(true)}>
                   {t('detail.resetMfa')}
                 </Button>
@@ -223,7 +227,7 @@ export default function UserDetailPage() {
             )}
           </div>
         </Card>
-        {canUsers && (
+        {canManage && (
           <Card header={t('detail.sessions')}>
             {sessions === null ? (
               <Spinner label={t('detail.loading')} />

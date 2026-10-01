@@ -32,23 +32,25 @@ domain) are left to the server and shown in its words.
 Groups: `users`, `audit`, `sso` (Admin by default), `billing` (Billing
 Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 `assign_roles`, `configure_permissions`, `transfer_ownership`,
-`delete_organization`. An Owner holds them all.
+`delete_organization`, `claim_domain`. An Owner holds them all.
 
 **Admin app** (sign-in admits Owner, Admin and Billing Admin)
 
 | control or route | backend check | UI gate |
 | --- | --- | --- |
 | Users nav, `/users` list | user `ListMemberships`: a member of the org | none (every role the app admits) |
-| Invite people, Import from a sheet (Users page, empty state) | identity `CreateInvite`: `users` and `MayManage(role, invitee)`; user `ImportUsers`, `ReadImportColumns`: `users`, each row's role `MayManage` | `mayInvite`: `can('users')` and a role that may hand one out |
-| `/users/invite`, `/users/import` | as above; `ListInvites`, resend, revoke: `users` (or the inviter) | route `permission: 'users'`; both pages refuse a role with no `assignableRoles` |
+| Invite people, Import from a sheet (Users page, empty state) | identity `CreateInvite`: `users` and `MayManage(role, invitee)`; user `ImportUsers`, `ReadImportColumns`: `users`, each row's role `MayManage` (a blank role is a User and checked too; a refused row is `failed`, `role_invalid`) | `mayInvite`: `can('users')` and a role that may hand one out; the invite role select and the import's role help name `assignableRoles` only; a refused row shows in the server's words |
+| `/users/invite`, `/users/import` | as above; `ListInvites`: `users` (or the inviter) | route `permission: 'users'`; both pages refuse a role with no `assignableRoles` |
+| Resend, Withdraw (each pending invite) | identity `ResendInvite`, `RevokeInvite`: `users` and `MayManage(role, invite's role)`, or the member who sent it | per row: `can('users')` and `mayManage(role, invite.role)`, or `invited_by_membership_id` is one's own |
 | `/users/:id` | user `GetMembership`: a member of the org | none |
 | Role select | authorization `SetRole`: `assign_roles` (Owner); not on oneself | `can('assign_roles')`, disabled on one's own membership and on a guest |
 | Deactivate, Reactivate | user `SetMembershipStatus`: `users` and `MayManage(role, target)` | `can('users')` and `mayManage(role, target)` |
-| Reset two-step sign-in | identity `ResetMemberMfa`: `users` | `can('users')` |
-| Sessions card, Sign out everywhere | identity `ListMemberSessions`, `RevokeMemberSessions`: `users` | `can('users')` |
+| Reset two-step sign-in | identity `ResetMemberMfa`: `users` and `MayManage(role, target)` (an Owner anyone, themselves included; an Admin not themselves) | `can('users')` and `mayManage(role, target)` |
+| Sessions card, Sign out everywhere | identity `ListMemberSessions`, `RevokeMemberSessions`: `users` and `MayManage(role, target)` | `can('users')` and `mayManage(role, target)`; the sessions are not asked for otherwise |
 | Activity card | audit `ListAuditEvents`: `audit` | `can('audit')` |
 | Audit log nav, `/audit`, export | audit list and export: `audit` | route `permission: 'audit'` |
-| Settings nav, `/settings`: general, domain claim and verify, session policy | organization `UpdateOrganization`, `GetDomain`, `SetDomain`, `VerifyDomain`, identity `SetSessionPolicy`: `settings` | route `permission: 'settings'` |
+| Settings nav, `/settings`: general, the domain claim (read), session policy | organization `UpdateOrganization`, `GetDomain`, identity `SetSessionPolicy`: `settings` | route `permission: 'settings'` |
+| Claim, Verify now (domain) | organization `SetDomain`, `VerifyDomain`: `claim_domain` (the Owner; or a platform operator) | `can('claim_domain')`; an Admin sees the claim and its record, no action |
 | Single sign-on nav, `/sso`: identity provider test, save | identity provider endpoints: `sso` | route `permission: 'sso'` |
 | Notification defaults | notification `SetOrgNotificationSettings`: `settings` and the Owner role | `role === 'owner'` |
 | Exports, Close organization | organization `CreateOrgExport`, `ListOrgExports`: `delete_organization` as Owner; `CloseOrganization`: `delete_organization` | `role === 'owner'` |
