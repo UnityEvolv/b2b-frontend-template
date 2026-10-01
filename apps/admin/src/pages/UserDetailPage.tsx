@@ -10,7 +10,7 @@ import {
   toast,
 } from '@unityevolv/unitykit'
 import type { audit, identity, user } from '@b2b-template/api'
-import { ORG_ROLES, useOrg, useSession } from '@b2b-template/ui-web'
+import { mayManage, ORG_ROLES, useOrg, useSession } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
@@ -31,7 +31,12 @@ export default function UserDetailPage() {
   const org = useOrg()
   // The log is for whoever holds the audit permission; for anyone else the
   // activity card is not shown rather than shown empty.
-  const canAudit = useSession().permissions.can('audit')
+  const { permissions } = useSession()
+  const canAudit = permissions.can('audit')
+  // Status, the second factor and sessions are the users permission's, as
+  // the user and identity services check it; roles are the Owner's alone.
+  const canUsers = permissions.can('users')
+  const canAssign = permissions.can('assign_roles')
   const [member, setMember] = useState<Membership | null>(null)
   const [sessions, setSessions] = useState<Session[] | null>(null)
   const [events, setEvents] = useState<Event[] | null>(null)
@@ -61,9 +66,11 @@ export default function UserDetailPage() {
       }
       setMember(data)
       const [s, e] = await Promise.all([
-        api.identity.GET('/v1/organizations/{org_id}/members/{user_id}/sessions', {
-          params: { path: { org_id: orgId, user_id: data.user.id } },
-        }),
+        canUsers
+          ? api.identity.GET('/v1/organizations/{org_id}/members/{user_id}/sessions', {
+              params: { path: { org_id: orgId, user_id: data.user.id } },
+            })
+          : { data: undefined },
         api.audit.GET('/v1/organizations/{org_id}/audit-events', {
           params: { path: { org_id: orgId }, query: { target_id: membershipId, limit: 20 } },
         }),
@@ -75,13 +82,15 @@ export default function UserDetailPage() {
     return () => {
       current = false
     }
-  }, [api, orgId, membershipId, version])
+  }, [api, orgId, membershipId, version, canUsers])
 
   if (!org) return <EmptyState icon="users" titleAs="h2" title={t('users.empty')} />
   if (missing) return <EmptyState icon="search" titleAs="h2" title={t('detail.missing')} />
   if (!member) return <Spinner block size="lg" label={t('detail.loading')} />
 
-  const isOwner = org.role === 'owner'
+  // The user service also asks whether this role may manage that one.
+  const canChangeStatus = canUsers && mayManage(org.role, member.role)
+  const self = member.id === org.membershipId
   const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' })
   /** The server's reason, in its own words; the codes are stable, the message is for people. */
   const refused = (err: { code?: string; message?: string } | undefined) => {
@@ -184,9 +193,9 @@ export default function UserDetailPage() {
           <div className="space-y-4">
             <Select
               label={t('users.columns.role')}
-              help={isOwner ? undefined : t('detail.ownerOnly')}
+              help={canAssign ? undefined : t('detail.ownerOnly')}
               value={member.role}
-              disabled={!isOwner || member.kind === 'guest'}
+              disabled={!canAssign || self || member.kind === 'guest'}
               onChange={(event) => void changeRole(event.target.value)}
             >
               {ORG_ROLES.map((r) => (
@@ -195,43 +204,48 @@ export default function UserDetailPage() {
                 </option>
               ))}
             </Select>
-            <div className="flex flex-wrap gap-2">
-              {member.status === 'active' ? (
-                <Button variant="danger" onClick={() => void changeStatus('deactivated')}>
-                  {t('detail.deactivate')}
+            {canUsers && (
+              <div className="flex flex-wrap gap-2">
+                {canChangeStatus &&
+                  (member.status === 'active' ? (
+                    <Button variant="danger" onClick={() => void changeStatus('deactivated')}>
+                      {t('detail.deactivate')}
+                    </Button>
+                  ) : (
+                    <Button onClick={() => void changeStatus('active')}>
+                      {t('detail.reactivate')}
+                    </Button>
+                  ))}
+                <Button variant="secondary" onClick={() => setConfirmMfa(true)}>
+                  {t('detail.resetMfa')}
                 </Button>
-              ) : (
-                <Button onClick={() => void changeStatus('active')}>
-                  {t('detail.reactivate')}
-                </Button>
-              )}
-              <Button variant="secondary" onClick={() => setConfirmMfa(true)}>
-                {t('detail.resetMfa')}
-              </Button>
-            </div>
+              </div>
+            )}
           </div>
         </Card>
-        <Card header={t('detail.sessions')}>
-          {sessions === null ? (
-            <Spinner label={t('detail.loading')} />
-          ) : sessions.length === 0 ? (
-            <p className="text-sm">{t('detail.noSessions')}</p>
-          ) : (
-            <div className="space-y-3">
-              <ul className="space-y-1 text-sm">
-                {sessions.map((s) => (
-                  <li key={s.session_id}>
-                    {s.user_agent ?? t('detail.unknownDevice')} ·{' '}
-                    {t('detail.lastSeen', { when: date.format(new Date(s.last_seen_at)) })}
-                  </li>
-                ))}
-              </ul>
-              <Button variant="secondary" onClick={() => void signOutEverywhere()}>
-                {t('detail.signOutEverywhere')}
-              </Button>
-            </div>
-          )}
-        </Card>
+        {canUsers && (
+          <Card header={t('detail.sessions')}>
+            {sessions === null ? (
+              <Spinner label={t('detail.loading')} />
+            ) : sessions.length === 0 ? (
+              <p className="text-sm">{t('detail.noSessions')}</p>
+            ) : (
+              <div className="space-y-3">
+                <ul className="space-y-1 text-sm">
+                  {sessions.map((s) => (
+                    <li key={s.session_id}>
+                      {s.user_agent ?? t('detail.unknownDevice')} ·{' '}
+                      {t('detail.lastSeen', { when: date.format(new Date(s.last_seen_at)) })}
+                    </li>
+                  ))}
+                </ul>
+                <Button variant="secondary" onClick={() => void signOutEverywhere()}>
+                  {t('detail.signOutEverywhere')}
+                </Button>
+              </div>
+            )}
+          </Card>
+        )}
         {canAudit && (
           <Card header={t('detail.activity')}>
             {events === null ? (

@@ -9,7 +9,7 @@ import {
   type TableSort,
 } from '@unityevolv/unitykit'
 import type { user } from '@b2b-template/api'
-import { MEMBERSHIP_STATUSES, ORG_ROLES, useOrg } from '@b2b-template/ui-web'
+import { mayInvite, MEMBERSHIP_STATUSES, ORG_ROLES, useOrg, useSession } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
@@ -26,6 +26,7 @@ const PAGE = 50
 export default function UsersPage() {
   const { t, i18n } = useTranslation('admin')
   const org = useOrg()
+  const { permissions } = useSession()
   const navigate = useNavigate()
   const [q, setQ] = useState('')
   const [query, setQuery] = useState('')
@@ -125,19 +126,24 @@ export default function UsersPage() {
   ]
 
   if (!org) return <EmptyState icon="users" titleAs="h2" title={t('users.empty')} />
+  // Anyone in the admin app may read the list; inviting and importing are
+  // the users permission's, and only for a role that may hand one out.
+  const invites = mayInvite(permissions, org.role)
 
   return (
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">{t('users.title')}</h1>
-        <div className="flex gap-2">
-          <Link to="/users/import" className="btn btn-ghost">
-            {t('users.import')}
-          </Link>
-          <Link to="/users/invite" className="btn btn-primary">
-            {t('users.invite')}
-          </Link>
-        </div>
+        {invites && (
+          <div className="flex gap-2">
+            <Link to="/users/import" className="btn btn-ghost">
+              {t('users.import')}
+            </Link>
+            <Link to="/users/invite" className="btn btn-primary">
+              {t('users.invite')}
+            </Link>
+          </div>
+        )}
       </div>
       <div className="mb-4 grid gap-3 sm:grid-cols-4">
         <Input
@@ -202,9 +208,11 @@ export default function UsersPage() {
             titleAs="h2"
             title={query || role || status || department ? t('users.noMatch') : t('users.onlyYou')}
             action={
-              <Link to="/users/invite" className="btn btn-primary">
-                {t('users.invite')}
-              </Link>
+              invites ? (
+                <Link to="/users/invite" className="btn btn-primary">
+                  {t('users.invite')}
+                </Link>
+              ) : undefined
             }
           />
         }

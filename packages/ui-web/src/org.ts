@@ -33,6 +33,28 @@ export function assignableRoles(role: string): string[] {
   return []
 }
 
+/**
+ * Whether a member holding `actor` may change one holding `target`
+ * (deactivate or reactivate them), as the backend's `authz.MayManage` rules
+ * it: an Owner anyone, an Admin Users and Guests, nobody else anyone. The
+ * users permission is asked separately, with `permissions.can('users')`.
+ */
+export function mayManage(actor: string, target: string): boolean {
+  if (actor === 'owner') return true
+  if (actor === 'admin') return target === 'user' || target === 'guest'
+  return false
+}
+
+/**
+ * Whether the signed-in member may invite or import people: the users
+ * permission, and a role that may hand out at least one role. A Billing
+ * Admin never may, even with the permission, since the identity service
+ * refuses every role they could name.
+ */
+export function mayInvite(permissions: { can(p: string): boolean }, role: string): boolean {
+  return permissions.can('users') && assignableRoles(role).length > 0
+}
+
 /** Every org role, highest first: the keys the pages translate. */
 export const ORG_ROLES = ['owner', 'admin', 'billing_admin', 'user', 'guest'] as const
 

@@ -102,6 +102,8 @@ export {
 /** The typed API and the org the session is in, for a page inside one org. */
 export {
   assignableRoles,
+  mayInvite,
+  mayManage,
   MEMBERSHIP_STATUSES,
   ORG_ROLES,
   PLATFORM_ORG,

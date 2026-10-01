@@ -9,7 +9,7 @@ import {
   type TableColumn,
 } from '@unityevolv/unitykit'
 import type { user } from '@b2b-template/api'
-import { useOrg } from '@b2b-template/ui-web'
+import { assignableRoles, useOrg } from '@b2b-template/ui-web'
 import { useRef, useState, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -51,6 +51,11 @@ export default function ImportUsersPage() {
   const [busy, setBusy] = useState(false)
 
   if (!org) return <Spinner block size="lg" label={t('import.loading')} />
+  // The route asks for the users permission; a role that may hand out no role
+  // (a Billing Admin granted it) is refused here as the invite page refuses it.
+  if (assignableRoles(org.role).length === 0) {
+    return <Alert variant="warn">{t('invite.notAllowed')}</Alert>
+  }
 
   /** The import, checked only on a dry run, sent otherwise. */
   const runImport = async (dryRun: boolean): Promise<Result | null> => {

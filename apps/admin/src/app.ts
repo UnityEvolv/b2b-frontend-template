@@ -119,10 +119,12 @@ export const definition: AppDefinition = {
     {
       path: '/users/invite',
       page: () => import('./pages/InviteUsersPage'),
+      permission: 'users',
     },
     {
       path: '/users/import',
       page: () => import('./pages/ImportUsersPage'),
+      permission: 'users',
     },
     {
       path: '/users/:membershipId',
