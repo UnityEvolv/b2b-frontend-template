@@ -48,6 +48,31 @@ export interface paths {
     patch: operations['updateOrganization']
     trace?: never
   }
+  '/v1/plans': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * The plan catalogue, for the plans and billing pages to render
+     * @description Every band registered in this deployment, the template's or the
+     *     product's, lowest first, with its label, whether it is contractual,
+     *     its cap on every registered limit (0 means no cap) and the gated
+     *     features it includes; and every registered limit and feature with
+     *     its label. The same for every org; any signed-in caller may read it.
+     *     Read from the registry at the moment of the request, never cached.
+     */
+    get: operations['listPlans']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/v1/organizations/{org_id}/plan': {
     parameters: {
       query?: never
@@ -55,7 +80,17 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    get?: never
+    /**
+     * The org's plan, what it allows, and what the org uses now (its members, platform operators)
+     * @description The band the org is on, with its label, whether it is contractual,
+     *     its cap on every registered limit (0 means no cap) and the gated
+     *     features it includes, and the org's current usage of the limits the
+     *     template counts itself (users: active members). A product's own
+     *     limits have no usage here; the product counts them. Everything is
+     *     read at the moment of the request, never cached; the gate is the
+     *     action itself, which reads the plan again.
+     */
+    get: operations['getOrganizationPlan']
     /**
      * Move the organization to another plan (platform operators, until billing)
      * @description Audited on the org. A downgrade closes doors going forward and never
@@ -476,6 +511,55 @@ export interface components {
       /** @description The gated features this plan includes. Everything not gated is on every plan. */
       features: string[]
     }
+    PlanCatalogue: {
+      /** @description Every registered band, lowest first. */
+      bands: components['schemas']['PlanBand'][]
+      /** @description Every registered limit, in registration order (users first). */
+      limits: components['schemas']['PlanLimitInfo'][]
+      /** @description Every gated feature, in registration order. Anything not listed is on every plan. */
+      features: components['schemas']['PlanFeatureInfo'][]
+    }
+    PlanBand: {
+      name: components['schemas']['Plan']
+      /** @description What a page calls the band, such as Team. */
+      label: string
+      /** @description Sold by contract rather than self-serve; billing never moves an organization into or out of it. */
+      contractual: boolean
+      /** @description Every registered limit's cap on this band, by key. 0 means no cap. */
+      limits: {
+        [key: string]: number
+      }
+      /** @description The gated features this band includes, by key. */
+      features: string[]
+    }
+    PlanLimitInfo: {
+      key: string
+      /** @description The plural noun a message uses, such as users. */
+      label: string
+    }
+    PlanFeatureInfo: {
+      key: string
+      /** @description What a message calls it, such as SCIM provisioning. */
+      label: string
+    }
+    OrganizationPlan: {
+      /** Format: uuid */
+      org_id: string
+      plan: components['schemas']['Plan']
+      /** @description The band's label. */
+      label: string
+      contractual: boolean
+      /** @description Every registered limit's cap on this plan, by key. 0 means no cap. */
+      limits: {
+        [key: string]: number
+      }
+      /** @description The gated features this plan includes, by key. */
+      features: string[]
+      /** @description What the org uses now of each limit the template counts, by key (users, its active members). A product's own limits are absent; the product counts them. */
+      usage: {
+        [key: string]: number
+      }
+    }
     PlanChange: {
       from: components['schemas']['Plan']
       to: components['schemas']['Plan']
@@ -800,6 +884,54 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
+      default: components['responses']['Error']
+    }
+  }
+  listPlans: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The catalogue */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PlanCatalogue']
+        }
+      }
+      401: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  getOrganizationPlan: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The plan and the usage */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OrganizationPlan']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
       default: components['responses']['Error']
     }
   }

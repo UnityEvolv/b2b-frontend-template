@@ -371,6 +371,10 @@ export interface components {
       id: string
       category: components['schemas']['Category']
       kind: string
+      /** @description The entry in words, as its push and email say it, from the category's copy for the kind and the entry's data (a batch's heading counts it). Never a preview. */
+      heading: string
+      /** @description The sentence under the heading, from the same copy. May be empty. */
+      line: string
       /** @description What the entry is about, for the app to put into words. */
       data: {
         [key: string]: unknown

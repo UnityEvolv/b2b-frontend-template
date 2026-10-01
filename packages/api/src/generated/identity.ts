@@ -1347,7 +1347,7 @@ export interface components {
       /** @description `discovery`, `issuer`, `keys` or `client`. */
       check: string
       ok: boolean
-      /** @description When it failed, the input to fix (issuer, tenant_id, client_id, client_secret). */
+      /** @description When it failed, the input to fix (issuer, tenant_id, client_id, client_secret). Absent when no input explains it, such as Google being unreachable. */
       field?: string
       /** @description A sentence for the admin. Never a secret or a token. */
       message: string

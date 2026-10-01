@@ -17,6 +17,8 @@ const entry = (category: string, data: Record<string, unknown> = {}): FeedEntry 
   id: 'e-1',
   category,
   kind: 'updated',
+  heading: '',
+  line: '',
   data,
   link: '/',
   count: 1,

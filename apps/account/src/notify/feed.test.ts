@@ -7,6 +7,8 @@ const entry = (id: string, read: boolean, link = '/settings/notifications'): Ent
     id,
     category: 'security',
     kind: 'new_sign_in',
+    heading: 'New sign-in',
+    line: '',
     data: {},
     link,
     count: 1,

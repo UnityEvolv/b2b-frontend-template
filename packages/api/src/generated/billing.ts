@@ -297,6 +297,15 @@ export interface components {
       /** @description 0 means no cap. */
       users_cap: number
       next_band?: components['schemas']['Band']
+      /**
+       * @description Every band the billing page may offer, lowest first: the lowest
+       *     band, which has no price (a move to it is a downgrade at the
+       *     period's end, or the end of a trial), then every self-serve band.
+       *     Contractual bands are never listed. Labels and what each allows are
+       *     at the organization service's GET /v1/plans.
+       */
+      bands: components['schemas']['Band'][]
+      /** @description The price of each band the payment provider sells, by band. A band in bands with no entry here costs nothing. */
       prices: {
         [key: string]: components['schemas']['Price']
       }
