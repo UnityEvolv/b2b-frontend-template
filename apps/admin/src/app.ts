@@ -123,6 +123,12 @@ export const definition: AppDefinition = {
       nav: { key: 'api-keys', icon: 'external-link', label: (t) => t('admin:nav.apiKeys') },
     },
     {
+      path: '/webhooks',
+      page: () => import('./webhooks/WebhooksPage'),
+      permission: 'webhooks',
+      nav: { key: 'webhooks', icon: 'share', label: (t) => t('admin:nav.webhooks') },
+    },
+    {
       path: '/roles',
       page: () => import('./pages/RolesPage'),
       permission: 'configure_permissions',
