@@ -42,18 +42,6 @@ export const ALLOWED = new Set([
   'Zlib',
 ])
 
-/**
- * Packages allowed despite a licence not on the list, each with the reason.
- * Matched by name, so every platform build of a package is covered.
- */
-export const EXCEPTIONS = new Map([
-  [
-    /^@sentry\/cli(-[a-z0-9-]+)?$/,
-    'FSL-1.1-MIT: a build-time tool that uploads source maps, never shipped in an app. ' +
-      'It permits any use except offering a competing product, and becomes MIT two years after each release.',
-  ],
-])
-
 /** Refused by name: the original product's engine, AGPL for its UI and realtime parts. */
 export const FORBIDDEN_NAME = /^@unityevolv\/ofiskit(-|$)/
 
@@ -113,7 +101,6 @@ function nameOf(key, entry) {
 /** Problems with a parsed package-lock.json (v2 or v3), as sentences. */
 export function checkLockfile(lock) {
   const problems = []
-  const accepted = []
   for (const [key, entry] of Object.entries(lock.packages ?? {})) {
     const requested = Object.keys({
       ...entry.dependencies,
@@ -135,28 +122,22 @@ export function checkLockfile(lock) {
     }
     const licence = entry.license
     if (acceptable(licence)) continue
-    const exception = [...EXCEPTIONS].find(([pattern]) => pattern.test(name))
-    if (exception) {
-      accepted.push(`${name} (${licence})`)
-      continue
-    }
     const what =
       typeof licence === 'string' && REFUSED.test(licence.replace(/LGPL/gi, ''))
         ? 'a copyleft licence the template cannot carry'
         : 'a licence this check does not recognise'
     problems.push(`${key}: ${JSON.stringify(licence ?? null)} is ${what}.`)
   }
-  return { problems, accepted }
+  return { problems }
 }
 
 async function main() {
   const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
   const lock = JSON.parse(await readFile(join(root, 'package-lock.json'), 'utf8'))
-  const { problems, accepted } = checkLockfile(lock)
+  const { problems } = checkLockfile(lock)
   const count = Object.keys(lock.packages ?? {}).filter((key) =>
     key.includes('node_modules/'),
   ).length
-  if (accepted.length > 0) console.log(`Allowed by a named exception: ${accepted.join(', ')}`)
   for (const problem of problems) console.error(problem)
   if (problems.length > 0) {
     console.error(`${problems.length} package(s) fail the licence check.`)

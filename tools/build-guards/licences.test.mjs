@@ -76,12 +76,4 @@ describe('checkLockfile', () => {
       'node_modules/@unityevolv/ofiskit-realtime-client: @unityevolv/ofiskit-realtime-client is refused by name.',
     ])
   })
-
-  it('allows a named exception and reports it', () => {
-    const { problems, accepted } = checkLockfile(
-      lock({ 'node_modules/@sentry/cli-linux-x64': { license: 'FSL-1.1-MIT' } }),
-    )
-    expect(problems).toEqual([])
-    expect(accepted).toEqual(['@sentry/cli-linux-x64 (FSL-1.1-MIT)'])
-  })
 })

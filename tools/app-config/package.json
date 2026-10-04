@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@b2b-template/product-config": "0.0.0",
-    "@sentry/vite-plugin": "5.4.0",
     "@tailwindcss/vite": "^4.1.0",
     "@vitejs/plugin-react": "^5.0.0",
     "tailwindcss": "^4.1.0",

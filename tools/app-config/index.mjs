@@ -4,7 +4,6 @@
  * One place for the build rules, so a new one reaches account, admin and platform
  * together and none of them can quietly miss it.
  */
-import { sentryVitePlugin } from '@sentry/vite-plugin'
 import tailwind from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { PRODUCT } from '@b2b-template/product-config'
@@ -49,29 +48,6 @@ function productName() {
 }
 
 /**
- * Upload source maps to Sentry when the build has a token and names the
- * Sentry organization and project (SENTRY_AUTH_TOKEN, SENTRY_ORG,
- * SENTRY_PROJECT), so a browser stack trace shows the file and line rather
- * than a minified bundle. The maps are deleted from the build after upload;
- * they never ship to users. Without them (a laptop, CI), nothing happens.
- */
-function sourceMapsToSentry() {
-  const token = process.env.SENTRY_AUTH_TOKEN
-  const org = process.env.SENTRY_ORG
-  const project = process.env.SENTRY_PROJECT
-  if (!token || !org || !project) return []
-  return [
-    sentryVitePlugin({
-      org,
-      project,
-      authToken: token,
-      telemetry: false,
-      sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
-    }),
-  ]
-}
-
-/**
  * @param {{ port: number }} options Each app gets its own dev port, so all three run at once.
  */
 export function defineAppConfig({ port }) {
@@ -86,8 +62,7 @@ export function defineAppConfig({ port }) {
     product: PRODUCT_SECURITY,
   })
   return defineConfig(({ command }) => ({
-    plugins: [react(), tailwind(), productName(), firstPaintTheme(), ...sourceMapsToSentry()],
-    build: { sourcemap: true },
+    plugins: [react(), tailwind(), productName(), firstPaintTheme()],
     ...(command === 'serve' ? { html: { cspNonce: DEV_NONCE } } : {}),
     server: { port, strictPort: true, headers },
     preview: { port, strictPort: true, headers },

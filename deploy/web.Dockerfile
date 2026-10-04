@@ -11,10 +11,6 @@ ARG VITE_RELEASE=
 ARG VITE_SENTRY_DSN=
 ARG VITE_RECAPTCHA_SITE_KEY=
 ARG VITE_API_ORIGIN=
-# Where source maps are uploaded, when the build is given a token as the
-# secret sentry_auth_token; without all three, nothing is uploaded.
-ARG SENTRY_ORG=
-ARG SENTRY_PROJECT=
 WORKDIR /src
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY apps ./apps
@@ -22,11 +18,8 @@ COPY packages ./packages
 COPY tools ./tools
 COPY deploy/web/headers.json ./deploy/web/headers.json
 RUN npm ci --no-audit --no-fund
-RUN --mount=type=secret,id=sentry_auth_token,required=false \
-  test -n "${APP}" \
-  && SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
-     SENTRY_ORG="${SENTRY_ORG}" SENTRY_PROJECT="${SENTRY_PROJECT}" \
-     VITE_RELEASE="${VITE_RELEASE}" VITE_SENTRY_DSN="${VITE_SENTRY_DSN}" VITE_RECAPTCHA_SITE_KEY="${VITE_RECAPTCHA_SITE_KEY}" VITE_API_ORIGIN="${VITE_API_ORIGIN}" \
+RUN test -n "${APP}" \
+  && VITE_RELEASE="${VITE_RELEASE}" VITE_SENTRY_DSN="${VITE_SENTRY_DSN}" VITE_RECAPTCHA_SITE_KEY="${VITE_RECAPTCHA_SITE_KEY}" VITE_API_ORIGIN="${VITE_API_ORIGIN}" \
      npm run build -w "@b2b-template/app-${APP}" \
   && node tools/app-config/generate-nginx-headers.mjs > /src/headers.conf
 

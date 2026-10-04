@@ -218,9 +218,7 @@ pages need. Nothing else in the code names it. See
 
 `tools/app-config` is the one Vite configuration every web app uses
 (`defineAppConfig({ port })`): React, Tailwind, the product's name in each
-`index.html` title, the first-paint theme script, source maps uploaded to
-Sentry when `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and `SENTRY_PROJECT` are set,
-and the security headers, report-only in development. `deploy/web.Dockerfile`
+`index.html` title, the first-paint theme script, and the security headers, report-only in development. `deploy/web.Dockerfile`
 builds one app (`--build-arg APP=account`) into an nginx image that sends the
 generated headers ([deploy/web/README.md](../deploy/web/README.md),
 [security.md](security.md)).

@@ -30,11 +30,9 @@ docker run --rm -p 8080:8080 -e API_ORIGIN=https://api.example web-account
   is seen on the next load. Every client-side route serves the index.
 - `/healthz` answers for the load balancer. nginx runs as its own user on 8080.
 - `VITE_RELEASE`, `VITE_SENTRY_DSN`, `VITE_RECAPTCHA_SITE_KEY` and
-  `VITE_API_ORIGIN` are build arguments. Source maps go to Sentry when the
-  build has `SENTRY_ORG` and `SENTRY_PROJECT` build arguments and a token as
-  the secret `sentry_auth_token`
-  (`--secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN`); without them
-  nothing is uploaded.
+  `VITE_API_ORIGIN` are build arguments. The build makes no source maps and
+  uploads none, so a stack trace in Sentry is minified
+  ([security.md](../../docs/security.md)).
 
 ## Optional: a per-page policy hook
 

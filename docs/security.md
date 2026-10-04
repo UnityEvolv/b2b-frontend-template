@@ -204,9 +204,13 @@ on its own `main` ([CONTRIBUTING.md](../CONTRIBUTING.md#ci-on-a-public-repositor
 
 - **No secret in a web build.** Only public values are build variables
   (`VITE_API_ORIGIN`, `VITE_SENTRY_DSN`, `VITE_RECAPTCHA_SITE_KEY`,
-  `VITE_RELEASE`). The Sentry token that uploads source maps is a BuildKit
-  secret, never in an image, and the maps are deleted from the build after
-  upload.
+  `VITE_RELEASE`). The build makes no source maps and uploads none, so no
+  token is needed and none reaches an image. A stack trace in Sentry is
+  therefore minified, unless a product adds its own upload step (hidden
+  maps, a token passed as a BuildKit secret, the maps deleted before the
+  image is made) and clears the uploader's licence with
+  `tools/build-guards/licences.mjs`: Sentry's CLI is FSL-1.1-MIT, which the
+  template does not carry.
 - **Only ids to error tracking:** never names, email addresses or content.
 - **Public forms** (signup, forgot password, invite acceptance) carry a
   CAPTCHA token when a site key is configured; the backend verifies it.
