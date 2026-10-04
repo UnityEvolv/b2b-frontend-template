@@ -137,7 +137,9 @@ The frontend has no list of them. It asks:
 | page | reads | from |
 | --- | --- | --- |
 | admin: Roles | the permission groups and their labels, and which role holds which | `GET /authorization/v1/permission-groups`, `.../organizations/{org_id}/permissions` |
-| admin: Billing, platform: an organization's plan | the plan bands, limits and features with their labels; the org's plan and current usage | `usePlanCatalogue` (`GET /organization/v1/plans`), `useOrganizationPlan` (`GET .../organizations/{org_id}/plan`) |
+| admin: Billing, platform: an organization's plan | the plan bands, limits and features with their labels; the org's plan, the overrides in force and current usage | `usePlanCatalogue` (`GET /organization/v1/plans`), `useOrganizationPlan` (`GET .../organizations/{org_id}/plan`) |
+| platform: an organization's overrides | the limits and features an override can be set on, from the catalogue | `usePlanCatalogue`, `GET .../organizations/{org_id}/plan-overrides` |
+| admin: API keys, account: access tokens | the permission groups a key can be given, less `api_keys`, `settings` and the Owner-only ones | `GET /authorization/v1/permission-groups` ([api-keys.md](api-keys.md)) |
 | account: notification preferences, the bell, the phone's feed | the notification categories and their channels; each feed entry's heading and line, worded by the server | `useNotificationCategories` (`GET /notification/v1/notification-categories`), the feed |
 
 Each is read when the page opens, and again after a change; nothing is kept

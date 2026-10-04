@@ -111,6 +111,19 @@ export {
   type OrgContext,
 } from './org'
 
+/** API keys and personal access tokens: the list, making one (its token shown once) and revoking. */
+export {
+  ApiKeysPanel,
+  grantableGroups,
+  keyState,
+  NEVER_GRANTED,
+  newKeyRequest,
+  type ApiKey,
+  type ApiKeyKind,
+  type NewKeyError,
+  type NewKeyForm,
+} from './api-keys'
+
 /** The notification categories the deployment registers, for the preferences grids. */
 export {
   channelsIn,
@@ -127,11 +140,14 @@ export {
   bandLabel,
   planFeatures,
   planLimits,
+  planOverride,
   sentenceCase,
   useOrganizationPlan,
   usePlanCatalogue,
+  withdrawnFeatures,
   type OrganizationPlan,
   type PlanBand,
   type PlanCatalogue,
   type PlanLimitRow,
+  type PlanOverride,
 } from '@b2b-template/client'

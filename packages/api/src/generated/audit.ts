@@ -137,7 +137,7 @@ export interface components {
       /** Format: uuid */
       org_id: string
       /**
-       * @description membership:<uuid>, user:<uuid> or system:<service>. Never a name or an email.
+       * @description membership:<uuid>, user:<uuid>, api_key:<uuid> (an org's API key) or system:<service>. Never a name or an email.
        * @example membership:01922b5e-0000-7000-8000-0000000000c1
        */
       actor: string

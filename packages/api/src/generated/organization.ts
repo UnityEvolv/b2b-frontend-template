@@ -82,13 +82,16 @@ export interface paths {
     }
     /**
      * The org's plan, what it allows, and what the org uses now (its members, platform operators)
-     * @description The band the org is on, with its label, whether it is contractual,
-     *     its cap on every registered limit (0 means no cap) and the gated
-     *     features it includes, and the org's current usage of the limits the
-     *     template counts itself (users: active members). A product's own
-     *     limits have no usage here; the product counts them. Everything is
-     *     read at the moment of the request, never cached; the gate is the
-     *     action itself, which reads the plan again.
+     * @description The band the org is on, with its label and whether it is
+     *     contractual; the effective cap on every registered limit (0 means no
+     *     cap) and the gated features on for the org, which is the band with
+     *     the org's overrides in force applied; those overrides, each with its
+     *     end, so the page marks what is the organization's agreement; and the
+     *     org's current usage of the limits the template counts itself (users:
+     *     active members). A product's own limits have no usage here; the
+     *     product counts them. Everything is read at the moment of the
+     *     request, never cached; the gate is the action itself, which reads
+     *     the plan again.
      */
     get: operations['getOrganizationPlan']
     /**
@@ -265,6 +268,59 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/organizations/{org_id}/plan-overrides': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Every override set for the organization, in force or ended (platform operators)
+     * @description A platform operator's exceptions to the org's band, for an
+     *     enterprise deal: a limit's cap raised or lowered, a feature granted
+     *     or taken away, each with an optional end. One past its end has
+     *     stopped applying and is listed with in_force false until it is
+     *     removed or set again; nothing sweeps it.
+     */
+    get: operations['listPlanOverrides']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/plan-overrides/{kind}/{key}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    /**
+     * Set the organization's override of one limit or feature (platform operators)
+     * @description Replaces any override of the same limit or feature. The key must be
+     *     a registered limit (with cap) or feature (with allowed). Checked at
+     *     the moment of every action like the band itself: the band's value
+     *     first, then this. Audited on the org as
+     *     organization.plan.override_set, which the org's audit log shows.
+     */
+    put: operations['setPlanOverride']
+    post?: never
+    /**
+     * Remove the organization's override of one limit or feature (platform operators)
+     * @description The band's value applies again from the next action. Audited on the
+     *     org as organization.plan.override_removed.
+     */
+    delete: operations['removePlanOverride']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/v1/signups': {
     parameters: {
       query?: never
@@ -410,9 +466,10 @@ export interface paths {
     }
     /**
      * The org's plan and its limits, for a service gating an action (services only)
-     * @description Read at the moment of the action, never cached. The limits are the
-     *     platform's table for the band, so a service can refuse with a message
-     *     that names the plan and the next one up.
+     * @description Read at the moment of the action, never cached. The band, what the
+     *     org may do with its overrides in force applied, and those overrides,
+     *     so a service checks the band's value then the override, and refuses
+     *     with a message that names the plan and the next one up.
      */
     get: operations['getPlan']
     /**
@@ -508,12 +565,49 @@ export interface components {
       plan: components['schemas']['Plan']
       /** @description Sold by contract rather than self-serve; billing never moves an organization into or out of it. */
       contractual: boolean
-      /** @description Every registered limit and its cap on this plan, by key (users is the one every deployment has). 0 means no cap in the product. */
+      /** @description Every registered limit and its effective cap for this org, by key (users is the one every deployment has), its override's where one is in force, else the band's. 0 means no cap in the product. */
       limits: {
         [key: string]: number
       }
-      /** @description The gated features this plan includes. Everything not gated is on every plan. */
+      /** @description The gated features on for this org, the band's with its overrides applied. Everything not gated is on every plan. */
       features: string[]
+      /**
+       * @description The org's overrides in force now, which limits and features
+       *     already include. A gate checks the band's value first, then
+       *     these.
+       */
+      overrides: components['schemas']['PlanOverride'][]
+    }
+    PlanOverride: {
+      /** @enum {string} */
+      kind: 'limit' | 'feature'
+      /** @description The registered limit's or feature's key. */
+      key: string
+      /** @description For a limit, the cap that replaces the band's. 0 means no cap. */
+      cap?: number
+      /** @description For a feature, whether it is granted (true) or taken away (false), whatever the band says. */
+      allowed?: boolean
+      /**
+       * Format: date-time
+       * @description When the override stops applying; absent or null is never.
+       */
+      ends_at?: string | null
+      /** @description Whether it applies now. One past its end has stopped. */
+      in_force: boolean
+    }
+    PlanOverrideInput: {
+      /** @description For a limit, the cap. 0 lifts it. */
+      cap?: number
+      /** @description For a feature, grant (true) or take away (false). */
+      allowed?: boolean
+      /**
+       * Format: date-time
+       * @description When it stops applying, in the future; absent or null is never.
+       */
+      ends_at?: string | null
+    }
+    PlanOverrideList: {
+      overrides: components['schemas']['PlanOverride'][]
     }
     PlanCatalogue: {
       /** @description Every registered band, lowest first. */
@@ -553,12 +647,14 @@ export interface components {
       /** @description The band's label. */
       label: string
       contractual: boolean
-      /** @description Every registered limit's cap on this plan, by key. 0 means no cap. */
+      /** @description Every registered limit's effective cap for this org, by key, its override's where it has one in force, else the band's. 0 means no cap. */
       limits: {
         [key: string]: number
       }
-      /** @description The gated features this plan includes, by key. */
+      /** @description The gated features on for this org, by key, the band's with its overrides applied. */
       features: string[]
+      /** @description The overrides in force now, limits first, each by key, with its end. The billing page marks these limits and features as the organization's agreement; the band's own values are in the catalogue. */
+      overrides: components['schemas']['PlanOverride'][]
       /** @description What the org uses now of each limit the template counts, by key (users, its active members). A product's own limits are absent; the product counts them. */
       usage: {
         [key: string]: number
@@ -737,6 +833,9 @@ export interface components {
      */
     IdempotencyKey: string
     OrgId: string
+    OverrideKind: 'limit' | 'feature'
+    /** @description A registered limit's or feature's key, validated against the plan registry. */
+    OverrideKey: string
   }
   requestBodies: never
   headers: never
@@ -1297,6 +1396,93 @@ export interface operations {
         }
       }
       400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  listPlanOverrides: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The overrides, limits first, each by key */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PlanOverrideList']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  setPlanOverride: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        kind: components['parameters']['OverrideKind']
+        /** @description A registered limit's or feature's key, validated against the plan registry. */
+        key: components['parameters']['OverrideKey']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PlanOverrideInput']
+      }
+    }
+    responses: {
+      /** @description The override as it now stands */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PlanOverride']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  removePlanOverride: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        kind: components['parameters']['OverrideKind']
+        /** @description A registered limit's or feature's key, validated against the plan registry. */
+        key: components['parameters']['OverrideKey']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Removed */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
       401: components['responses']['Error']
       403: components['responses']['Error']
       404: components['responses']['Error']

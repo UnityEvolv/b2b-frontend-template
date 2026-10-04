@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { bandLabel, planFeatures, planLimits, type PlanCatalogue } from './plans'
+import {
+  bandLabel,
+  planFeatures,
+  planLimits,
+  planOverride,
+  withdrawnFeatures,
+  type PlanCatalogue,
+} from './plans'
 
 const catalogue: PlanCatalogue = {
   bands: [
@@ -55,5 +62,28 @@ describe('the plan catalogue', () => {
       { key: 'gantt', label: 'Gantt charts' },
     ])
     expect(planFeatures({ features: ['beta'] }, null)).toEqual([{ key: 'beta', label: 'beta' }])
+  })
+})
+
+describe('overrides', () => {
+  const plan = {
+    overrides: [
+      { kind: 'limit' as const, key: 'users', cap: 75, in_force: true },
+      { kind: 'feature' as const, key: 'gantt', allowed: false, in_force: true },
+      { kind: 'feature' as const, key: 'scim', allowed: false, in_force: false },
+    ],
+  }
+
+  it('finds the one in force for a limit or feature, never an ended one', () => {
+    expect(planOverride(plan, 'limit', 'users')?.cap).toBe(75)
+    expect(planOverride(plan, 'feature', 'users')).toBeUndefined()
+    expect(planOverride(plan, 'feature', 'scim')).toBeUndefined()
+    expect(planOverride({}, 'limit', 'users')).toBeUndefined()
+  })
+
+  it('names the features taken away, by the catalogue’s label', () => {
+    expect(withdrawnFeatures(plan, catalogue).map((f) => [f.key, f.label])).toEqual([
+      ['gantt', 'Gantt charts'],
+    ])
   })
 })

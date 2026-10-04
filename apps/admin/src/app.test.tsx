@@ -92,4 +92,22 @@ describe('the admin app’s routes', () => {
     ).toBeTruthy()
     expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull()
   })
+
+  // The identity service asks for api_keys alone: not settings, not users.
+  it('opens API keys to whoever holds api_keys, and lists it in the nav', async () => {
+    visit('/api-keys', ['api_keys'])
+    expect(
+      await screen.findByRole('heading', { name: '/api-keys' }, { timeout: 5000 }),
+    ).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'API keys' })).toBeTruthy()
+  })
+
+  it('refuses API keys to settings and users without api_keys, and leaves it out of the nav', async () => {
+    visit('/api-keys', ['settings', 'users', 'billing'])
+    expect(
+      await screen.findByText('You do not have access to this page', {}, { timeout: 5000 }),
+    ).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: '/api-keys' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'API keys' })).toBeNull()
+  })
 })

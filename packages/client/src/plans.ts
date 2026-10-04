@@ -6,6 +6,7 @@ type Schemas = organization.components['schemas']
 export type PlanCatalogue = Schemas['PlanCatalogue']
 export type PlanBand = Schemas['PlanBand']
 export type OrganizationPlan = Schemas['OrganizationPlan']
+export type PlanOverride = Schemas['PlanOverride']
 
 /** One limit of a plan as a page lists it: its label, its cap and, when counted, the usage. */
 export interface PlanLimitRow {
@@ -93,6 +94,38 @@ export function planLimits(
       ...(used === undefined ? {} : { used }),
     }
   })
+}
+
+/**
+ * The org's override in force of one limit or feature, set by a platform
+ * operator for its agreement, if it has one. The plan's limits and features
+ * already include it; a page marks the value as the agreement's.
+ */
+export function planOverride(
+  plan: { overrides?: OrganizationPlan['overrides'] },
+  kind: PlanOverride['kind'],
+  key: string,
+): PlanOverride | undefined {
+  return plan.overrides?.find((o) => o.kind === kind && o.key === key && o.in_force)
+}
+
+/**
+ * The features an override takes away from the org, with the catalogue's
+ * labels: the plan no longer lists them, so a page that marks agreements
+ * names them itself.
+ */
+export function withdrawnFeatures(
+  plan: { overrides?: OrganizationPlan['overrides'] },
+  catalogue: PlanCatalogue | null,
+): { key: string; label: string; override: PlanOverride }[] {
+  return (plan.overrides ?? [])
+    .filter((o) => o.kind === 'feature' && o.allowed === false && o.in_force)
+    .map((o) => ({
+      key: o.key,
+      label:
+        catalogue?.features.find((f) => f.key === o.key)?.label || humanizeKey(o.key).toLowerCase(),
+      override: o,
+    }))
 }
 
 /** The gated features a plan includes, with the catalogue's labels, in its order. */

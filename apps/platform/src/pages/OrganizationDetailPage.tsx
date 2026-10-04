@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 
 import { planChoices, type Plan } from './organizations'
+import { PlanOverrides } from './PlanOverrides'
 
 type Organization = organization.components['schemas']['Organization']
 type PlanChange = organization.components['schemas']['PlanChange']
@@ -53,7 +54,8 @@ const AUDIT_MONTHS = [13, 24, 36, 60, 84]
  * it is, its plan and status, and a read-only support view of its people
  * and recent activity. Reading it writes a support entry to the org's own
  * audit log (the organization service does that), so the customer sees
- * that staff looked. Plan and suspension are the only changes made here.
+ * that staff looked. The plan, its overrides, retention and the status are
+ * the only changes made here.
  */
 export default function OrganizationDetailPage() {
   const { t, i18n } = useTranslation('platform')
@@ -348,6 +350,8 @@ export default function OrganizationDetailPage() {
               </div>
             )}
           </Card>
+
+          <PlanOverrides api={api} orgId={org.org_id} catalogue={catalogue} onChanged={reload} />
 
           <Card header={t('detail.status')}>
             {org.status === 'closing' ? (

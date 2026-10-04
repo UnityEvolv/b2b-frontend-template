@@ -29,7 +29,7 @@ or the app's sign-in (`roles`, `orgs`). Refusals that depend on data rather
 than on who is asking (the last Owner, the plan's cap or features, a taken
 domain) are left to the server and shown in its words.
 
-Groups: `users`, `audit`, `sso` (Admin by default), `billing` (Billing
+Groups: `users`, `audit`, `sso`, `api_keys` (Admin by default), `billing` (Billing
 Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 `assign_roles`, `configure_permissions`, `transfer_ownership`,
 `delete_organization`, `claim_domain`. An Owner holds them all.
@@ -54,9 +54,10 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | Single sign-on nav, `/sso`: identity provider test, save | identity provider endpoints: `sso` | route `permission: 'sso'` |
 | Notification defaults | notification `SetOrgNotificationSettings`: `settings` and the Owner role | `role === 'owner'` |
 | Exports, Close organization | organization `CreateOrgExport`, `ListOrgExports`: `delete_organization` as Owner; `CloseOrganization`: `delete_organization` | `role === 'owner'` |
-| Billing nav, `/billing`: card, band, trial, cancel pending; the banner | billing `StartSetup`, `ChangeBand`, `StartTrial`, `CancelPending`: `billing` | route `permission: 'billing'`; banner `can('billing')`; with `provider_configured` false (`StartSetup` and priced bands answer 503) no card, automatic upgrade or priced band, only the trial and the lowest band |
+| Billing nav, `/billing`: card, band, trial, cancel pending; the banner; limits and features set by agreement (an override) marked with their end | billing `StartSetup`, `ChangeBand`, `StartTrial`, `CancelPending`: `billing` | route `permission: 'billing'`; banner `can('billing')`; with `provider_configured` false (`StartSetup` and priced bands answer 503) no card, automatic upgrade or priced band, only the trial and the lowest band |
 | Automatic upgrade toggle | billing `SetAutoUpgrade`: `billing` and the Owner role | `can_manage_auto_upgrade` from the billing service |
 | SCIM nav, `/scim`: tokens, halt | user SCIM admin: `settings`, and a plan with SCIM to change anything | route `permission: 'settings'`; buttons need `available` |
+| API keys nav, `/api-keys`: list, create, revoke | identity `ListApiKeys`, `CreateApiKey`, `RevokeApiKey`: `api_keys`; each group granted must be one the maker holds, never `api_keys`, `settings` or Owner-only; the plan must include `api_access` | route `permission: 'api_keys'`; the groups offered are the registry's the viewer `can`, less `api_keys`, `settings` and `owner_only`; a plan refusal (`plan.limit_reached`) is shown, with a link to `/billing` for `can('billing')` |
 | Roles nav, `/roles`: permission matrix, ownership transfer | authorization `SetPermissions`: `configure_permissions`; `RequestOwnershipTransfer`, cancel: the Owner | route `permission: 'configure_permissions'` |
 | `/settings/security` (own second factor) | identity: the caller's own | signed in |
 
@@ -67,6 +68,7 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | Organizations nav, `/organizations`, `/organizations/:id` | organization `ListOrganizations`, and reads: platform operator | app `orgs: [PLATFORM_ORG]` |
 | `/organizations/new` (create, invite the Owner) | organization `CreateOrganization`: platform; identity `CreateInvite`: platform | app `orgs` |
 | Plan, status (suspend, reactivate), close, retention | organization `ChangePlan`, `SetOrganizationStatus`, `CloseOrganization`, `SetRetention`: platform | app `orgs`; retention only on a contractual plan |
+| Overrides: list, add, edit, remove | organization `ListPlanOverrides`, `SetPlanOverride`, `RemovePlanOverride`: platform; the key must be registered, an end in the future | app `orgs`; limits and features picked from the plan catalogue, never typed |
 
 **Account app** (any signed-in person)
 
@@ -75,6 +77,7 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | Profile, photo, email change, sign out other sessions, your data, deleting the account | user, identity and organization `/v1/me/*`: the caller's own | signed in |
 | Notifications nav, preferences, push | notification preferences: the caller's own in the org | signed in; admins' categories shown to admin roles |
 | Security nav (own second factor) | identity: the caller's own | signed in |
+| Access tokens nav, `/settings/tokens`: own personal access tokens | identity `ListPersonalAccessTokens`, `CreatePersonalAccessToken`, `RevokePersonalAccessToken`: the caller's own; groups a subset of their own now, never `api_keys`, `settings` or Owner-only; the plan must include `api_access` | signed in; the groups offered are those the person `can`, less the same; a plan refusal is shown, asking whoever manages billing |
 
 ## Sessions and tokens
 
@@ -86,6 +89,10 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 - **Desktop:** main takes the cookie off the identity service's responses and
   keeps it encrypted with Electron's `safeStorage` (DPAPI on Windows, the
   Keychain on macOS); where there is no keychain nothing is written.
+- **API keys and personal access tokens** are shown once, in the dialog
+  that follows making one, and held only in that dialog's state: closing
+  it drops the token, and nothing writes it to storage, a URL or error
+  tracking ([api-keys.md](api-keys.md)).
 - **Revocation** reaches an open web tab at once through the live session
   stream (`session.revoked` signs it out).
 - **Single sign-on** on the phone and the desktop always opens the system
