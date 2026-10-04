@@ -16,10 +16,13 @@ import {
   bandLabel,
   planFeatures,
   planLimits,
+  planOverride,
   sentenceCase,
   useOrg,
   useOrganizationPlan,
   usePlanCatalogue,
+  withdrawnFeatures,
+  type PlanOverride,
 } from '@b2b-template/ui-web'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -111,6 +114,7 @@ export default function BillingPage() {
   }
   const date = (at?: string) =>
     at ? new Date(at).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : ''
+  const withdrawn = plan ? withdrawnFeatures(plan, catalogue) : []
 
   // The service's words for a refusal. Told no provider is configured (the
   // page was open before the deployment changed), read the account again so
@@ -315,15 +319,25 @@ export default function BillingPage() {
                           ? t('billing.plan.used', { used: String(l.used), cap: String(l.cap) })
                           : t('billing.plan.usedNoLimit', { used: String(l.used) }),
                   })}
+                  <Agreement override={planOverride(plan, 'limit', l.key)} date={date} />
                 </li>
               ))}
             </ul>
-            {plan.features.length > 0 && (
+            {(plan.features.length > 0 || withdrawn.length > 0) && (
               <>
                 <h2 className="mt-3 text-sm font-medium">{t('billing.plan.features')}</h2>
                 <ul className="mt-1 list-disc pl-5 text-sm" aria-label={t('billing.plan.features')}>
                   {planFeatures(plan, catalogue).map((f) => (
-                    <li key={f.key}>{sentenceCase(f.label)}</li>
+                    <li key={f.key}>
+                      {sentenceCase(f.label)}
+                      <Agreement override={planOverride(plan, 'feature', f.key)} date={date} />
+                    </li>
+                  ))}
+                  {withdrawn.map((f) => (
+                    <li key={f.key}>
+                      {t('billing.plan.withdrawn', { label: sentenceCase(f.label) })}
+                      <Agreement override={f.override} date={date} />
+                    </li>
                   ))}
                 </ul>
               </>
@@ -454,5 +468,31 @@ export default function BillingPage() {
         )}
       </Modal>
     </div>
+  )
+}
+
+/**
+ * The mark on a limit or feature a platform operator set for the
+ * organization's agreement: its value is the agreement's, not the plan's,
+ * until the day it ends, if it does.
+ */
+function Agreement({
+  override,
+  date,
+}: {
+  override: PlanOverride | undefined
+  date: (at?: string) => string
+}) {
+  const { t } = useTranslation('admin')
+  if (!override) return null
+  return (
+    <>
+      {' '}
+      <Badge variant="secondary">
+        {override.ends_at
+          ? t('billing.plan.agreementUntil', { date: date(override.ends_at) })
+          : t('billing.plan.agreement')}
+      </Badge>
+    </>
   )
 }

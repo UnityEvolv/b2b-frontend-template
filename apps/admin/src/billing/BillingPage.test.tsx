@@ -76,16 +76,18 @@ const notConfigured = {
 
 /**
  * The page against a mocked API. provider says whether the deployment has a
- * payment provider; billing overrides the account read; preview answers
- * band-preview.
+ * payment provider; billing overrides the account read; orgPlan overrides
+ * the org's plan read; preview answers band-preview.
  */
 function renderBilling({
   provider = true,
   billing = {},
+  orgPlan = {},
   preview,
 }: {
   provider?: boolean
   billing?: Record<string, unknown>
+  orgPlan?: Record<string, unknown>
   preview?: () => Response
 } = {}) {
   const calls: string[] = []
@@ -127,7 +129,9 @@ function renderBilling({
         contractual: false,
         limits: { users: 25, projects: 0 },
         features: ['gantt'],
+        overrides: [],
         usage: { users: 12 },
+        ...orgPlan,
       })
     }
     return new Response(null, { status: 404 })
@@ -181,6 +185,41 @@ describe('BillingPage', () => {
     )
     expect(calls).toContain('/organization/v1/plans')
     expect(calls).toContain('/organization/v1/organizations/org-1/plan')
+  })
+
+  it('marks what a platform operator set by agreement, with its end or none', async () => {
+    renderBilling({
+      orgPlan: {
+        limits: { users: 75, projects: 0 },
+        features: ['gantt', 'scim'],
+        overrides: [
+          { kind: 'limit', key: 'users', cap: 75, ends_at: '2027-01-31T12:00:00Z', in_force: true },
+          { kind: 'feature', key: 'scim', allowed: true, in_force: true },
+          { kind: 'feature', key: 'gantt_export', allowed: false, in_force: true },
+        ],
+      },
+    })
+    const limits = await screen.findByRole(
+      'list',
+      { name: 'What the plan allows' },
+      { timeout: 5000 },
+    )
+    const until = new Date('2027-01-31T12:00:00Z').toLocaleDateString('en', {
+      dateStyle: 'medium',
+    })
+    expect(
+      within(limits)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual([`Users: 12 of 75 Set by agreement until ${until}`, 'Projects: No limit'])
+    const features = within(screen.getByRole('list', { name: 'Included' }))
+      .getAllByRole('listitem')
+      .map((li) => li.textContent)
+    expect(features).toEqual([
+      'SCIM provisioning Set by agreement',
+      'Gantt charts',
+      'Gantt export: not included, by agreement Set by agreement',
+    ])
   })
 
   it('offers no priced band and no card setup when no payment provider is configured', async () => {
