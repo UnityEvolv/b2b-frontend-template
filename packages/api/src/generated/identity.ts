@@ -1175,6 +1175,246 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/organizations/{org_id}/support-access': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Whether platform operators may see the organization without asking each time
+     * @description Standing support access lets a platform operator start an
+     *     impersonation without an Owner's consent each time, for an hour at
+     *     a time; without it every impersonation needs an Owner's time-boxed
+     *     consent. Needs the settings permission. Off until an Owner turns it
+     *     on.
+     */
+    get: operations['getSupportAccess']
+    /**
+     * Turn standing support access on or off (an Owner of the organization)
+     * @description An Owner of the organization only: never an Admin, a platform
+     *     operator, a key or a support session. Turning it off, or taking the
+     *     Owners out of it, ends every impersonation it no longer covers at
+     *     once. Audited (support_access.changed).
+     */
+    put: operations['setSupportAccess']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/impersonation-grants': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * The organization's consents to support impersonation, newest first
+     * @description The last 200, ended and revoked ones included. Needs the settings permission.
+     */
+    get: operations['listImpersonationGrants']
+    put?: never
+    /**
+     * Consent to support impersonation for a while (an Owner of the organization)
+     * @description Any platform operator may then see the organization as one of its
+     *     people, read-only, until the consent ends (15 minutes to 24 hours
+     *     from now) or is revoked. An Owner is seen as only when
+     *     include_owners says so. It cannot be extended: a longer look needs
+     *     a new consent. Audited (impersonation.granted).
+     */
+    post: operations['createImpersonationGrant']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/impersonation-grants/{grant_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /**
+     * Withdraw a consent now (an Owner of the organization)
+     * @description Every impersonation running under it ends at once and its open tabs
+     *     are told (session.revoked). Audited (impersonation.grant_revoked).
+     */
+    delete: operations['revokeImpersonationGrant']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/impersonations': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Who from the platform saw the organization as whom, newest first
+     * @description The last 200 impersonations, running and ended. What each one did
+     *     is in the audit log as impersonation.request entries, one per
+     *     request. Needs the settings permission.
+     */
+    get: operations['listImpersonations']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/impersonations/{impersonation_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /**
+     * End one impersonation now (an Owner of the organization)
+     * @description Its open tabs are told (session.revoked). Audited (impersonation.ended).
+     */
+    delete: operations['endImpersonation']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/platform/impersonation-grants': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Where a platform operator may start an impersonation now (platform operators)
+     * @description Every consent open now, in every organization, and every organization with standing support access.
+     */
+    get: operations['listUsableImpersonationGrants']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/platform/impersonations': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * See an organization as one of its people (platform operators)
+     * @description Under an Owner's open consent (grant_id), until it ends, or under
+     *     the organization's standing support access (no grant_id), for an
+     *     hour. The person must be an active member, and not an Owner unless
+     *     the consent or the standing access includes Owners. Sets the
+     *     support session cookie (<prefix>_impersonation), apart from the
+     *     operator's own session, and answers its first access token; the app
+     *     refreshes it with POST /v1/session/impersonation/refresh. The
+     *     session is read-only, every request it makes is audited in the
+     *     organization's log, and it ends at its time box without extension.
+     *     Audited (impersonation.started).
+     */
+    post: operations['startImpersonation']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/session/impersonation/refresh': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * An access token for the support session in the support cookie
+     * @description Rotates the support session's refresh token. The answer's
+     *     impersonation says the session is a platform operator's, for the
+     *     banner. Refused (401) once the time box has passed, the consent was
+     *     withdrawn, standing access turned off, the person left, or the
+     *     operator is no longer one; the access token never outlives the time
+     *     box.
+     */
+    post: operations['refreshImpersonation']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/session/impersonation/end': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * End the support session in the support cookie, and clear it
+     * @description Always 204. Audited (impersonation.ended) when there was one.
+     */
+    post: operations['endOwnImpersonation']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/internal/organizations/{org_id}/onboarding/{step_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Whether one of this service's onboarding steps is done (the organization service only)
+     * @description Derived now, never stored (docs/onboarding.md). invite_teammates:
+     *     the organization has sent at least one invite, whatever became of
+     *     it, or has a second active member. set_up_sso: its identity
+     *     provider is saved and active. Any other step is not this service's
+     *     (404).
+     */
+    get: operations['getOnboardingStep']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
@@ -1280,6 +1520,7 @@ export interface components {
       membership_id?: string
       /** @description True when no organization is active yet and the app must show the chooser. */
       choose_organization: boolean
+      impersonation?: components['schemas']['ImpersonationMarker']
     }
     SessionMembership: {
       /** Format: uuid */
@@ -1321,6 +1562,11 @@ export interface components {
        * @description When it ends if not used before then.
        */
       idle_expires_at?: string
+      /**
+       * Format: uuid
+       * @description Set when the session is a platform operator seeing the organization as this person (docs/impersonation.md). It can be ended like any other.
+       */
+      impersonation_id?: string
     }
     SessionPolicy: {
       /** Format: uuid */
@@ -1562,6 +1808,123 @@ export interface components {
         [key: string]: string
       }
     }
+    SupportAccess: {
+      /** Format: uuid */
+      org_id: string
+      /** @description Platform operators may start an impersonation without a consent, for an hour at a time. */
+      standing: boolean
+      /** @description Standing access reaches the Owners too. */
+      include_owners: boolean
+    }
+    SupportAccessUpdate: {
+      standing: boolean
+      include_owners?: boolean
+    }
+    NewImpersonationGrant: {
+      /** @description How long from now the consent lasts, 15 minutes to 24 hours. */
+      duration_minutes: number
+      /** @description An Owner may be seen as too. False when left out. */
+      include_owners?: boolean
+    }
+    ImpersonationGrant: {
+      /** Format: uuid */
+      id: string
+      /** Format: uuid */
+      org_id: string
+      /** @description The Owner who gave it, as an actor (membership:<id>). */
+      granted_by: string
+      /** Format: date-time */
+      created_at: string
+      /** Format: date-time */
+      expires_at: string
+      include_owners: boolean
+      /** Format: date-time */
+      revoked_at?: string
+      /** @description Neither revoked nor past its end. */
+      active: boolean
+    }
+    ImpersonationGrantList: {
+      grants: components['schemas']['ImpersonationGrant'][]
+    }
+    UsableImpersonationGrants: {
+      grants: components['schemas']['ImpersonationGrant'][]
+      standing: components['schemas']['SupportAccess'][]
+    }
+    NewImpersonation: {
+      /** Format: uuid */
+      org_id: string
+      /**
+       * Format: uuid
+       * @description The person to see as; their membership in the organization is the target.
+       */
+      user_id: string
+      /**
+       * Format: uuid
+       * @description The Owner's consent to start under; left out, the organization's standing support access.
+       */
+      grant_id?: string
+    }
+    Impersonation: {
+      /** Format: uuid */
+      id: string
+      /** Format: uuid */
+      org_id: string
+      /**
+       * Format: uuid
+       * @description The consent it runs under; absent under standing support access.
+       */
+      grant_id?: string
+      /**
+       * Format: uuid
+       * @description The platform operator's user id.
+       */
+      impersonator_id: string
+      /**
+       * Format: uuid
+       * @description The person seen as.
+       */
+      user_id: string
+      /** Format: uuid */
+      membership_id: string
+      /** Format: date-time */
+      started_at: string
+      /**
+       * Format: date-time
+       * @description The time box; it is never extended.
+       */
+      ends_at: string
+      /**
+       * Format: date-time
+       * @description When it was ended before its time box, if it was.
+       */
+      ended_at?: string
+      ended_reason?: string
+      /** @description Neither ended nor past its time box. */
+      active: boolean
+    }
+    ImpersonationList: {
+      impersonations: components['schemas']['Impersonation'][]
+    }
+    ImpersonationStarted: {
+      impersonation: components['schemas']['Impersonation']
+      token: components['schemas']['AccessToken']
+    }
+    /** @description The session is a platform operator seeing the organization as this person; the app shows a banner until ends_at. */
+    ImpersonationMarker: {
+      /** Format: uuid */
+      impersonation_id: string
+      /** Format: uuid */
+      impersonator_id: string
+      /** Format: uuid */
+      grant_id?: string
+      /** Format: date-time */
+      ends_at: string
+      /** @description Always true in the template; every write is refused with impersonation.read_only. */
+      read_only: boolean
+    }
+    OnboardingStatus: {
+      done: boolean
+    }
   }
   responses: {
     /** @description The error envelope */
@@ -1575,6 +1938,8 @@ export interface components {
     }
   }
   parameters: {
+    GrantId: string
+    ImpersonationId: string
     OrgId: string
     KeyId: string
     InviteId: string
@@ -3499,6 +3864,310 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
+      default: components['responses']['Error']
+    }
+  }
+  getSupportAccess: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The setting */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SupportAccess']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  setSupportAccess: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SupportAccessUpdate']
+      }
+    }
+    responses: {
+      /** @description The setting as saved */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SupportAccess']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  listImpersonationGrants: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The consents */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImpersonationGrantList']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  createImpersonationGrant: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NewImpersonationGrant']
+      }
+    }
+    responses: {
+      /** @description The consent */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImpersonationGrant']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  revokeImpersonationGrant: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        grant_id: components['parameters']['GrantId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Withdrawn */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  listImpersonations: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The impersonations */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImpersonationList']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  endImpersonation: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        impersonation_id: components['parameters']['ImpersonationId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Ended */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  listUsableImpersonationGrants: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The consents and standing access */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UsableImpersonationGrants']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  startImpersonation: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NewImpersonation']
+      }
+    }
+    responses: {
+      /** @description The impersonation and its first access token */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImpersonationStarted']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  refreshImpersonation: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The access token */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AccessToken']
+        }
+      }
+      401: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  endOwnImpersonation: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Ended */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      default: components['responses']['Error']
+    }
+  }
+  getOnboardingStep: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        step_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Whether it is done */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OnboardingStatus']
+        }
+      }
+      403: components['responses']['Error']
+      404: components['responses']['Error']
       default: components['responses']['Error']
     }
   }
