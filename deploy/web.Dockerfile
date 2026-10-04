@@ -23,13 +23,16 @@ RUN test -n "${APP}" \
      npm run build -w "@b2b-template/app-${APP}" \
   && node tools/app-config/generate-nginx-headers.mjs > /src/headers.conf
 
-FROM nginx:1.27-alpine
+FROM nginx:1.30-alpine
 ARG APP
 COPY deploy/web/nginx.conf /etc/nginx/nginx.conf
 COPY deploy/web/entrypoint.sh /docker-entrypoint.d/40-app-headers.sh
 COPY --from=build /src/headers.conf /etc/nginx/app/headers.conf.template
 COPY --from=build /src/apps/${APP}/dist /usr/share/nginx/html
-RUN chmod +x /docker-entrypoint.d/40-app-headers.sh \
+# The distribution's security fixes, which reach its package index days
+# before they reach a rebuilt nginx image.
+RUN apk upgrade --no-cache \
+  && chmod +x /docker-entrypoint.d/40-app-headers.sh \
   && mkdir -p /etc/nginx/app && chown -R nginx:nginx /etc/nginx/app /var/cache/nginx /var/run
 USER nginx
 EXPOSE 8080
