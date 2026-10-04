@@ -51,7 +51,7 @@ that keep that true. Most are enforced by lint or a check in `npm run check`.
 apps/
   account    the member app: profile, account, notifications, own data
   admin      organisation admins: users, invites, import, roles, settings,
-             billing, SCIM, audit log
+             billing, SCIM, API keys, webhooks, audit log
   platform   the operator's staff: organisations across the platform
   mobile     React Native with Expo, sharing the packages below with web
   desktop    an Electron shell around the account web app; it has no pages

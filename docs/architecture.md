@@ -140,6 +140,7 @@ The frontend has no list of them. It asks:
 | admin: Billing, platform: an organization's plan | the plan bands, limits and features with their labels; the org's plan, the overrides in force and current usage | `usePlanCatalogue` (`GET /organization/v1/plans`), `useOrganizationPlan` (`GET .../organizations/{org_id}/plan`) |
 | platform: an organization's overrides | the limits and features an override can be set on, from the catalogue | `usePlanCatalogue`, `GET .../organizations/{org_id}/plan-overrides` |
 | admin: API keys, account: access tokens | the permission groups a key can be given, less `api_keys`, `settings` and the Owner-only ones | `GET /authorization/v1/permission-groups` ([api-keys.md](api-keys.md)) |
+| admin: Webhooks | the event types an endpoint may subscribe to, with their descriptions, and whether the plan has webhooks | `GET /webhooks/v1/organizations/{org_id}/webhook-event-types` ([webhooks.md](webhooks.md)) |
 | account: notification preferences, the bell, the phone's feed | the notification categories and their channels; each feed entry's heading and line, worded by the server | `useNotificationCategories` (`GET /notification/v1/notification-categories`), the feed |
 
 Each is read when the page opens, and again after a change; nothing is kept
