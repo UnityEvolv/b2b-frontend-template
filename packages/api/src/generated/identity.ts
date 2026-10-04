@@ -1051,10 +1051,201 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/organizations/{org_id}/api-keys': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Every API key and personal access token in the organization (the api_keys permission)
+     * @description Newest first, revoked and expired included, never a token: the
+     *     prefix, the groups, who it belongs to, when it expires and when it
+     *     was last used (to the minute).
+     */
+    get: operations['listApiKeys']
+    put?: never
+    /**
+     * Make an API key for the organization (the api_keys permission)
+     * @description A named key for a script, granted permission groups, each one the
+     *     caller holds themself; never api_keys, settings or an Owner-only
+     *     action. Optionally expires. The token is in this answer only: it is
+     *     stored as a hash and cannot be shown again. Refused unless the
+     *     org's plan includes API access. Audited (api_key.created). A key
+     *     acts as itself (actor api_key:<id>) with an Admin's reach over
+     *     people, and only where its groups allow.
+     */
+    post: operations['createApiKey']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/api-keys/{key_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /**
+     * Revoke any API key or personal access token in the organization (the api_keys permission)
+     * @description At once: the next request made with it is refused. Audited
+     *     (api_key.revoked).
+     */
+    delete: operations['revokeApiKey']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/personal-access-tokens': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Your own personal access tokens in the organization */
+    get: operations['listPersonalAccessTokens']
+    put?: never
+    /**
+     * Make a personal access token for yourself in the organization
+     * @description Granted a subset of the caller's own permission groups now; never
+     *     api_keys, settings or an Owner-only action. Each use is also checked
+     *     against what the person may do at that moment, so a role that drops
+     *     takes the token's access with it. Optionally expires. The token is
+     *     in this answer only. Refused unless the org's plan includes API
+     *     access. Audited (api_key.created, kind personal).
+     */
+    post: operations['createPersonalAccessToken']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/personal-access-tokens/{key_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /**
+     * Revoke one of your own personal access tokens
+     * @description At once. Audited (api_key.revoked).
+     */
+    delete: operations['revokePersonalAccessToken']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/internal/api-keys/resolve': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * What an API key or personal access token is, now (services only)
+     * @description Every service's auth middleware asks this for every request that
+     *     brings a key (pkg/auth.KeyClient); nothing is cached. 401 when it is
+     *     no key, revoked or expired; 429 past the key's rate limit, with
+     *     Retry-After; 403 plan.limit_reached when the org's plan does not
+     *     include API access. The first use is audited (api_key.first_used),
+     *     and the last use recorded at most once a minute.
+     */
+    post: operations['resolveApiKey']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    NewApiKey: {
+      /** @description What a person calls it, such as nightly export. */
+      name: string
+      /** @description Permission groups, keys of the authorization service's registry (GET /authorization/v1/permission-groups), each one the caller holds. */
+      groups: string[]
+      /**
+       * Format: date-time
+       * @description When it stops working, in the future; none when absent.
+       */
+      expires_at?: string
+    }
+    ApiKey: {
+      /** Format: uuid */
+      id: string
+      /** Format: uuid */
+      org_id: string
+      /**
+       * @description org, the organization's key; personal, a person's own token.
+       * @enum {string}
+       */
+      kind: 'org' | 'personal'
+      name: string
+      /** @description The token's first characters, to tell keys apart. The token itself is never shown again. */
+      prefix: string
+      groups: string[]
+      /**
+       * Format: uuid
+       * @description Whose personal access token it is.
+       */
+      user_id?: string
+      /** Format: uuid */
+      membership_id?: string
+      /** @description The actor who made it, such as membership:<uuid>. */
+      created_by: string
+      /** Format: date-time */
+      created_at: string
+      /** Format: date-time */
+      expires_at?: string
+      /**
+       * Format: date-time
+       * @description To the minute.
+       */
+      last_used_at?: string
+      /** Format: date-time */
+      revoked_at?: string
+    }
+    ApiKeyCreated: {
+      key: components['schemas']['ApiKey']
+      /** @description The bearer token, shown this once. It starts with the product's prefix for its kind. */
+      token: string
+    }
+    ApiKeyList: {
+      keys: components['schemas']['ApiKey'][]
+    }
+    ResolvedApiKey: {
+      /** Format: uuid */
+      id: string
+      /** @enum {string} */
+      kind: 'org' | 'personal'
+      /** Format: uuid */
+      org_id: string
+      /** Format: uuid */
+      user_id?: string
+      /** Format: uuid */
+      membership_id?: string
+      groups: string[]
+    }
     DataPart: {
       service: string
       data: {
@@ -1385,6 +1576,7 @@ export interface components {
   }
   parameters: {
     OrgId: string
+    KeyId: string
     InviteId: string
     InviteToken: string
     /** @description A retried create with the same key makes nothing new. */
@@ -3102,6 +3294,205 @@ export interface operations {
       /** @description Somebody else signs in with the old address now */
       409: {
         headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      default: components['responses']['Error']
+    }
+  }
+  listApiKeys: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The keys */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ApiKeyList']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  createApiKey: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NewApiKey']
+      }
+    }
+    responses: {
+      /** @description The key, with its token shown this once */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ApiKeyCreated']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  revokeApiKey: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        key_id: components['parameters']['KeyId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Revoked */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  listPersonalAccessTokens: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The tokens, newest first */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ApiKeyList']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  createPersonalAccessToken: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NewApiKey']
+      }
+    }
+    responses: {
+      /** @description The token, shown this once */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ApiKeyCreated']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  revokePersonalAccessToken: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        key_id: components['parameters']['KeyId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Revoked */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  resolveApiKey: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': {
+          token: string
+        }
+      }
+    }
+    responses: {
+      /** @description The key */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ResolvedApiKey']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      /** @description Past the key's rate limit */
+      429: {
+        headers: {
+          'Retry-After'?: number
           [name: string]: unknown
         }
         content: {

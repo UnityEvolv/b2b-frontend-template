@@ -294,7 +294,7 @@ export interface components {
       /** @description Enterprise, invoiced by contract; no controls. */
       invoiced: boolean
       active_members: number
-      /** @description 0 means no cap. */
+      /** @description The org's seat cap, its override's where a platform operator set one, else its band's. 0 means no cap. */
       users_cap: number
       next_band?: components['schemas']['Band']
       /**
