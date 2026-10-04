@@ -3,7 +3,17 @@
  * their preferences.
  */
 export const account = {
-  nav: { profile: 'Profile', security: 'Security', notifications: 'Notifications' },
+  nav: {
+    profile: 'Profile',
+    security: 'Security',
+    notifications: 'Notifications',
+    tokens: 'Access tokens',
+  },
+  tokens: {
+    title: 'Personal access tokens',
+    intro:
+      'A token lets a script of yours use the API as you, in this organization, with only the permissions you give it. Each use is checked against what you may do at that moment, so if your role changes, the token changes with it. Revoke a token you no longer use.',
+  },
   account: {
     email: {
       title: 'Sign-in email',

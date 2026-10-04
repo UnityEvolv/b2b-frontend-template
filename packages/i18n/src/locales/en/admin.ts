@@ -83,6 +83,12 @@ export const admin = {
     roles: 'Roles',
     billing: 'Billing',
     scim: 'Directory sync',
+    apiKeys: 'API keys',
+  },
+  apiKeys: {
+    title: 'API keys',
+    intro:
+      'Keys let your organization’s scripts and integrations use the API without a person signing in. A key has only the permissions it is given, which must be ones you hold, and acts as itself in the audit log. The list also shows every member’s personal access tokens, which you can revoke.',
   },
   scim: {
     title: 'Directory sync (SCIM)',

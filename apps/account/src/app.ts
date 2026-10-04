@@ -28,6 +28,12 @@ export const definition: AppDefinition = {
       path: '/settings/notifications',
       label: (t) => t('common:notificationsLink'),
     },
+    {
+      key: 'tokens',
+      icon: 'external-link',
+      path: '/settings/tokens',
+      label: (t) => t('account:nav.tokens'),
+    },
   ],
   home: '/profile',
   signInPath: '/sign-in',
@@ -85,6 +91,12 @@ export const definition: AppDefinition = {
       path: '/settings/notifications',
       page: () => import('./pages/NotificationsPage'),
       nav: { key: 'notifications', icon: 'bell', label: (t) => t('account:nav.notifications') },
+    },
+    // The person's own personal access tokens in the org they are in.
+    {
+      path: '/settings/tokens',
+      page: () => import('./pages/TokensPage'),
+      nav: { key: 'tokens', icon: 'external-link', label: (t) => t('account:nav.tokens') },
     },
     {
       path: '/sign-in',

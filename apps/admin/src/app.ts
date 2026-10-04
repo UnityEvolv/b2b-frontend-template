@@ -117,6 +117,12 @@ export const definition: AppDefinition = {
       nav: { key: 'scim', icon: 'invite', label: (t) => t('admin:nav.scim') },
     },
     {
+      path: '/api-keys',
+      page: () => import('./pages/ApiKeysPage'),
+      permission: 'api_keys',
+      nav: { key: 'api-keys', icon: 'external-link', label: (t) => t('admin:nav.apiKeys') },
+    },
+    {
       path: '/roles',
       page: () => import('./pages/RolesPage'),
       permission: 'configure_permissions',
