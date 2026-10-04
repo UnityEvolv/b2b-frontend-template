@@ -8,6 +8,7 @@ import type { paths as identity } from './identity.js'
 import type { paths as notification } from './notification.js'
 import type { paths as organization } from './organization.js'
 import type { paths as user } from './user.js'
+import type { paths as webhooks } from './webhooks.js'
 
 /** Every backend service with a contract. */
 export const serviceNames = [
@@ -18,6 +19,7 @@ export const serviceNames = [
   'notification',
   'organization',
   'user',
+  'webhooks',
 ] as const
 
 /** Each service name to its paths. */
@@ -29,6 +31,7 @@ export interface Services {
   notification: notification
   organization: organization
   user: user
+  webhooks: webhooks
 }
 
 export type * as audit from './audit.js'
@@ -38,3 +41,4 @@ export type * as identity from './identity.js'
 export type * as notification from './notification.js'
 export type * as organization from './organization.js'
 export type * as user from './user.js'
+export type * as webhooks from './webhooks.js'

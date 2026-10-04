@@ -110,4 +110,22 @@ describe('the admin app’s routes', () => {
     expect(screen.queryByRole('heading', { name: '/api-keys' })).toBeNull()
     expect(screen.queryByRole('link', { name: 'API keys' })).toBeNull()
   })
+
+  // The webhooks service asks for webhooks alone: not settings, not api_keys.
+  it('opens webhooks to whoever holds webhooks, and lists it in the nav', async () => {
+    visit('/webhooks', ['webhooks'])
+    expect(
+      await screen.findByRole('heading', { name: '/webhooks' }, { timeout: 5000 }),
+    ).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Webhooks' })).toBeTruthy()
+  })
+
+  it('refuses webhooks to settings, api_keys and billing without webhooks, and leaves it out of the nav', async () => {
+    visit('/webhooks', ['settings', 'users', 'api_keys', 'billing'])
+    expect(
+      await screen.findByText('You do not have access to this page', {}, { timeout: 5000 }),
+    ).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: '/webhooks' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Webhooks' })).toBeNull()
+  })
 })

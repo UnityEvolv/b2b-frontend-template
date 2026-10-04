@@ -29,7 +29,7 @@ or the app's sign-in (`roles`, `orgs`). Refusals that depend on data rather
 than on who is asking (the last Owner, the plan's cap or features, a taken
 domain) are left to the server and shown in its words.
 
-Groups: `users`, `audit`, `sso`, `api_keys` (Admin by default), `billing` (Billing
+Groups: `users`, `audit`, `sso`, `api_keys`, `webhooks` (Admin by default), `billing` (Billing
 Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 `assign_roles`, `configure_permissions`, `transfer_ownership`,
 `delete_organization`, `claim_domain`. An Owner holds them all.
@@ -58,6 +58,7 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | Automatic upgrade toggle | billing `SetAutoUpgrade`: `billing` and the Owner role | `can_manage_auto_upgrade` from the billing service |
 | SCIM nav, `/scim`: tokens, halt | user SCIM admin: `settings`, and a plan with SCIM to change anything | route `permission: 'settings'`; buttons need `available` |
 | API keys nav, `/api-keys`: list, create, revoke | identity `ListApiKeys`, `CreateApiKey`, `RevokeApiKey`: `api_keys`; each group granted must be one the maker holds, never `api_keys`, `settings` or Owner-only; the plan must include `api_access` | route `permission: 'api_keys'`; the groups offered are the registry's the viewer `can`, less `api_keys`, `settings` and `owner_only`; a plan refusal (`plan.limit_reached`) is shown, with a link to `/billing` for `can('billing')` |
+| Webhooks nav, `/webhooks`: event types, endpoints (add, edit, turn on or off, delete, rotate the secret, send a test), deliveries (list, detail, resend) | webhooks admin API: `webhooks` on every request; adding an endpoint, a test and a resend also need the plan's `webhooks` feature (`plan.limit_reached`); at most 20 endpoints (`webhooks.endpoint_limit`) | route `permission: 'webhooks'`; with the event types' `available` false (or a `plan.limit_reached` refusal) Add, Send test and Resend are disabled and the refusal names `required_plan`, with a link to `/billing` for `can('billing')`; editing, turning off, rotating and deleting stay offered on any plan |
 | Roles nav, `/roles`: permission matrix, ownership transfer | authorization `SetPermissions`: `configure_permissions`; `RequestOwnershipTransfer`, cancel: the Owner | route `permission: 'configure_permissions'` |
 | `/settings/security` (own second factor) | identity: the caller's own | signed in |
 
@@ -93,6 +94,10 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
   that follows making one, and held only in that dialog's state: closing
   it drops the token, and nothing writes it to storage, a URL or error
   tracking ([api-keys.md](api-keys.md)).
+- **Webhook signing secrets** are the same: shown once, after adding an
+  endpoint or rotating its secret, held only in that dialog's state and
+  dropped when it closes; the endpoint list never carries one
+  ([webhooks.md](webhooks.md)).
 - **Revocation** reaches an open web tab at once through the live session
   stream (`session.revoked` signs it out).
 - **Single sign-on** on the phone and the desktop always opens the system
