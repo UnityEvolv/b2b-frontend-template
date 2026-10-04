@@ -23,6 +23,7 @@ import { LiveSessionProvider } from './live'
 import { OrgSwitcher } from './org-switcher'
 import { PageLoading } from './pages'
 import { useSession } from './session'
+import { SupportBanner, SupportGuard, useSupport } from './support'
 import { useTheme } from './theme'
 
 /** A sidebar row: the kit's menu item look, from tokens, keyed off aria-current. */
@@ -51,6 +52,7 @@ function UserMenu() {
   const navigate = useNavigate()
   const { state, signOut } = useSession()
   const { preference, setPreference } = useTheme()
+  const support = useSupport()
   if (state.status !== 'signed-in') return null
 
   const { user } = state.session
@@ -74,11 +76,17 @@ function UserMenu() {
       }
     >
       <Dropdown.Label>{name}</Dropdown.Label>
-      {accountMenu.map((entry) => (
-        <Dropdown.Item key={entry.key} icon={entry.icon} onSelect={() => void navigate(entry.path)}>
-          {entry.label(navT)}
-        </Dropdown.Item>
-      ))}
+      {accountMenu
+        .filter((entry) => !support || entry.support !== false)
+        .map((entry) => (
+          <Dropdown.Item
+            key={entry.key}
+            icon={entry.icon}
+            onSelect={() => void navigate(entry.path)}
+          >
+            {entry.label(navT)}
+          </Dropdown.Item>
+        ))}
       <Dropdown.Separator />
       <Dropdown.Label>{t('theme.label')}</Dropdown.Label>
       {THEME_PREFERENCES.map((option) => (
@@ -97,7 +105,7 @@ function UserMenu() {
       ))}
       <Dropdown.Separator />
       <Dropdown.Item icon="log-out" onSelect={() => void signOut()}>
-        {t('signOut')}
+        {support ? t('support.end') : t('signOut')}
       </Dropdown.Item>
     </Dropdown>
   )
@@ -120,11 +128,16 @@ export function AppLayout() {
     shell: Shell,
   } = useApp()
   const { permissions } = useSession()
+  const support = useSupport()
   const { pathname } = useLocation()
   const navigation = useNavigation()
 
   const visible = routes.filter(
-    (route) => route.nav && (!route.permission || granted(permissions, route.permission)),
+    (route) =>
+      route.nav &&
+      (!route.permission || granted(permissions, route.permission)) &&
+      // A support session is not offered what it never opens.
+      !(support && route.support === false),
   )
   const items: SidebarItem[] = visible.map((route) => ({
     key: route.nav!.key,
@@ -146,21 +159,24 @@ export function AppLayout() {
       <AppShell
         sidebarTitle={t('navigation')}
         navbar={
-          <Navbar
-            brand={
-              <Link to={home} className="flex items-center gap-2">
-                <Brand size="sm" />
-                {badge && <Badge variant="secondary">{badge(navT)}</Badge>}
-              </Link>
-            }
-            actions={
-              <div className="flex items-center gap-2">
-                {HeaderActions && <HeaderActions />}
-                <OrgSwitcher />
-                <UserMenu />
-              </div>
-            }
-          />
+          <>
+            <SupportBanner />
+            <Navbar
+              brand={
+                <Link to={home} className="flex items-center gap-2">
+                  <Brand size="sm" />
+                  {badge && <Badge variant="secondary">{badge(navT)}</Badge>}
+                </Link>
+              }
+              actions={
+                <div className="flex items-center gap-2">
+                  {HeaderActions && <HeaderActions />}
+                  <OrgSwitcher />
+                  <UserMenu />
+                </div>
+              }
+            />
+          </>
         }
         sidebar={
           <Sidebar
@@ -195,6 +211,12 @@ export function AppLayout() {
       </AppShell>
     </>
   )
-  // The live session events, for the app's shell and its pages too.
-  return <LiveSessionProvider>{Shell ? <Shell>{page}</Shell> : page}</LiveSessionProvider>
+  // The live session events, for the app's shell and its pages too; in a
+  // support tab, its guard beside them.
+  return (
+    <LiveSessionProvider>
+      {support && <SupportGuard />}
+      {Shell ? <Shell>{page}</Shell> : page}
+    </LiveSessionProvider>
+  )
 }

@@ -31,6 +31,8 @@ export interface AccountMenuEntry {
   icon?: IconName
   path: string
   label: (t: NavT) => string
+  /** False: not offered in a support session (docs/impersonation.md). Offered by default. */
+  support?: boolean
 }
 
 /**
@@ -51,6 +53,11 @@ export interface AppRoute {
    * will do. Without it: the 403 page, and no nav entry.
    */
   permission?: string | string[]
+  /**
+   * False: a support session never opens this page (tokens, keys): no nav
+   * entry, and a page that says so. Opened by default, read-only.
+   */
+  support?: boolean
   nav?: {
     key: string
     icon?: IconName
@@ -91,6 +98,13 @@ export interface AppDefinition {
   sessionSource: SessionSource
   /** Sign-in and the API behind the session. Absent for a development session. */
   auth?: Auth & { reason(): SignedOutReason | null }
+  /**
+   * Where each web app is, by name (`admin`, `account`, a product's own):
+   * for a link into another app, such as an onboarding step's. From the
+   * build's configuration (`VITE_<APP>_ORIGIN`, see `appOriginsFromEnv`); an
+   * app with no origin is not linked to.
+   */
+  appOrigins?: Readonly<Record<string, string>>
   /** Where unhandled errors go. From the build's configuration; absent on a laptop. */
   errorTracking?: ErrorTrackingConfig
   /** The public CAPTCHA site key for public forms. From the build's configuration; absent on a laptop. */
@@ -131,6 +145,7 @@ type AppContextValue = Pick<
   | 'headerActions'
   | 'banner'
   | 'shell'
+  | 'appOrigins'
 >
 
 const AppContext = createContext<AppContextValue | null>(null)

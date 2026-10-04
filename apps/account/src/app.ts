@@ -33,6 +33,7 @@ export const definition: AppDefinition = {
       icon: 'external-link',
       path: '/settings/tokens',
       label: (t) => t('account:nav.tokens'),
+      support: false,
     },
   ],
   home: '/profile',
@@ -72,6 +73,8 @@ export const definition: AppDefinition = {
     {
       path: '/settings/security',
       page: () => import('@b2b-template/ui-web').then((m) => ({ default: m.MfaSettingsPage })),
+      // The person's own second factor: never support's to see.
+      support: false,
       nav: { key: 'security', icon: 'lock', label: (t) => t('account:nav.security') },
     },
     {
@@ -96,6 +99,8 @@ export const definition: AppDefinition = {
     {
       path: '/settings/tokens',
       page: () => import('./pages/TokensPage'),
+      // Tokens are never shown to a support session.
+      support: false,
       nav: { key: 'tokens', icon: 'external-link', label: (t) => t('account:nav.tokens') },
     },
     {

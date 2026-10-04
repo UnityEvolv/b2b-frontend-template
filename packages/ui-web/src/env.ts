@@ -23,3 +23,22 @@ export function serviceOriginsFromEnv(env: Record<string, string | boolean | und
   const apiOrigin = text('VITE_API_ORIGIN')
   return { ...(apiOrigin ? { apiOrigin } : {}), serviceOrigin }
 }
+
+/**
+ * Where each web app is, from the build's configuration: `VITE_<APP>_ORIGIN`
+ * names the app `<app>` (`VITE_ADMIN_ORIGIN` is the admin app,
+ * `VITE_PROJECTS_ORIGIN` a product's `projects`). Used for a link into
+ * another app, such as an onboarding step's or a support session's. The
+ * API's own (`VITE_API_ORIGIN`) is not an app.
+ */
+export function appOriginsFromEnv(
+  env: Record<string, string | boolean | undefined>,
+): Record<string, string> {
+  const origins: Record<string, string> = {}
+  for (const [key, value] of Object.entries(env)) {
+    const name = /^VITE_([A-Z][A-Z0-9_]*)_ORIGIN$/.exec(key)?.[1]
+    if (!name || name === 'API' || typeof value !== 'string' || value === '') continue
+    origins[name.toLowerCase()] = value.replace(/\/+$/, '')
+  }
+  return origins
+}

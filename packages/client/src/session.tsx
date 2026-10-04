@@ -40,6 +40,22 @@ export interface SessionMembership {
   role: string
 }
 
+/**
+ * A support session: a platform operator seeing the org as this person
+ * (docs/impersonation.md). The shell shows a banner until `endsAt` and
+ * disables what writes.
+ */
+export interface SessionImpersonation {
+  id: string
+  /** The platform operator's user id. */
+  impersonatorId: string
+  /** The Owner's consent it runs under; absent under standing support access. */
+  grantId?: string
+  /** RFC 3339: its time box, never extended. */
+  endsAt: string
+  readOnly: boolean
+}
+
 export interface Session {
   user: SessionUser
   /** The effective permissions, as the server resolved them from roles. */
@@ -48,6 +64,8 @@ export interface Session {
   membership?: SessionMembership
   /** The person has several organizations and none is active yet. */
   chooseOrganization?: boolean
+  /** Set when this is a support session, never for the person's own. */
+  impersonation?: SessionImpersonation
 }
 
 export interface SessionSource {
@@ -59,8 +77,9 @@ export interface SessionSource {
   /**
    * The server ended the session (a live `session.revoked`): forget it on
    * this device without asking the server again. Absent: nothing to forget.
+   * `why` is the event's code and sentence, when there was one.
    */
-  forget?(): Promise<void>
+  forget?(why?: { code?: string; message?: string }): Promise<void>
 }
 
 export type SessionState =
@@ -78,7 +97,7 @@ export interface SessionContextValue {
   /** Load the session again: after a sign-in, or when it changed elsewhere. */
   reload(): void
   /** The server ended the session: forget it here and show the signed-out state. */
-  ended(): Promise<void>
+  ended(why?: { code?: string; message?: string }): Promise<void>
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
@@ -143,13 +162,16 @@ export function SessionProvider({
     setState({ status: 'signed-out' })
   }, [source])
 
-  const ended = useCallback(async () => {
-    try {
-      await source.forget?.()
-    } finally {
-      setState({ status: 'signed-out' })
-    }
-  }, [source])
+  const ended = useCallback(
+    async (why?: { code?: string; message?: string }) => {
+      try {
+        await source.forget?.(why)
+      } finally {
+        setState({ status: 'signed-out' })
+      }
+    },
+    [source],
+  )
 
   const reload = useCallback(() => {
     setState({ status: 'loading' })

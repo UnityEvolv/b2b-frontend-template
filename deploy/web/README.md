@@ -33,6 +33,10 @@ docker run --rm -p 8080:8080 -e API_ORIGIN=https://api.example web-account
   `VITE_API_ORIGIN` are build arguments. The build makes no source maps and
   uploads none, so a stack trace in Sentry is minified
   ([security.md](../../docs/security.md)).
+- `VITE_ACCOUNT_ORIGIN`, `VITE_ADMIN_ORIGIN` and `VITE_PLATFORM_ORIGIN` are
+  build arguments too: where each web app is, for links between them (an
+  onboarding step in another app, the support tab the platform app opens).
+  An app left unset is not linked to.
 
 ## Optional: a per-page policy hook
 

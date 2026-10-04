@@ -11,6 +11,9 @@ ARG VITE_RELEASE=
 ARG VITE_SENTRY_DSN=
 ARG VITE_RECAPTCHA_SITE_KEY=
 ARG VITE_API_ORIGIN=
+ARG VITE_ACCOUNT_ORIGIN=
+ARG VITE_ADMIN_ORIGIN=
+ARG VITE_PLATFORM_ORIGIN=
 WORKDIR /src
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY apps ./apps
@@ -20,6 +23,7 @@ COPY deploy/web/headers.json ./deploy/web/headers.json
 RUN npm ci --no-audit --no-fund
 RUN test -n "${APP}" \
   && VITE_RELEASE="${VITE_RELEASE}" VITE_SENTRY_DSN="${VITE_SENTRY_DSN}" VITE_RECAPTCHA_SITE_KEY="${VITE_RECAPTCHA_SITE_KEY}" VITE_API_ORIGIN="${VITE_API_ORIGIN}" \
+     VITE_ACCOUNT_ORIGIN="${VITE_ACCOUNT_ORIGIN}" VITE_ADMIN_ORIGIN="${VITE_ADMIN_ORIGIN}" VITE_PLATFORM_ORIGIN="${VITE_PLATFORM_ORIGIN}" \
      npm run build -w "@b2b-template/app-${APP}" \
   && node tools/app-config/generate-nginx-headers.mjs > /src/headers.conf
 
