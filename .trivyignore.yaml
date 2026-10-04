@@ -6,5 +6,20 @@
 #   - id: CVE-0000-00000
 #     statement: Why the risk is accepted, and what would end it.
 #     expired_at: 2027-01-01
+#
+# Each entry is scoped by purl to the one installed version, so a new version
+# with the same flaw, or the flaw turning up in another package, fails again.
 
-vulnerabilities: []
+vulnerabilities:
+  # Accepted 2026-10-05. braces 3.0.3 is the last release; nothing patched exists.
+  - id: CVE-2026-93687
+    purls:
+      - pkg:npm/braces@3.0.3
+    statement: "Build-time only, never shipped. The one path is apps/mobile -> expo -> @expo/cli -> @expo/metro-file-map -> micromatch -> braces, run by the Metro dev server and bundler on a developer machine or CI. braces parses only the glob patterns (the watcher's own '**/*' and the project's metro.config.js), never file names or request data, so the deeply nested pattern the flaw needs can only come from someone who can already edit the repository. The web apps do not depend on it and the mobile bundle does not include it. Ends when braces or micromatch publishes a fix, or Expo drops micromatch."
+    expired_at: 2027-01-05
+  # Accepted 2026-10-05. node-forge 1.4.0 is the last release; nothing patched exists.
+  - id: CVE-2026-85393
+    purls:
+      - pkg:npm/node-forge@1.4.0
+    statement: "Build-time only, never shipped. The flaw is in RSA PKCS#1 v1.5 signature verification. The paths are apps/mobile -> expo-updates -> @expo/code-signing-certificates and expo -> @expo/cli, both developer CLIs (expo start, expo-updates codesigning:*, expo run:ios). Their only verify calls check a certificate or signature the developer's own key just made or holds locally (validateSelfSignedCertificate, signBufferRSASHA256AndVerify); @expo/cli trusts cached Expo dev certificates by date, not by forge verification, and run:ios only parses keychain PEMs. On devices, expo-updates checks update signatures in native code, not node-forge, and the mobile bundle does not include it. Ends when node-forge publishes a fix, or Expo drops it."
+    expired_at: 2027-01-05
