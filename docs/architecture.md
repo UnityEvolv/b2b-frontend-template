@@ -104,6 +104,16 @@ member who signs in to the admin app is told it is for administrators.
   notification 8083, user 8084, authorization 8086, webhooks 8087, billing
   8089: the ports the backend's compose stack publishes).
 
+`appOriginsFromEnv` reads where the web apps are, for a link from one into
+another (an onboarding step, the support tab the platform app opens):
+`VITE_<APP>_ORIGIN`, such as `VITE_ADMIN_ORIGIN` and `VITE_ACCOUNT_ORIGIN`,
+handed to the app definition as `appOrigins`. An app with no origin is not
+linked to.
+
+A tab the platform app opens with `?support=1` is a support session: the
+same app, read-only, as another person, with a banner
+([impersonation.md](impersonation.md)).
+
 In a development build, `VITE_DEV_SESSION=1` skips sign-in and signs in a
 fake developer with no backend. Pages that need data then have none; it is
 for working on layout.
