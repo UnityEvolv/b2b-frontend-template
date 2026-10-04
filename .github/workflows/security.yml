@@ -7,9 +7,9 @@
 # is used, so it runs on forks too.
 #
 # Accepted risks live in .trivyignore.yaml and must name a reason and an expiry.
-# An accepted secret finding (a key already rotated) would go in
-# .gitleaksignore with a comment saying why; there are none, so there is no
-# such file. Licence exceptions live in tools/build-guards/licences.mjs, each
+# An accepted secret finding (a key already rotated, or a published test
+# vector) goes in .gitleaksignore with a comment saying why. Licence
+# exceptions live in tools/build-guards/licences.mjs, each
 # with its reason.
 # The web apps ship as static files, not images, so there is no image scan
 # here; the backend scans every image it builds.

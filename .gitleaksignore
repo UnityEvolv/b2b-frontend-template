@@ -1,0 +1,6 @@
+# Accepted gitleaks findings, one fingerprint per line, each with the reason
+# above it.
+
+# The Standard Webhooks specification's published test-vector secret, used
+# as a fixture in the webhooks page test. It signs nothing real.
+0057e259ebb5b5ff1d950628fa9882df00ed27bd:apps/admin/src/webhooks/WebhooksPage.test.tsx:generic-api-key:81
