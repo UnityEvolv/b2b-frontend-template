@@ -101,8 +101,8 @@ member who signs in to the admin app is told it is for administrators.
   it (`/identity`, `/organization`, ...).
 - **On a laptop:** `VITE_API_ORIGIN_<SERVICE>` per service, from each app's
   `.env.development` (identity on 8093, organization 8081, audit 8082,
-  notification 8083, user 8084, authorization 8086, billing 8089: the ports
-  the backend's compose stack publishes).
+  notification 8083, user 8084, authorization 8086, webhooks 8087, billing
+  8089: the ports the backend's compose stack publishes).
 
 In a development build, `VITE_DEV_SESSION=1` skips sign-in and signs in a
 fake developer with no backend. Pages that need data then have none; it is
