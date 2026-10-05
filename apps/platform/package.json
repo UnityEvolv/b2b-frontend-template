@@ -16,13 +16,13 @@
     "@b2b-template/core": "0.0.0",
     "@b2b-template/i18n": "0.0.0",
     "@b2b-template/ui-web": "0.0.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.0.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-i18next": "^15.0.0"
   },
   "devDependencies": {
     "@b2b-template/app-config": "0.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "@types/react": "~19.2.4",
+    "@types/react-dom": "~19.2.3"
   }
 }
