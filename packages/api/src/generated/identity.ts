@@ -98,6 +98,64 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/sign-in/saml/{org_id}/acs': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * The SAML identity provider posts the browser back here
+     * @description The assertion consumer service of the organization's SAML service
+     *     provider (HTTP-POST binding). `RelayState` must name the sign-in
+     *     attempt in this browser's attempt cookie, and the response must
+     *     answer that attempt's AuthnRequest. The assertion must be signed
+     *     with one of the provider's certificates, addressed to this ACS URL
+     *     and this organization's entity id, within its time, and seen for
+     *     the first time. Then, as the OpenID callback: the address must be in
+     *     the organization's proven domain, the sign-in is recorded, a session
+     *     starts, and the browser goes to the app.
+     *
+     *     A response that answers no request (identity-provider-initiated:
+     *     a tile on the provider's dashboard) is never accepted. When the
+     *     browser has no sign-in attempt for the organization, it is sent to
+     *     `GET /v1/sign-in/start?org_id=…` instead, which starts a sign-in
+     *     the provider answers at once.
+     */
+    post: operations['finishSamlSignIn']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/sign-in/saml/{org_id}/metadata': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * This service's SAML metadata for an organization
+     * @description The service provider metadata to give the identity provider: the
+     *     entity id (this URL), the assertion consumer service, and that
+     *     assertions must be signed. Public, and fixed by the organization's
+     *     id, so it can be set up at the provider before anything is saved
+     *     here.
+     */
+    get: operations['getSamlServiceProviderMetadata']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/v1/session/refresh': {
     parameters: {
       query?: never
@@ -189,14 +247,19 @@ export interface paths {
     get: operations['getIdentityProvider']
     /**
      * Configure the organization's identity provider
-     * @description Any OpenID Connect provider, filled in from a preset. Nothing is
+     * @description Any OpenID Connect provider, filled in from a preset, or a SAML 2.0
+     *     identity provider (`preset: saml`). Nothing is
      *     saved unless the settings pass the same test as
-     *     `POST .../identity-provider/test` (discovery, issuer, keys, and the
-     *     client id and secret at the token endpoint); a failure is 422 with
+     *     `POST .../identity-provider/test` (OpenID: discovery, issuer, keys,
+     *     and the client id and secret at the token endpoint; SAML: the
+     *     metadata, entity id, single sign-on URL and signing certificates);
+     *     a failure is 422 with
      *     `fields` naming the inputs to fix. The client secret is encrypted
      *     under the organization's data key and never returned; left out on a
      *     change to the same provider and client id, the stored one is kept
-     *     and tested again. Audited. Needs the
+     *     and tested again. A SAML provider is `pending_first_sign_in` until
+     *     someone signs in through it, which is what proves the provider
+     *     side of the setup. Audited. Needs the
      *     sso permission (an Owner, an Admin with it, or a platform operator).
      */
     put: operations['setIdentityProvider']
@@ -234,6 +297,56 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/organizations/{org_id}/identity-provider/saml-service-provider': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * What to set up at a SAML identity provider for this organization
+     * @description The entity id, ACS URL and metadata URL of the organization's SAML
+     *     service provider, for the admin page to show before any SAML
+     *     provider is saved. Needs the sso permission.
+     */
+    get: operations['getSamlServiceProvider']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/identity-provider/enforcement': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    /**
+     * Require single sign-on for the organization's domain
+     * @description On: everyone whose address is in the domain the organization has
+     *     proven signs in through its identity provider, and a password
+     *     sign-in is refused (`sso.required`). The organization's Owners may
+     *     still sign in with a password and the second factor they already
+     *     have, so a broken provider never locks the organization out. In
+     *     force only while the provider is active and verified; it can be
+     *     turned on only then (409 `identity_provider.not_verified`). An
+     *     Owner only, never an Admin, a platform operator or a support
+     *     session. Audited.
+     */
+    put: operations['setSsoEnforcement']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/v1/identity-provider-presets': {
     parameters: {
       query?: never
@@ -246,6 +359,8 @@ export interface paths {
      * @description What each preset fills in, so the admin page's provider picker
      *     needs no copy of it: the issuer (with `{tenant_id}` where Entra's
      *     goes), the scopes, the claims, and which fields the preset asks for.
+     *     `saml_profiles` is the attribute names each common SAML provider
+     *     sends, for the `saml` preset's mapping.
      */
     get: operations['listIdentityProviderPresets']
     put?: never
@@ -484,6 +599,13 @@ export interface paths {
      *     account and per address; a person who types their password right is
      *     never slowed. An unverified account is refused until its email is
      *     verified.
+     *
+     *     When the organization that has proven the address's domain requires
+     *     single sign-on (`PUT .../identity-provider/enforcement`), the right
+     *     password is refused with 403 `sso.required`: the person signs in
+     *     through the organization's provider. Its Owners are the exception
+     *     (break glass), and only with a second factor already set up, which
+     *     the 202 then asks for.
      */
     post: operations['signInLocal']
     delete?: never
@@ -1175,6 +1297,246 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/organizations/{org_id}/support-access': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Whether platform operators may see the organization without asking each time
+     * @description Standing support access lets a platform operator start an
+     *     impersonation without an Owner's consent each time, for an hour at
+     *     a time; without it every impersonation needs an Owner's time-boxed
+     *     consent. Needs the settings permission. Off until an Owner turns it
+     *     on.
+     */
+    get: operations['getSupportAccess']
+    /**
+     * Turn standing support access on or off (an Owner of the organization)
+     * @description An Owner of the organization only: never an Admin, a platform
+     *     operator, a key or a support session. Turning it off, or taking the
+     *     Owners out of it, ends every impersonation it no longer covers at
+     *     once. Audited (support_access.changed).
+     */
+    put: operations['setSupportAccess']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/impersonation-grants': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * The organization's consents to support impersonation, newest first
+     * @description The last 200, ended and revoked ones included. Needs the settings permission.
+     */
+    get: operations['listImpersonationGrants']
+    put?: never
+    /**
+     * Consent to support impersonation for a while (an Owner of the organization)
+     * @description Any platform operator may then see the organization as one of its
+     *     people, read-only, until the consent ends (15 minutes to 24 hours
+     *     from now) or is revoked. An Owner is seen as only when
+     *     include_owners says so. It cannot be extended: a longer look needs
+     *     a new consent. Audited (impersonation.granted).
+     */
+    post: operations['createImpersonationGrant']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/impersonation-grants/{grant_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /**
+     * Withdraw a consent now (an Owner of the organization)
+     * @description Every impersonation running under it ends at once and its open tabs
+     *     are told (session.revoked). Audited (impersonation.grant_revoked).
+     */
+    delete: operations['revokeImpersonationGrant']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/impersonations': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Who from the platform saw the organization as whom, newest first
+     * @description The last 200 impersonations, running and ended. What each one did
+     *     is in the audit log as impersonation.request entries, one per
+     *     request. Needs the settings permission.
+     */
+    get: operations['listImpersonations']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/impersonations/{impersonation_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /**
+     * End one impersonation now (an Owner of the organization)
+     * @description Its open tabs are told (session.revoked). Audited (impersonation.ended).
+     */
+    delete: operations['endImpersonation']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/platform/impersonation-grants': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Where a platform operator may start an impersonation now (platform operators)
+     * @description Every consent open now, in every organization, and every organization with standing support access.
+     */
+    get: operations['listUsableImpersonationGrants']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/platform/impersonations': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * See an organization as one of its people (platform operators)
+     * @description Under an Owner's open consent (grant_id), until it ends, or under
+     *     the organization's standing support access (no grant_id), for an
+     *     hour. The person must be an active member, and not an Owner unless
+     *     the consent or the standing access includes Owners. Sets the
+     *     support session cookie (<prefix>_impersonation), apart from the
+     *     operator's own session, and answers its first access token; the app
+     *     refreshes it with POST /v1/session/impersonation/refresh. The
+     *     session is read-only, every request it makes is audited in the
+     *     organization's log, and it ends at its time box without extension.
+     *     Audited (impersonation.started).
+     */
+    post: operations['startImpersonation']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/session/impersonation/refresh': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * An access token for the support session in the support cookie
+     * @description Rotates the support session's refresh token. The answer's
+     *     impersonation says the session is a platform operator's, for the
+     *     banner. Refused (401) once the time box has passed, the consent was
+     *     withdrawn, standing access turned off, the person left, or the
+     *     operator is no longer one; the access token never outlives the time
+     *     box.
+     */
+    post: operations['refreshImpersonation']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/session/impersonation/end': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * End the support session in the support cookie, and clear it
+     * @description Always 204. Audited (impersonation.ended) when there was one.
+     */
+    post: operations['endOwnImpersonation']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/internal/organizations/{org_id}/onboarding/{step_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Whether one of this service's onboarding steps is done (the organization service only)
+     * @description Derived now, never stored (docs/onboarding.md). invite_teammates:
+     *     the organization has sent at least one invite, whatever became of
+     *     it, or has a second active member. set_up_sso: its identity
+     *     provider is saved and active. Any other step is not this service's
+     *     (404).
+     */
+    get: operations['getOnboardingStep']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
@@ -1280,6 +1642,7 @@ export interface components {
       membership_id?: string
       /** @description True when no organization is active yet and the app must show the chooser. */
       choose_organization: boolean
+      impersonation?: components['schemas']['ImpersonationMarker']
     }
     SessionMembership: {
       /** Format: uuid */
@@ -1321,6 +1684,11 @@ export interface components {
        * @description When it ends if not used before then.
        */
       idle_expires_at?: string
+      /**
+       * Format: uuid
+       * @description Set when the session is a platform operator seeing the organization as this person (docs/impersonation.md). It can be ended like any other.
+       */
+      impersonation_id?: string
     }
     SessionPolicy: {
       /** Format: uuid */
@@ -1465,12 +1833,15 @@ export interface components {
       setup_token?: string
     }
     /**
-     * @description An OpenID Connect provider. The preset fills in what is left out:
-     *     see `GET /v1/identity-provider-presets` and docs/sso.md.
+     * @description An OpenID Connect provider, or a SAML 2.0 identity provider. The
+     *     preset fills in what is left out: see
+     *     `GET /v1/identity-provider-presets` and docs/sso.md. With `saml`,
+     *     only `saml` is sent: any OpenID field is a 400 naming it.
      */
     NewIdentityProvider: {
-      /** @description `entra`, `google` or `generic`; checked by the server. */
+      /** @description `entra`, `google` or `generic` (OpenID Connect), or `saml`; checked by the server. */
       preset: string
+      saml?: components['schemas']['NewSamlSettings']
       /**
        * @description generic only (required there): the issuer URL, whose
        *     `/.well-known/openid-configuration` is the discovery document.
@@ -1482,7 +1853,8 @@ export interface components {
       tenant_id?: string
       /** @description google only (required there): the Workspace domain; identity tokens must carry it in hd. */
       hosted_domain?: string
-      client_id: string
+      /** @description OpenID Connect presets only, and required there. */
+      client_id?: string
       /** @description Required the first time; left out on a change, the stored secret is kept, but only while the preset, issuer (tenant, hosted domain) and client id stay the same. */
       client_secret?: string
       /** @description The scopes asked for; must include openid. The preset's when left out. */
@@ -1497,62 +1869,148 @@ export interface components {
        */
       require_email_verified?: boolean
     }
+    /**
+     * @description A SAML 2.0 identity provider: its metadata, by URL or uploaded (one
+     *     of them; neither keeps the saved metadata, its certificates checked
+     *     again), and the attributes the address and name are read from (the
+     *     profile's when left out).
+     */
+    NewSamlSettings: {
+      /** @description Fetched now, from a public https address. Kept, so the admin page can show it. */
+      metadata_url?: string
+      /** @description The metadata document itself, at most 1 MB. */
+      metadata_xml?: string
+      /** @description Whose attribute names fill in the mapping: `okta`, `entra`, `google`, `jumpcloud`, `adfs`, `onelogin` or `generic` (the default). Checked by the server. */
+      profile?: string
+      /** @description The attribute the address is read from. Without it in an assertion, the subject's NameID is used when it is an address. */
+      email_attribute?: string
+      /** @description The attribute the display name is read from. */
+      name_attribute?: string
+      /** @description With family_name_attribute, the name when name_attribute is absent. Empty reads none. */
+      given_name_attribute?: string
+      family_name_attribute?: string
+    }
+    SamlProvider: {
+      /** @description The identity provider's entity id; the issuer of every assertion. */
+      entity_id: string
+      /** @description Where the browser is sent to sign in (HTTP-Redirect binding). */
+      sso_url: string
+      /** @description Where the metadata was fetched from; absent when it was uploaded. */
+      metadata_url?: string
+      profile: string
+      email_attribute: string
+      name_attribute: string
+      given_name_attribute?: string
+      family_name_attribute?: string
+      /** @description The signing certificates assertions are checked against. */
+      certificates: components['schemas']['SamlCertificate'][]
+      /**
+       * Format: date-time
+       * @description When the last certificate expires, and sign-in with it stops unless new metadata is saved.
+       */
+      certificates_expire_at: string
+      service_provider: components['schemas']['SamlServiceProvider']
+    }
+    SamlCertificate: {
+      subject: string
+      /** Format: date-time */
+      not_before: string
+      /** Format: date-time */
+      not_after: string
+      /** @description The SHA-256 fingerprint, hex, colon-separated, as providers show it. */
+      sha256: string
+    }
+    /** @description What the identity provider is set up with for this organization. */
+    SamlServiceProvider: {
+      /** @description The audience (Entity ID, Identifier) every assertion must name. */
+      entity_id: string
+      /** @description The assertion consumer service URL (Reply URL, Single sign-on URL), HTTP-POST binding. */
+      acs_url: string
+      /** @description This service provider's metadata, for providers that read it. */
+      metadata_url: string
+      /** @description The NameID format asked for; the email address is preferred. */
+      name_id_format: string
+    }
+    SamlProfile: {
+      profile: string
+      label: string
+      email_attribute: string
+      name_attribute: string
+      given_name_attribute: string
+      family_name_attribute: string
+    }
     IdentityProvider: {
       /** Format: uuid */
       org_id: string
-      /** @description `entra`, `google` or `generic`. */
+      /** @enum {string} */
+      protocol: 'oidc' | 'saml'
+      /** @description `entra`, `google`, `generic` or `saml`. */
       preset: string
-      /** @description The issuer as its discovery document names it. */
+      /** @description The issuer as its discovery document names it; for SAML, the identity provider's entity id. */
       issuer: string
       /** @description entra only. */
       tenant_id?: string
       /** @description google only. */
       hosted_domain?: string
+      /** @description The client id; for SAML, this service provider's entity id (the audience). */
       client_id: string
-      /** @description A secret is stored. The secret itself is never returned. */
+      /** @description A secret is stored. The secret itself is never returned. Always false for SAML. */
       client_secret_set: boolean
+      /** @description Empty for SAML. */
       scopes: string[]
+      /** @description The claim the address is read from; for SAML, the attribute. */
       email_claim: string
+      /** @description The claim the name is read from; for SAML, the attribute. */
       name_claim: string
       require_email_verified: boolean
-      /** @enum {string} */
-      status: 'active' | 'disabled'
+      /**
+       * @description `pending_first_sign_in`: a SAML provider nobody has signed in through yet. It signs people in; it is not verified, so single sign-on cannot be required yet.
+       * @enum {string}
+       */
+      status: 'active' | 'pending_first_sign_in' | 'disabled'
       /**
        * Format: date-time
-       * @description When the settings last passed the test before saving.
+       * @description When the settings last passed the test before saving; for SAML, when someone first signed in through the provider as saved.
        */
       verified_at?: string
-      /** @description What to register with the provider as the redirect URI. */
+      /** @description What to register with the provider as the redirect URI; for SAML, the ACS URL. */
       redirect_uri: string
+      /** @description An Owner requires single sign-on for the organization's domain. */
+      sso_enforced: boolean
+      /** @description It is required and in force now, the provider being active and verified. */
+      sso_enforcement_active: boolean
+      saml?: components['schemas']['SamlProvider']
     }
     IdentityProviderTest: {
       /** @description Every check passed; a save with these settings would be accepted. */
       ok: boolean
-      /** @description The issuer the discovery document named, once it was fetched. */
+      /** @description The issuer the discovery document named, once it was fetched; for SAML, the entity id the metadata named. */
       issuer?: string
-      /** @description What to register with the provider as the redirect URI. */
+      /** @description What to register with the provider as the redirect URI; for SAML, the ACS URL. */
       redirect_uri: string
       /** @description In order; a check after a failed one is not run and not listed. */
       checks: components['schemas']['IdentityProviderCheck'][]
     }
     IdentityProviderCheck: {
-      /** @description `discovery`, `issuer`, `keys` or `client`. */
+      /** @description OpenID Connect: `discovery`, `issuer`, `keys`, `client`. SAML: `metadata`, `entity_id`, `sso_url`, `certificates`. */
       check: string
       ok: boolean
-      /** @description When it failed, the input to fix (issuer, tenant_id, client_id, client_secret). Absent when no input explains it, such as Google being unreachable. */
+      /** @description When it failed, the input to fix (issuer, tenant_id, client_id, client_secret; saml.metadata_url, saml.metadata_xml). Absent when no input explains it, such as Google being unreachable. */
       field?: string
       /** @description A sentence for the admin. Never a secret or a token. */
       message: string
     }
     IdentityProviderPreset: {
       preset: string
-      /** @description The issuer the preset uses: `{tenant_id}` stands for Entra's tenant; empty for generic, which asks for it. */
+      /** @enum {string} */
+      protocol: 'oidc' | 'saml'
+      /** @description The issuer the preset uses: `{tenant_id}` stands for Entra's tenant; empty for generic, which asks for it, and for saml. */
       issuer: string
       scopes: string[]
       email_claim: string
       name_claim: string
       require_email_verified: boolean
-      /** @description The inputs the preset asks for besides the client id and secret. */
+      /** @description The inputs the preset asks for besides the client id and secret; for saml, the inputs of `saml`. */
       fields: string[]
     }
     Error: {
@@ -1561,6 +2019,123 @@ export interface components {
       fields?: {
         [key: string]: string
       }
+    }
+    SupportAccess: {
+      /** Format: uuid */
+      org_id: string
+      /** @description Platform operators may start an impersonation without a consent, for an hour at a time. */
+      standing: boolean
+      /** @description Standing access reaches the Owners too. */
+      include_owners: boolean
+    }
+    SupportAccessUpdate: {
+      standing: boolean
+      include_owners?: boolean
+    }
+    NewImpersonationGrant: {
+      /** @description How long from now the consent lasts, 15 minutes to 24 hours. */
+      duration_minutes: number
+      /** @description An Owner may be seen as too. False when left out. */
+      include_owners?: boolean
+    }
+    ImpersonationGrant: {
+      /** Format: uuid */
+      id: string
+      /** Format: uuid */
+      org_id: string
+      /** @description The Owner who gave it, as an actor (membership:<id>). */
+      granted_by: string
+      /** Format: date-time */
+      created_at: string
+      /** Format: date-time */
+      expires_at: string
+      include_owners: boolean
+      /** Format: date-time */
+      revoked_at?: string
+      /** @description Neither revoked nor past its end. */
+      active: boolean
+    }
+    ImpersonationGrantList: {
+      grants: components['schemas']['ImpersonationGrant'][]
+    }
+    UsableImpersonationGrants: {
+      grants: components['schemas']['ImpersonationGrant'][]
+      standing: components['schemas']['SupportAccess'][]
+    }
+    NewImpersonation: {
+      /** Format: uuid */
+      org_id: string
+      /**
+       * Format: uuid
+       * @description The person to see as; their membership in the organization is the target.
+       */
+      user_id: string
+      /**
+       * Format: uuid
+       * @description The Owner's consent to start under; left out, the organization's standing support access.
+       */
+      grant_id?: string
+    }
+    Impersonation: {
+      /** Format: uuid */
+      id: string
+      /** Format: uuid */
+      org_id: string
+      /**
+       * Format: uuid
+       * @description The consent it runs under; absent under standing support access.
+       */
+      grant_id?: string
+      /**
+       * Format: uuid
+       * @description The platform operator's user id.
+       */
+      impersonator_id: string
+      /**
+       * Format: uuid
+       * @description The person seen as.
+       */
+      user_id: string
+      /** Format: uuid */
+      membership_id: string
+      /** Format: date-time */
+      started_at: string
+      /**
+       * Format: date-time
+       * @description The time box; it is never extended.
+       */
+      ends_at: string
+      /**
+       * Format: date-time
+       * @description When it was ended before its time box, if it was.
+       */
+      ended_at?: string
+      ended_reason?: string
+      /** @description Neither ended nor past its time box. */
+      active: boolean
+    }
+    ImpersonationList: {
+      impersonations: components['schemas']['Impersonation'][]
+    }
+    ImpersonationStarted: {
+      impersonation: components['schemas']['Impersonation']
+      token: components['schemas']['AccessToken']
+    }
+    /** @description The session is a platform operator seeing the organization as this person; the app shows a banner until ends_at. */
+    ImpersonationMarker: {
+      /** Format: uuid */
+      impersonation_id: string
+      /** Format: uuid */
+      impersonator_id: string
+      /** Format: uuid */
+      grant_id?: string
+      /** Format: date-time */
+      ends_at: string
+      /** @description Always true in the template; every write is refused with impersonation.read_only. */
+      read_only: boolean
+    }
+    OnboardingStatus: {
+      done: boolean
     }
   }
   responses: {
@@ -1575,6 +2150,8 @@ export interface components {
     }
   }
   parameters: {
+    GrantId: string
+    ImpersonationId: string
     OrgId: string
     KeyId: string
     InviteId: string
@@ -1703,6 +2280,58 @@ export interface operations {
         content?: never
       }
       400: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  finishSamlSignIn: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/x-www-form-urlencoded': {
+          SAMLResponse?: string
+          RelayState?: string
+        }
+      }
+    }
+    responses: {
+      /** @description To the app, to the app's sign-in page with an error code, or to start a sign-in */
+      302: {
+        headers: {
+          Location?: string
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      default: components['responses']['Error']
+    }
+  }
+  getSamlServiceProviderMetadata: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The metadata */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/samlmetadata+xml': string
+        }
+      }
       default: components['responses']['Error']
     }
   }
@@ -1907,6 +2536,65 @@ export interface operations {
       default: components['responses']['Error']
     }
   }
+  getSamlServiceProvider: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The service provider */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SamlServiceProvider']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  setSsoEnforcement: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': {
+          enforced: boolean
+        }
+      }
+    }
+    responses: {
+      /** @description The provider, with the setting */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['IdentityProvider']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      409: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
   listIdentityProviderPresets: {
     parameters: {
       query?: never
@@ -1924,6 +2612,7 @@ export interface operations {
         content: {
           'application/json': {
             presets: components['schemas']['IdentityProviderPreset'][]
+            saml_profiles: components['schemas']['SamlProfile'][]
           }
         }
       }
@@ -2308,6 +2997,19 @@ export interface operations {
       400: components['responses']['Error']
       /** @description Refused; the code says whether it was the credentials, an unverified email, or no organization */
       401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /**
+       * @description The password is right, but the address's organization requires
+       *     single sign-on: `sso.required`. The sign-in page sends the
+       *     person to `GET /v1/sign-in/start?email=…`.
+       */
+      403: {
         headers: {
           [name: string]: unknown
         }
@@ -3499,6 +4201,310 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
+      default: components['responses']['Error']
+    }
+  }
+  getSupportAccess: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The setting */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SupportAccess']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  setSupportAccess: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SupportAccessUpdate']
+      }
+    }
+    responses: {
+      /** @description The setting as saved */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SupportAccess']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  listImpersonationGrants: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The consents */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImpersonationGrantList']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  createImpersonationGrant: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NewImpersonationGrant']
+      }
+    }
+    responses: {
+      /** @description The consent */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImpersonationGrant']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  revokeImpersonationGrant: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        grant_id: components['parameters']['GrantId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Withdrawn */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  listImpersonations: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The impersonations */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImpersonationList']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  endImpersonation: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        impersonation_id: components['parameters']['ImpersonationId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Ended */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  listUsableImpersonationGrants: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The consents and standing access */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UsableImpersonationGrants']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  startImpersonation: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NewImpersonation']
+      }
+    }
+    responses: {
+      /** @description The impersonation and its first access token */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImpersonationStarted']
+        }
+      }
+      400: components['responses']['Error']
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  refreshImpersonation: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The access token */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AccessToken']
+        }
+      }
+      401: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  endOwnImpersonation: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Ended */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      default: components['responses']['Error']
+    }
+  }
+  getOnboardingStep: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        step_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Whether it is done */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OnboardingStatus']
+        }
+      }
+      403: components['responses']['Error']
+      404: components['responses']['Error']
       default: components['responses']['Error']
     }
   }

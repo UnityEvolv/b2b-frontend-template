@@ -11,7 +11,11 @@ export const platform = {
     suspended: 'Suspended',
     left: 'Left',
   },
-  providerStatuses: { active: 'active', disabled: 'disabled' },
+  providerStatuses: {
+    active: 'active',
+    pending_first_sign_in: 'waiting for the first sign-in',
+    disabled: 'disabled',
+  },
   organizations: {
     title: 'Organizations',
     empty: 'Every organization on {{product}} will appear here.',
