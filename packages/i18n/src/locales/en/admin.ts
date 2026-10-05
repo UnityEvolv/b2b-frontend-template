@@ -609,14 +609,24 @@ export const admin = {
       local:
         'People sign in with local accounts. Connect your organization’s identity provider to sign in with work accounts instead.',
       current: 'People sign in through {{provider}}.',
+      currentSaml: 'People sign in through a SAML 2.0 identity provider.',
       issuer: 'Issuer: {{issuer}}',
       verifiedAt: 'Last tested {{when}}.',
+      confirmedAt: 'Confirmed by a sign-in {{when}}.',
+      statuses: {
+        active: 'Active',
+        pending_first_sign_in: 'Waiting for the first sign-in to confirm',
+        disabled: 'Disabled',
+      },
+      pending:
+        'Waiting for the first sign-in to confirm. People can sign in through the provider now; the first sign-in that goes through proves the provider is set up for this organization. Until then single sign-on cannot be required.',
       provider: 'Identity provider',
       pick: 'Choose a provider',
       presets: {
         entra: 'Microsoft Entra ID',
         google: 'Google Workspace',
         generic: 'Another OpenID Connect provider',
+        saml: 'SAML 2.0 (Okta, Entra ID, Google Workspace, JumpCloud, AD FS, OneLogin and others)',
       },
       fields: {
         issuer: 'Issuer URL',
@@ -646,15 +656,109 @@ export const admin = {
         issuer: 'Issuer',
         keys: 'Signing keys',
         client: 'Client ID and secret',
+        metadata: 'Metadata',
+        entity_id: 'Entity ID',
+        sso_url: 'Single sign-on URL',
+        certificates: 'Signing certificates',
       },
       pass: 'Passed',
       fail: 'Failed',
       redirect: 'Register this redirect URI with the provider:',
       copy: 'Copy',
+      copyNamed: 'Copy {{name}}',
       copied: 'Copied.',
       save: 'Save provider',
       saved: 'Identity provider saved.',
       unreachable: 'The identity provider could not be saved.',
+      saml: {
+        sp: {
+          title: 'First, set up this service at your identity provider',
+          intro:
+            'Create a SAML application at your identity provider with these details. Assertions must be signed, and not encrypted. Then come back with the provider’s metadata.',
+          entity_id: 'Entity ID (audience)',
+          acs_url: 'ACS URL (reply URL)',
+          metadata_url: 'Our metadata URL',
+          name_id_format: 'NameID format',
+          failed:
+            'The details for your identity provider could not be loaded. Reload the page to try again.',
+        },
+        metadata: 'Identity provider metadata',
+        sources: {
+          url: 'From a URL',
+          xml: 'Upload or paste the XML',
+        },
+        metadataUrl: 'Metadata URL',
+        metadataUrlHelp: 'The https address your provider publishes its SAML metadata at.',
+        metadataXml: 'Metadata XML',
+        metadataXmlHelp:
+          'Paste the document, or choose the file your provider gave you. At most 1 MB.',
+        chooseFile: 'Choose a file',
+        fileTooLarge: 'That file is larger than 1 MB.',
+        fileUnreadable: 'That file could not be read.',
+        keepMetadata:
+          'Leave empty to keep the saved metadata; its certificates are checked again. Save the provider’s new metadata when it rotates its signing certificate.',
+        profile: 'Your provider',
+        profileHelp: 'Fills in the attribute names your provider sends. You can change them below.',
+        mapping: 'Attribute mapping',
+        email_attribute: 'Email attribute',
+        emailHelp: 'Without it in an assertion, the NameID is used when it is an email address.',
+        name_attribute: 'Name attribute',
+        given_name_attribute: 'Given name attribute',
+        family_name_attribute: 'Family name attribute',
+        partsHelp: 'Used when the name attribute is absent. Leave empty to read none.',
+        passed:
+          'Every check passed. Saving tests the metadata once more; the first sign-in through the provider then confirms it.',
+        entityId: 'Identity provider: {{value}}',
+        ssoUrl: 'Sign-in URL: {{value}}',
+        metadataFrom: 'Metadata from {{value}}',
+        uploaded: 'Metadata uploaded.',
+        certificates: {
+          title: 'Signing certificates',
+          subject: 'Subject',
+          fingerprint: 'SHA-256 fingerprint',
+          validUntil: 'Valid until',
+          state: 'State',
+          valid: 'Valid',
+          soon: 'Expires soon',
+          expired: 'Expired',
+          expiring:
+            'The provider’s last signing certificate expires on {{date}}. Save its new metadata before then, or sign-in through it stops.',
+        },
+      },
+    },
+    enforcement: {
+      title: 'Require single sign-on',
+      label: 'Require single sign-on for {{domain}}',
+      yourDomain: 'your domain',
+      explain:
+        'Everyone with an address in {{domain}} signs in through the identity provider, and a password sign-in is refused.',
+      breakGlass:
+        'Break glass: the organization’s Owners who have already set up two-step sign-in can still sign in with their password, so a broken provider never locks the organization out.',
+      ownerOnly: 'Only an Owner can change this.',
+      notVerified:
+        'Available once the provider is active and confirmed. A SAML provider is confirmed by its first sign-in.',
+      inForce: 'Single sign-on is required now.',
+      waiting:
+        'Required, but not in force until the provider is active and confirmed again: until then passwords still work.',
+      confirmOn: {
+        title: 'Require single sign-on for {{domain}}?',
+        body: 'People with an address in {{domain}} will no longer be able to sign in with a password. Owners with two-step sign-in set up keep a password sign-in as a way back in.',
+        go: 'Require single sign-on',
+      },
+      confirmOff: {
+        title: 'Stop requiring single sign-on?',
+        body: 'People with an address in {{domain}} will be able to sign in with a password again.',
+        go: 'Stop requiring it',
+      },
+      on: 'Single sign-on is now required.',
+      off: 'Single sign-on is no longer required.',
+      errors: {
+        notVerified:
+          'The identity provider is not confirmed yet. Once someone has signed in through it, try again.',
+        notConfigured: 'There is no identity provider to require. Save one first.',
+        forbidden: 'Only an Owner can change this.',
+        failed: 'The setting could not be changed. Try again in a moment.',
+      },
     },
     sessions: {
       title: 'Sessions and two-step sign-in',

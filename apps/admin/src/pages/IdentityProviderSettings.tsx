@@ -14,10 +14,21 @@ import { useOrg, useSession } from '@b2b-template/ui-web'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { copyText, refusal, TestReport } from './identity-provider-parts'
+import { SamlDetails, SamlProviderForm } from './SamlProviderForm'
+import { SsoEnforcement } from './SsoEnforcement'
+
 type Provider = identity.components['schemas']['IdentityProvider']
 type Preset = identity.components['schemas']['IdentityProviderPreset']
 type Body = identity.components['schemas']['NewIdentityProvider']
 type Report = identity.components['schemas']['IdentityProviderTest']
+type Profile = identity.components['schemas']['SamlProfile']
+
+const STATUS_BADGE = {
+  active: 'primary',
+  pending_first_sign_in: 'secondary',
+  disabled: 'danger',
+} as const
 
 /** The inputs a preset may ask for besides the client id and secret. */
 type PresetField = 'issuer' | 'tenant_id' | 'hosted_domain'
@@ -110,19 +121,15 @@ export function secretRequired(
   })
 }
 
-/** The error envelope's message and per-input messages, when there are any. */
-const refusal = (error: unknown) => {
-  const e = error as { message?: string; fields?: Record<string, string> } | undefined
-  return { message: e?.message, fields: e?.fields ?? {} }
-}
-
 /**
  * The organization's identity provider: any OpenID Connect provider, filled
- * in from a preset the identity service lists. The settings are tested (the
- * discovery document, the issuer, the keys, and the client id and secret at
- * the token endpoint) before Save is offered, and the server tests them
- * again. The sso permission's alone: without it nothing here is shown, and
- * the API refuses on its own.
+ * in from a preset the identity service lists, or a SAML 2.0 provider (a
+ * preset whose protocol is saml, SamlProviderForm). The settings are
+ * tested (OpenID: the discovery document, the issuer, the keys, and the
+ * client id and secret at the token endpoint) before Save is offered, and
+ * the server tests them again. The sso permission's alone: without it
+ * nothing here is shown, and the API refuses on its own. Once a provider is
+ * saved, an Owner may require it (SsoEnforcement).
  */
 export function IdentityProviderSettings() {
   const { t, i18n } = useTranslation('admin')
@@ -132,6 +139,7 @@ export function IdentityProviderSettings() {
   const orgId = org?.orgId
 
   const [presets, setPresets] = useState<Preset[] | null>(null)
+  const [profiles, setProfiles] = useState<Profile[]>([])
   const [saved, setSaved] = useState<Provider | null | undefined>(undefined)
   const [form, setForm] = useState<ProviderForm>(blank())
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -152,6 +160,7 @@ export function IdentityProviderSettings() {
       if (!current) return
       const list = p.data?.presets ?? []
       setPresets(list)
+      setProfiles(p.data?.saml_profiles ?? [])
       setSaved(s.data ?? null)
       setForm(s.data ? fromProvider(s.data) : blank(list[0]))
     })
@@ -171,6 +180,7 @@ export function IdentityProviderSettings() {
   }
 
   const preset = presets.find((p) => p.preset === form.preset)
+  const saml = preset?.protocol === 'saml'
   const fields = presetFields(preset)
   const body = bodyOf(form, preset)
   const key = JSON.stringify(body)
@@ -260,44 +270,51 @@ export function IdentityProviderSettings() {
     setProblem(null)
   }
 
-  const copy = async (text: string) => {
-    await navigator.clipboard.writeText(text)
-    toast.success(t('settings.identity.copied'))
-  }
-
-  const redirectUri = tested?.report.redirect_uri ?? saved?.redirect_uri
+  const copy = (text: string) => copyText(text, t('settings.identity.copied'))
+  const redirectUri =
+    tested?.report.redirect_uri ?? (saved?.protocol === 'saml' ? undefined : saved?.redirect_uri)
   const report = tested?.key === key ? tested.report : null
+  const savedSaml = saved?.protocol === 'saml' ? saved.saml : undefined
 
   return (
-    <Card header={title}>
-      <div className="space-y-4">
-        {saved ? (
-          <div className="space-y-1 text-sm">
-            <p className="flex items-center gap-2">
-              {t('settings.identity.current', { provider: label(saved.preset) })}
-              <Badge variant={saved.status === 'active' ? 'primary' : 'danger'}>
-                {saved.status}
-              </Badge>
-            </p>
-            <p className="break-all text-base-content/70">
-              {t('settings.identity.issuer', { issuer: saved.issuer })}
-            </p>
-            {saved.verified_at && (
-              <p className="text-base-content/70">
-                {t('settings.identity.verifiedAt', {
-                  when: new Date(saved.verified_at).toLocaleString(i18n.language, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  }),
-                })}
+    <>
+      <Card header={title}>
+        <div className="space-y-4">
+          {saved ? (
+            <div className="space-y-1 text-sm">
+              <p className="flex flex-wrap items-center gap-2">
+                {savedSaml
+                  ? t('settings.identity.currentSaml')
+                  : t('settings.identity.current', { provider: label(saved.preset) })}
+                <Badge variant={STATUS_BADGE[saved.status]}>
+                  {t(`settings.identity.statuses.${saved.status}`)}
+                </Badge>
               </p>
-            )}
-          </div>
-        ) : (
-          <p className="text-sm">{t('settings.identity.local')}</p>
-        )}
+              {saved.status === 'pending_first_sign_in' && (
+                <Alert variant="info">{t('settings.identity.pending')}</Alert>
+              )}
+              {savedSaml ? (
+                <SamlDetails saml={savedSaml} />
+              ) : (
+                <p className="break-all text-base-content/70">
+                  {t('settings.identity.issuer', { issuer: saved.issuer })}
+                </p>
+              )}
+              {saved.verified_at && (
+                <p className="text-base-content/70">
+                  {t(savedSaml ? 'settings.identity.confirmedAt' : 'settings.identity.verifiedAt', {
+                    when: new Date(saved.verified_at).toLocaleString(i18n.language, {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    }),
+                  })}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm">{t('settings.identity.local')}</p>
+          )}
 
-        <form onSubmit={save} noValidate className="space-y-4">
           <Select
             label={t('settings.identity.provider')}
             placeholder={t('settings.identity.pick')}
@@ -311,129 +328,129 @@ export function IdentityProviderSettings() {
               </option>
             ))}
           </Select>
-          {fields.map((field) => (
-            <Input
-              key={field}
-              required
-              label={t(`settings.identity.fields.${field}`, { defaultValue: field })}
-              help={t(`settings.identity.fieldHelp.${field}`, { defaultValue: '' }) || undefined}
-              error={errors[field]}
-              value={form[field]}
-              onChange={(e) => change({ [field]: e.target.value })}
+
+          {saml ? (
+            <SamlProviderForm
+              profiles={profiles}
+              saved={saved}
+              onSaved={(provider) => {
+                setSaved(provider)
+                setForm(fromProvider(provider))
+              }}
             />
-          ))}
-          <Input
-            required
-            label={t('settings.identity.clientId')}
-            error={errors.client_id}
-            value={form.client_id}
-            onChange={(e) => change({ client_id: e.target.value })}
-          />
-          <Input
-            type="password"
-            autoComplete="off"
-            required={needsSecret}
-            label={t('settings.identity.secret')}
-            help={
-              !saved?.client_secret_set
-                ? undefined
-                : needsSecret
-                  ? t('settings.identity.secretAgain')
-                  : t('settings.identity.secretKept')
-            }
-            error={errors.client_secret}
-            value={form.client_secret}
-            onChange={(e) => change({ client_secret: e.target.value })}
-          />
-
-          <details
-            className="text-sm"
-            open={advanced}
-            onToggle={(e) => setAdvanced(e.currentTarget.open)}
-          >
-            <summary className="cursor-pointer font-medium">
-              {t('settings.identity.advanced')}
-            </summary>
-            <div className="mt-3 space-y-4">
+          ) : (
+            <form onSubmit={save} noValidate className="space-y-4">
+              {fields.map((field) => (
+                <Input
+                  key={field}
+                  required
+                  label={t(`settings.identity.fields.${field}`, { defaultValue: field })}
+                  help={
+                    t(`settings.identity.fieldHelp.${field}`, { defaultValue: '' }) || undefined
+                  }
+                  error={errors[field]}
+                  value={form[field]}
+                  onChange={(e) => change({ [field]: e.target.value })}
+                />
+              ))}
               <Input
-                label={t('settings.identity.scopes')}
-                help={t('settings.identity.scopesHelp')}
-                error={errors.scopes}
-                value={form.scopes}
-                onChange={(e) => change({ scopes: e.target.value })}
+                required
+                label={t('settings.identity.clientId')}
+                error={errors.client_id}
+                value={form.client_id}
+                onChange={(e) => change({ client_id: e.target.value })}
               />
               <Input
-                label={t('settings.identity.emailClaim')}
-                error={errors.email_claim}
-                value={form.email_claim}
-                onChange={(e) => change({ email_claim: e.target.value })}
+                type="password"
+                autoComplete="off"
+                required={needsSecret}
+                label={t('settings.identity.secret')}
+                help={
+                  !saved?.client_secret_set
+                    ? undefined
+                    : needsSecret
+                      ? t('settings.identity.secretAgain')
+                      : t('settings.identity.secretKept')
+                }
+                error={errors.client_secret}
+                value={form.client_secret}
+                onChange={(e) => change({ client_secret: e.target.value })}
               />
-              <Input
-                label={t('settings.identity.nameClaim')}
-                error={errors.name_claim}
-                value={form.name_claim}
-                onChange={(e) => change({ name_claim: e.target.value })}
-              />
-              <Checkbox
-                label={t('settings.identity.emailVerified')}
-                checked={form.require_email_verified}
-                onChange={(e) => change({ require_email_verified: e.target.checked })}
-              />
-            </div>
-          </details>
 
-          {problem && <Alert variant="danger">{problem}</Alert>}
+              <details
+                className="text-sm"
+                open={advanced}
+                onToggle={(e) => setAdvanced(e.currentTarget.open)}
+              >
+                <summary className="cursor-pointer font-medium">
+                  {t('settings.identity.advanced')}
+                </summary>
+                <div className="mt-3 space-y-4">
+                  <Input
+                    label={t('settings.identity.scopes')}
+                    help={t('settings.identity.scopesHelp')}
+                    error={errors.scopes}
+                    value={form.scopes}
+                    onChange={(e) => change({ scopes: e.target.value })}
+                  />
+                  <Input
+                    label={t('settings.identity.emailClaim')}
+                    error={errors.email_claim}
+                    value={form.email_claim}
+                    onChange={(e) => change({ email_claim: e.target.value })}
+                  />
+                  <Input
+                    label={t('settings.identity.nameClaim')}
+                    error={errors.name_claim}
+                    value={form.name_claim}
+                    onChange={(e) => change({ name_claim: e.target.value })}
+                  />
+                  <Checkbox
+                    label={t('settings.identity.emailVerified')}
+                    checked={form.require_email_verified}
+                    onChange={(e) => change({ require_email_verified: e.target.checked })}
+                  />
+                </div>
+              </details>
 
-          {report && (
-            <div className="space-y-2">
-              <ul className="space-y-1 text-sm" aria-label={t('settings.identity.test')}>
-                {report.checks.map((check) => (
-                  <li key={check.check} className="flex items-start gap-2">
-                    <Badge variant={check.ok ? 'primary' : 'danger'}>
-                      {check.ok ? t('settings.identity.pass') : t('settings.identity.fail')}
-                    </Badge>
-                    <span className="font-medium">
-                      {t(`settings.identity.checks.${check.check}`, {
-                        defaultValue: check.check,
-                      })}
-                    </span>
-                    <span>{check.message}</span>
-                  </li>
-                ))}
-              </ul>
-              <Alert variant={report.ok ? 'info' : 'danger'}>
-                {report.ok ? t('settings.identity.passed') : t('settings.identity.failed')}
-              </Alert>
-            </div>
-          )}
+              {problem && <Alert variant="danger">{problem}</Alert>}
 
-          {redirectUri && (
-            <div className="space-y-1 text-sm">
-              <p>{t('settings.identity.redirect')}</p>
-              <p className="flex items-center gap-2">
-                <code className="break-all">{redirectUri}</code>
-                <Button size="sm" variant="ghost" onClick={() => void copy(redirectUri)}>
-                  {t('settings.identity.copy')}
+              {report && <TestReport report={report} />}
+
+              {redirectUri && (
+                <div className="space-y-1 text-sm">
+                  <p>{t('settings.identity.redirect')}</p>
+                  <p className="flex items-center gap-2">
+                    <code className="break-all">{redirectUri}</code>
+                    <Button size="sm" variant="ghost" onClick={() => void copy(redirectUri)}>
+                      {t('settings.identity.copy')}
+                    </Button>
+                  </p>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="secondary"
+                  disabled={!complete || busy}
+                  onClick={() => void test()}
+                >
+                  {busy ? t('settings.identity.testing') : t('settings.identity.test')}
                 </Button>
-              </p>
-            </div>
+                <Button type="submit" disabled={!complete || !passed || busy}>
+                  {t('settings.identity.save')}
+                </Button>
+                {complete && !passed && (
+                  <span className="text-sm text-base-content/70">
+                    {t('settings.identity.testFirst')}
+                  </span>
+                )}
+              </div>
+            </form>
           )}
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" disabled={!complete || busy} onClick={() => void test()}>
-              {busy ? t('settings.identity.testing') : t('settings.identity.test')}
-            </Button>
-            <Button type="submit" disabled={!complete || !passed || busy}>
-              {t('settings.identity.save')}
-            </Button>
-            {complete && !passed && (
-              <span className="text-sm text-base-content/70">
-                {t('settings.identity.testFirst')}
-              </span>
-            )}
-          </div>
-        </form>
-      </div>
-    </Card>
+        </div>
+      </Card>
+      {saved && <SsoEnforcement provider={saved} onChange={setSaved} />}
+    </>
   )
 }
