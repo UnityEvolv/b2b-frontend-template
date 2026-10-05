@@ -14,6 +14,8 @@ import { useOrg, useSession } from '@b2b-template/ui-web'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { OnboardingRestore } from '../onboarding/OnboardingChecklist'
+import { SetupHint } from '../onboarding/SetupHint'
 import { NotificationDefaults } from './NotificationDefaults'
 import { OrgDataSettings } from './OrgDataSettings'
 
@@ -147,6 +149,7 @@ export default function OrgSettingsPage() {
     <>
       <h1 className="mb-6 text-2xl font-semibold">{t('settings.title')}</h1>
       <div className="grid max-w-3xl gap-6">
+        {!claim?.domain && <SetupHint step="verify_domain" />}
         <Card header={t('settings.general')}>
           <form onSubmit={saveGeneral} noValidate className="space-y-4">
             <Input
@@ -179,7 +182,7 @@ export default function OrgSettingsPage() {
           </form>
         </Card>
 
-        <Card header={t('settings.domain.title')}>
+        <Card id="verify_domain" header={t('settings.domain.title')}>
           {claim?.domain ? (
             <p className="flex items-center gap-2">
               {claim.domain} <Badge variant="primary">{t('settings.domain.verifiedBadge')}</Badge>
@@ -261,6 +264,8 @@ export default function OrgSettingsPage() {
         </Card>
 
         <NotificationDefaults />
+
+        <OnboardingRestore />
 
         <OrgDataSettings name={record?.name ?? ''} />
       </div>
