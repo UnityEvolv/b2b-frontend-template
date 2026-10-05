@@ -13,3 +13,6 @@ apps/desktop/release/
 apps/mobile/android/
 apps/mobile/ios/
 apps/mobile/.expo/
+# The end-to-end tests' authenticator key and results (tools/e2e).
+tools/e2e/.auth/
+tools/e2e/test-results/
