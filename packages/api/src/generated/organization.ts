@@ -542,6 +542,79 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/organizations/{org_id}/onboarding': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * The organization's first-run checklist, as it stands now
+     * @description Every registered step, the core's then the product's, each derived
+     *     now from the data that says whether it is done; nothing is a stored
+     *     flag. Each step's service is asked at once, within two seconds: one
+     *     that does not answer leaves its step unknown, never the checklist
+     *     failed. Dismissals are the organization's. Needs the settings
+     *     permission (an Owner or an Admin).
+     */
+    get: operations['getOnboarding']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/onboarding/dismissal': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Hide the whole checklist for the organization
+     * @description Needs the settings permission. Audited (onboarding.dismissed).
+     */
+    post: operations['dismissOnboarding']
+    /**
+     * Show the checklist again
+     * @description Needs the settings permission. Audited (onboarding.restored).
+     */
+    delete: operations['restoreOnboarding']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/v1/organizations/{org_id}/onboarding/steps/{step_id}/dismissal': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Hide one step for the organization
+     * @description Needs the settings permission. Audited (onboarding.step_dismissed).
+     */
+    post: operations['dismissOnboardingStep']
+    /**
+     * Show one step again
+     * @description Needs the settings permission. Audited (onboarding.step_restored).
+     */
+    delete: operations['restoreOnboardingStep']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
@@ -813,6 +886,29 @@ export interface components {
         [key: string]: string
       }
     }
+    Onboarding: {
+      /** Format: uuid */
+      org_id: string
+      /** @description The whole checklist is hidden for the organization. */
+      dismissed: boolean
+      /** @description Every step is done or dismissed, and none is unknown. */
+      complete: boolean
+      steps: components['schemas']['OnboardingStep'][]
+    }
+    OnboardingStep: {
+      /** @description Stable; the core's are verify_domain, invite_teammates, set_up_sso and choose_plan, and a product adds its own. Not an enum. */
+      id: string
+      label: string
+      /** @description Where the step is done, a path in app. */
+      href: string
+      /** @description The web app href is in, by name (admin unless the step says otherwise). */
+      app: string
+      /** @description Derived now from the organization's data. False when unknown. */
+      done: boolean
+      dismissed: boolean
+      /** @description The service that knows did not answer in time; done is not known. */
+      unknown: boolean
+    }
   }
   responses: {
     /** @description The error envelope */
@@ -826,6 +922,7 @@ export interface components {
     }
   }
   parameters: {
+    StepId: string
     /**
      * @description A key the client makes up once per intended create and reuses on
      *     every retry of it. A second request with the same key returns what
@@ -1876,6 +1973,128 @@ export interface operations {
         content: {
           'application/json': components['schemas']['WrappedDataKey']
         }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  getOnboarding: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description The checklist */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Onboarding']
+        }
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  dismissOnboarding: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Hidden */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  restoreOnboarding: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Shown */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  dismissOnboardingStep: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        step_id: components['parameters']['StepId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Hidden */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Error']
+      403: components['responses']['Error']
+      404: components['responses']['Error']
+      default: components['responses']['Error']
+    }
+  }
+  restoreOnboardingStep: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: components['parameters']['OrgId']
+        step_id: components['parameters']['StepId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Shown */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
       }
       401: components['responses']['Error']
       403: components['responses']['Error']

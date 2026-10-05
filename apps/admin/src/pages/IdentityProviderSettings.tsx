@@ -14,6 +14,8 @@ import { useOrg, useSession } from '@b2b-template/ui-web'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SetupHint } from '../onboarding/SetupHint'
+
 type Provider = identity.components['schemas']['IdentityProvider']
 type Preset = identity.components['schemas']['IdentityProviderPreset']
 type Body = identity.components['schemas']['NewIdentityProvider']
@@ -294,10 +296,13 @@ export function IdentityProviderSettings() {
             )}
           </div>
         ) : (
-          <p className="text-sm">{t('settings.identity.local')}</p>
+          <>
+            <SetupHint step="set_up_sso" />
+            <p className="text-sm">{t('settings.identity.local')}</p>
+          </>
         )}
 
-        <form onSubmit={save} noValidate className="space-y-4">
+        <form id="set_up_sso" onSubmit={save} noValidate className="space-y-4">
           <Select
             label={t('settings.identity.provider')}
             placeholder={t('settings.identity.pick')}

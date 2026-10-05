@@ -14,6 +14,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 
+import { OnboardingChecklist } from '../onboarding/OnboardingChecklist'
+import { SetupHint } from '../onboarding/SetupHint'
+
 type Membership = user.components['schemas']['Membership']
 
 const PAGE = 50
@@ -129,9 +132,17 @@ export default function UsersPage() {
   // Anyone in the admin app may read the list; inviting and importing are
   // the users permission's, and only for a role that may hand one out.
   const invites = mayInvite(permissions, org.role)
+  // Only the person themself on the first page, with nothing filtered: nobody invited yet.
+  const alone =
+    !loading &&
+    !failed &&
+    cursors.length === 1 &&
+    rows.length <= 1 &&
+    !(query || role || status || department)
 
   return (
     <>
+      <OnboardingChecklist />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">{t('users.title')}</h1>
         {invites && (
@@ -145,6 +156,7 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+      {alone && invites && <SetupHint step="invite_teammates" className="mb-4" />}
       <div className="mb-4 grid gap-3 sm:grid-cols-4">
         <Input
           type="search"

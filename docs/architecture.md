@@ -104,6 +104,16 @@ member who signs in to the admin app is told it is for administrators.
   notification 8083, user 8084, authorization 8086, webhooks 8087, billing
   8089: the ports the backend's compose stack publishes).
 
+`appOriginsFromEnv` reads where the web apps are, for a link from one into
+another (an onboarding step, the support tab the platform app opens):
+`VITE_<APP>_ORIGIN`, such as `VITE_ADMIN_ORIGIN` and `VITE_ACCOUNT_ORIGIN`,
+handed to the app definition as `appOrigins`. An app with no origin is not
+linked to.
+
+A tab the platform app opens with `?support=1` is a support session: the
+same app, read-only, as another person, with a banner
+([impersonation.md](impersonation.md)).
+
 In a development build, `VITE_DEV_SESSION=1` skips sign-in and signs in a
 fake developer with no backend. Pages that need data then have none; it is
 for working on layout.
@@ -141,6 +151,7 @@ The frontend has no list of them. It asks:
 | platform: an organization's overrides | the limits and features an override can be set on, from the catalogue | `usePlanCatalogue`, `GET .../organizations/{org_id}/plan-overrides` |
 | admin: API keys, account: access tokens | the permission groups a key can be given, less `api_keys`, `settings` and the Owner-only ones | `GET /authorization/v1/permission-groups` ([api-keys.md](api-keys.md)) |
 | admin: Webhooks | the event types an endpoint may subscribe to, with their descriptions, and whether the plan has webhooks | `GET /webhooks/v1/organizations/{org_id}/webhook-event-types` ([webhooks.md](webhooks.md)) |
+| admin: the onboarding checklist | every registered step, the core's and the product's, with its label, where it is done and whether it is | `GET /organization/v1/organizations/{org_id}/onboarding` ([onboarding.md](onboarding.md)) |
 | account: notification preferences, the bell, the phone's feed | the notification categories and their channels; each feed entry's heading and line, worded by the server | `useNotificationCategories` (`GET /notification/v1/notification-categories`), the feed |
 
 Each is read when the page opens, and again after a change; nothing is kept

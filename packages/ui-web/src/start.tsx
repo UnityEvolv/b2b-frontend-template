@@ -53,6 +53,7 @@ export function AppProviders({
     headerActions,
     banner,
     shell,
+    appOrigins,
   } = definition
   return (
     <AppProvider
@@ -71,6 +72,7 @@ export function AppProviders({
         headerActions,
         banner,
         shell,
+        appOrigins,
       }}
     >
       <SessionProvider source={sessionSource}>

@@ -102,7 +102,11 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
     const session = openLiveSession({
       url,
       EventSource,
-      onRevoked: () => void answers.current.ended(),
+      onRevoked: (event) =>
+        void answers.current.ended({
+          ...(event.code ? { code: event.code } : {}),
+          ...(event.message ? { message: event.message } : {}),
+        }),
     })
     const refresh = () => answers.current.reload()
     const offs = [

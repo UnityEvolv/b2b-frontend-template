@@ -258,6 +258,30 @@ export const common = {
       newTitle: 'Your new token',
     },
   },
+  // A support session: a platform operator seeing the org as one of its people.
+  support: {
+    region: 'Support session',
+    title: 'Support session',
+    banner:
+      'You are viewing as {{person}} for support. Read-only: nothing can be changed. Ends at {{time}}.',
+    bannerWritable: 'You are viewing as {{person}} for support. Ends at {{time}}.',
+    end: 'End session',
+    readOnlyRefused: 'A support session can look but not change anything.',
+    ended: 'Support session ended',
+    close: 'Close this tab',
+    reasons: {
+      ended:
+        'The support session is over. Start a new one from the platform app if you need to look again.',
+      consentRevoked: 'An Owner of the organization withdrew their consent.',
+      endedByOwner: 'An Owner of the organization ended this session.',
+      accessWithdrawn: 'The organization turned off standing support access.',
+      replaced: 'Another support session was started in this browser.',
+    },
+    unavailable: {
+      title: 'Not available in a support session',
+      description: 'Tokens and keys are never shown to support, whoever is seen as.',
+    },
+  },
   // The notice reCAPTCHA's terms require when its badge is hidden.
   captcha: {
     notice: 'This site is protected by reCAPTCHA and the Google',

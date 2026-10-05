@@ -4,7 +4,7 @@ import { createApi, isApiError, type Api, type ServiceName } from '@b2b-template
 import { createAccountClient, type AccountClient } from './account'
 import { cookieFrom, SESSION_COOKIE, type SessionCookieStore } from './cookies'
 import { SignInRefused } from './errors'
-import type { Preferences, Session, SessionSource } from './session'
+import type { Preferences, Session, SessionImpersonation, SessionSource } from './session'
 
 /**
  * Sign-in and the session behind it, for the web apps and
@@ -55,6 +55,19 @@ export function serviceOrigins(
   }
 }
 
+/**
+ * The mark of a support session: a platform operator seeing the org as this
+ * person, read-only, until `ends_at`. The identity service sets it on the
+ * support session's refresh; an ordinary session never has it.
+ */
+export interface ImpersonationMarker {
+  impersonation_id: string
+  impersonator_id: string
+  grant_id?: string
+  ends_at: string
+  read_only: boolean
+}
+
 /** What the identity service answers with, after a sign-in or a refresh. */
 export interface AccessToken {
   access_token: string
@@ -63,7 +76,34 @@ export interface AccessToken {
   org_id?: string
   membership_id?: string
   choose_organization: boolean
+  impersonation?: ImpersonationMarker
 }
+
+/** Why a support session ended: the API's code (or the live event's) and its sentence. */
+export interface SupportEnd {
+  code: string
+  message?: string
+}
+
+/**
+ * A support session, in the tab the platform app opened for it
+ * (docs/impersonation.md). Absent outside one.
+ */
+export interface SupportControl {
+  /** How it ended, once it has; null while it runs. */
+  ended(): SupportEnd | null
+  /** Called once when it ends: the time box, an Owner, the operator, or a refused refresh. */
+  onEnded(listener: (end: SupportEnd) => void): () => void
+  /** Called when the API refused a write with `impersonation.read_only`. */
+  onReadOnly(listener: () => void): () => void
+  /** The operator ends it here: the support cookie is cleared and the session revoked. */
+  end(): Promise<void>
+}
+
+/** The error code a support session's writes are refused with. */
+export const IMPERSONATION_READ_ONLY = 'impersonation.read_only'
+/** The error code a support session's refresh answers once it is over. */
+export const IMPERSONATION_ENDED = 'impersonation.ended'
 
 /** A parked sign-in: a second factor is due, or must be set up first. */
 export interface MfaStep {
@@ -134,8 +174,11 @@ export interface Auth {
   /**
    * The live session events stream (`GET /v1/session/events` on the
    * identity service), opened with the session cookie: see `openLiveSession`.
+   * A support session's names its own cookie (`?impersonation=true`).
    */
   eventsUrl: string
+  /** The support session this tab is, or null for an ordinary one. */
+  support: SupportControl | null
 }
 
 /** A device-local cache, which may not exist. A failure is a miss. */
@@ -173,6 +216,14 @@ export interface AuthOptions {
    * first call must not fail for that.
    */
   refreshOnRequest?: boolean
+  /**
+   * This tab is a support session the platform app opened: the session is
+   * the support cookie's (`<prefix>_impersonation`), never the ordinary
+   * one, refreshed at `/v1/session/impersonation/refresh` and ended at
+   * `/v1/session/impersonation/end`. Its token is kept in memory only, and
+   * nothing of the person's is written to the device's cache. Web only.
+   */
+  support?: boolean
   /** The device's cache for first paint: the preferences. */
   cache?: Cache
   /** For tests: a fetch that answers instead of the network. */
@@ -189,14 +240,31 @@ const REFRESH_MARGIN_MS = 60_000
  * The reason the shell's session is signed out when it is, for the sign-in
  * page: `not_admin` when this app refused a valid sign-in for its role,
  * `not_staff` when the platform app refused someone who is not staff,
- * `signed_out` when the server ended the session while the app was open.
+ * `signed_out` when the server ended the session while the app was open,
+ * `support_ended` when a support session is over.
  */
-export type SignedOutReason = 'not_admin' | 'not_staff' | 'signed_out'
+export type SignedOutReason = 'not_admin' | 'not_staff' | 'signed_out' | 'support_ended'
+
+/** The session's support mark, from the support session's token. */
+function impersonationOf(token: AccessToken, now: number): SessionImpersonation {
+  const marker = token.impersonation
+  return {
+    id: marker?.impersonation_id ?? '',
+    impersonatorId: marker?.impersonator_id ?? '',
+    ...(marker?.grant_id ? { grantId: marker.grant_id } : {}),
+    // The token never outlives the time box: without a marker, its expiry is the end.
+    endsAt: marker?.ends_at ?? new Date(now + token.expires_in * 1000).toISOString(),
+    // Read-only unless the server says otherwise; the template's never does.
+    readOnly: marker?.read_only !== false,
+  }
+}
 
 export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutReason | null } {
   const origins = serviceOrigins(options.apiOrigin, options.serviceOrigin, options.envPrefix)
   const now = options.now ?? (() => Date.now())
-  const cache = options.cache
+  const support = options.support === true
+  // A support session writes nothing of the person's to the operator's device.
+  const cache = support ? undefined : options.cache
   const baseFetch =
     options.fetch ??
     ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init))
@@ -239,13 +307,36 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
     token = { value: body.access_token, expiresAt: now() + body.expires_in * 1000, body }
   }
 
+  // A support session: how it ended, and who is told.
+  let supportEnd: SupportEnd | null = null
+  const endListeners = new Set<(end: SupportEnd) => void>()
+  const readOnlyListeners = new Set<() => void>()
+  const supportEnded = (end: SupportEnd) => {
+    token = null
+    reason = 'support_ended'
+    if (supportEnd) return
+    supportEnd = end
+    for (const listener of [...endListeners]) listener(end)
+  }
+
   /** One refresh at a time; a token that expired is not presented. */
   const refresh = (): Promise<AccessToken | null> => {
+    if (support && supportEnd) return Promise.resolve(null)
     if (!refreshing) {
-      refreshing = withCredentials(identityUrl('/v1/session/refresh'), { method: 'POST' })
+      const path = support ? '/v1/session/impersonation/refresh' : '/v1/session/refresh'
+      refreshing = withCredentials(identityUrl(path), { method: 'POST' })
         .then(async (response) => {
           if (!response.ok) {
             token = null
+            if (support && response.status === 401) {
+              // Over: its time box, an Owner, the operator, or never one.
+              const body = (await response.json().catch(() => null)) as unknown
+              supportEnded(
+                isApiError(body)
+                  ? { code: body.code, message: body.message }
+                  : { code: IMPERSONATION_ENDED },
+              )
+            }
             return null
           }
           const body = (await response.json()) as AccessToken
@@ -270,15 +361,46 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
     return renewed?.access_token ?? null
   }
 
+  /** A support session's write the API refused: whoever listens says so, once per refusal. */
+  const watchReadOnly = async (response: Response) => {
+    if (response.status !== 403 || readOnlyListeners.size === 0) return
+    const body = (await response
+      .clone()
+      .json()
+      .catch(() => null)) as unknown
+    if (isApiError(body) && body.code === IMPERSONATION_READ_ONLY) {
+      for (const listener of [...readOnlyListeners]) listener()
+    }
+  }
+
   const api = createApi({
     baseUrl: origins,
-    getToken: options.refreshOnRequest
-      ? () => (token ? getToken().catch(() => null) : null)
-      : fresh,
-    fetch: (request) => baseFetch(request),
+    // A support session refreshes before a request too: the refresh is what
+    // finds out that it ended.
+    getToken:
+      options.refreshOnRequest || support
+        ? () => (token ? getToken().catch(() => null) : null)
+        : fresh,
+    fetch: support
+      ? async (request) => {
+          const response = await baseFetch(request)
+          await watchReadOnly(response)
+          return response
+        }
+      : (request) => baseFetch(request),
   })
 
+  const endSupport = async () => {
+    await withCredentials(identityUrl('/v1/session/impersonation/end'), { method: 'POST' }).catch(
+      () => null,
+    )
+    supportEnded({ code: 'impersonation_ended' })
+  }
+
   const signOutHere = async () => {
+    // Signing out of a support tab ends the support session; the
+    // operator's own session, in the other cookie, is never touched.
+    if (support) return endSupport()
     await withCredentials(identityUrl('/v1/session/sign-out'), { method: 'POST' }).catch(() => null)
     // Out on this device whatever the network said: the keystore forgets it.
     await cookies?.write(null)
@@ -287,6 +409,7 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
 
   /** The session for the token in hand: the person, their org and what they may do. */
   const load = async (): Promise<Session | null> => {
+    if (support && supportEnd) return null
     reason = null
     if (cookies && !(await cookies.read())) {
       token = null
@@ -297,7 +420,7 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
     const me = await api.user.GET('/v1/me')
     if (!me.data) throw new Error(`could not load the profile: ${me.response.status}`)
     let membership = me.data.membership
-    if (options.orgs && !options.orgs.includes(membership?.org_id ?? '')) {
+    if (!support && options.orgs && !options.orgs.includes(membership?.org_id ?? '')) {
       // Staff who also belong to a customer org may have landed there: move
       // the session to the platform org, or refuse when they are not staff.
       const moved = await withCredentials(identityUrl('/v1/session/switch'), {
@@ -323,7 +446,7 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
         params: { path: { org_id: membership.org_id } },
       })
       permissions = config.data?.effective?.[membership.role] ?? []
-      if (options.roles && !options.roles.includes(membership.role)) {
+      if (!support && options.roles && !options.roles.includes(membership.role)) {
         // Valid credentials, wrong app: out again, and the page says why.
         await signOutHere()
         reason = 'not_admin'
@@ -359,12 +482,18 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
           }
         : {}),
       chooseOrganization: current.choose_organization,
+      // A support tab is marked whatever the answer said: never shown as
+      // the person's own session, and never writable.
+      ...(support ? { impersonation: impersonationOf(current, now()) } : {}),
     }
   }
 
   const sessionSource: SessionSource = {
     load,
     async savePreferences(changes) {
+      // A support session changes nothing of the person's: the choice lasts
+      // as long as the tab.
+      if (support) return
       cache?.write(PREFERENCES_KEY, JSON.stringify({ ...loadPreferences(), ...changes }))
       // On the user, so it follows the person to every device.
       const { error } = await api.user.PATCH('/v1/me/profile', {
@@ -376,8 +505,15 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
       if (error) throw new Error('preferences not saved')
     },
     signOut: signOutHere,
-    async forget() {
+    async forget(why) {
       // The server has ended it already: nothing to ask, only to drop.
+      if (support) {
+        supportEnded({
+          code: why?.code ?? IMPERSONATION_ENDED,
+          ...(why?.message ? { message: why.message } : {}),
+        })
+        return
+      }
       await cookies?.write(null)
       token = null
       reason = 'signed_out'
@@ -459,6 +595,8 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
 
   const orgs = {
     async list(): Promise<OrgChoice[]> {
+      // A support session is one person in one org: nowhere to switch to.
+      if (support) return []
       const response = await withCredentials(identityUrl('/v1/session/memberships'))
       if (!response.ok) return []
       const body = (await response.json()) as {
@@ -480,6 +618,7 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
         }))
     },
     async switchTo(orgId: string) {
+      if (support) throw new Error('a support session cannot switch organization')
       const response = await withCredentials(identityUrl('/v1/session/switch'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -497,7 +636,23 @@ export function createAuth(options: AuthOptions): Auth & { reason(): SignedOutRe
     account,
     orgs,
     getToken,
-    eventsUrl: identityUrl('/v1/session/events'),
+    eventsUrl: identityUrl(
+      support ? '/v1/session/events?impersonation=true' : '/v1/session/events',
+    ),
+    support: support
+      ? {
+          ended: () => supportEnd,
+          onEnded(listener) {
+            endListeners.add(listener)
+            return () => void endListeners.delete(listener)
+          },
+          onReadOnly(listener) {
+            readOnlyListeners.add(listener)
+            return () => void readOnlyListeners.delete(listener)
+          },
+          end: endSupport,
+        }
+      : null,
     reason: () => reason,
   }
 }

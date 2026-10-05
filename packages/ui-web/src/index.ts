@@ -15,7 +15,7 @@ export {
   type Namespace,
   type NavT,
 } from './app'
-export { buildRoutes, RequirePermission, RequireSignIn } from './routing'
+export { buildRoutes, RequireOutsideSupport, RequirePermission, RequireSignIn } from './routing'
 export { AppLayout } from './layout'
 export {
   ForbiddenPage,
@@ -56,7 +56,28 @@ export {
   type DesktopNotice,
   type DesktopSignIn,
 } from './desktop'
-export { serviceOriginsFromEnv } from './env'
+export { appOriginsFromEnv, serviceOriginsFromEnv } from './env'
+/** A path in another web app, at its configured origin. */
+export { appLink, useAppLink, type AppLink } from './app-links'
+/** Support mode: a platform operator seeing an org as one of its people, read-only. */
+export {
+  forgetSupportRequest,
+  SUPPORT_PARAM,
+  SupportBanner,
+  SupportEndedPage,
+  supportRequested,
+  SupportUnavailablePage,
+  useReadOnly,
+  useSupport,
+  type SupportEnvironment,
+} from './support'
+export {
+  IMPERSONATION_ENDED,
+  IMPERSONATION_READ_ONLY,
+  type SessionImpersonation,
+  type SupportControl,
+  type SupportEnd,
+} from '@b2b-template/client'
 /** The pages around sign-in. */
 export {
   AcceptInvitePage,

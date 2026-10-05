@@ -1,18 +1,24 @@
 import { Navigate, Outlet, useLocation, type RouteObject } from 'react-router'
 
-import { granted, type AppDefinition, type AppRoute } from './app'
+import { granted, useApp, type AppDefinition, type AppRoute } from './app'
 import { DesktopRoot } from './desktop-links'
 import { AppLayout } from './layout'
 import { ForbiddenPage, NotFoundPage, PageLoading, RouteErrorPage, SessionErrorPage } from './pages'
 import { useSession } from './session'
+import { SupportEndedPage, SupportUnavailablePage, useSupport } from './support'
 
-/** Signed-out visitors go to sign-in, and come back to where they were going. */
+/**
+ * Signed-out visitors go to sign-in, and come back to where they were going.
+ * A support tab has no sign-in: once its session is over it says so.
+ */
 export function RequireSignIn({ signInPath }: { signInPath: string }) {
   const { state } = useSession()
+  const { auth } = useApp()
   const location = useLocation()
 
   if (state.status === 'loading') return <PageLoading />
   if (state.status === 'error') return <SessionErrorPage onRetry={state.retry} />
+  if (state.status === 'signed-out' && auth?.support) return <SupportEndedPage />
   if (state.status === 'signed-out') {
     const next = encodeURIComponent(location.pathname + location.search + location.hash)
     return <Navigate to={`${signInPath}?next=${next}`} replace />
@@ -27,6 +33,11 @@ export function RequireSignIn({ signInPath }: { signInPath: string }) {
 export function RequirePermission({ permission }: { permission: string | string[] }) {
   const { permissions } = useSession()
   return granted(permissions, permission) ? <Outlet /> : <ForbiddenPage />
+}
+
+/** A page a support session never opens: tokens, keys. Read-only is not enough there. */
+export function RequireOutsideSupport() {
+  return useSupport() ? <SupportUnavailablePage /> : <Outlet />
 }
 
 const lazyPage = (route: AppRoute): Pick<RouteObject, 'path' | 'lazy'> => ({
@@ -64,14 +75,17 @@ export function buildRoutes({
               element: <AppLayout />,
               children: [
                 { index: true, element: <Navigate to={home} replace /> },
-                ...guarded.map((route) =>
-                  route.permission
+                ...guarded.map((route) => {
+                  const page: RouteObject = route.permission
                     ? {
                         element: <RequirePermission permission={route.permission} />,
                         children: [lazyPage(route)],
                       }
-                    : lazyPage(route),
-                ),
+                    : lazyPage(route)
+                  return route.support === false
+                    ? { element: <RequireOutsideSupport />, children: [page] }
+                    : page
+                }),
                 { path: '*', element: <NotFoundPage /> },
               ],
             },

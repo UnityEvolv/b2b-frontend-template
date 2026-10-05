@@ -18,6 +18,7 @@ import { Link, useParams } from 'react-router'
 
 import { planChoices, type Plan } from './organizations'
 import { PlanOverrides } from './PlanOverrides'
+import { SupportSessions } from './SupportSessions'
 
 type Organization = organization.components['schemas']['Organization']
 type PlanChange = organization.components['schemas']['PlanChange']
@@ -59,7 +60,7 @@ const AUDIT_MONTHS = [13, 24, 36, 60, 84]
  */
 export default function OrganizationDetailPage() {
   const { t, i18n } = useTranslation('platform')
-  const { auth } = useApp()
+  const { auth, appOrigins } = useApp()
   const { orgId = '' } = useParams()
   const [org, setOrg] = useState<Organization | null>(null)
   const [missing, setMissing] = useState(false)
@@ -430,6 +431,8 @@ export default function OrganizationDetailPage() {
         rows={members}
         rowKey={(m) => m.id}
       />
+
+      <SupportSessions api={api} orgId={org.org_id} members={members} appOrigins={appOrigins} />
 
       <h2 className="mb-3 mt-8 text-xl font-semibold">{t('detail.activity.title')}</h2>
       <Table

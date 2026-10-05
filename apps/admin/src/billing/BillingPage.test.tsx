@@ -280,4 +280,18 @@ describe('BillingPage', () => {
       expect(calls.filter((c) => c.endsWith('/billing')).length).toBeGreaterThan(reads),
     )
   })
+
+  it('points an org on the lowest band to its setup step', async () => {
+    renderBilling({ billing: { band: 'free' }, orgPlan: { plan: 'free', label: 'Free' } })
+    const link = await screen.findByRole('link', { name: 'Choose a plan' }, { timeout: 5000 })
+    // The step's page; on it, the hint jumps to the plan card (SetupHint's own tests).
+    expect(link.getAttribute('href')).toBe('/billing')
+    expect(document.getElementById('choose_plan')).toBeTruthy()
+  })
+
+  it('does not point an org trying a band to the plan step', async () => {
+    renderBilling({ billing: { band: 'free', state: 'trialing' } })
+    await screen.findByRole('combobox', {}, { timeout: 5000 })
+    expect(screen.queryByRole('link', { name: 'Choose a plan' })).toBeNull()
+  })
 })
