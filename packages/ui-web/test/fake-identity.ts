@@ -13,6 +13,8 @@ export interface FakeAccount {
   /** The org requires an authenticator the person does not have. */
   mustEnroll?: boolean
   verified?: boolean
+  /** The address's organization requires single sign-on: the right password is refused (sso.required). */
+  ssoRequired?: boolean
 }
 
 export interface FakeIdentity {
@@ -87,6 +89,7 @@ export function fakeIdentity(): FakeIdentity {
         if (!account || account.password !== body.password)
           return refused(401, 'credentials.invalid')
         if (account.verified === false) return refused(401, 'local_account.unverified')
+        if (account.ssoRequired) return refused(403, 'sso.required')
         if (!account.membership && !account.mustEnroll && account.email.startsWith('nobody'))
           return refused(401, 'session.no_membership')
         if (account.mustEnroll)

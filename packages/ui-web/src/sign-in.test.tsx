@@ -180,6 +180,39 @@ describe('SignInPage', { timeout: 20_000 }, () => {
     expect(router.state.location.pathname).toBe('/home')
   })
 
+  it('sends a password refused with sso.required on to the organization’s provider', async () => {
+    const fake = fakeIdentity()
+    fake.accounts.set('ada@acme.com', {
+      email: 'ada@acme.com',
+      password: 'a long password',
+      membership: { orgId: 'acme', role: 'user' },
+      ssoRequired: true,
+    })
+    const assign = vi.fn()
+    vi.stubGlobal('location', { ...window.location, assign })
+    const { user } = renderSignIn({ fake })
+    await user.type(
+      await screen.findByLabelText(/Email address/, {}, { timeout: 5000 }),
+      'ada@acme.com',
+    )
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.type(await screen.findByLabelText(/Password/), 'a long password')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    expect(
+      await screen.findByText(/Your organization requires single sign-on for this address/),
+    ).toBeInTheDocument()
+    expect(fake.signedIn).toBe(false)
+    expect(assign).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Continue with single sign-on' }))
+    await waitFor(() => expect(assign).toHaveBeenCalled())
+    const url = new URL(assign.mock.calls[0]![0] as string)
+    expect(url.pathname).toBe('/identity/v1/sign-in/start')
+    expect(url.searchParams.get('email')).toBe('ada@acme.com')
+    expect(url.searchParams.get('next')).toBe('/home')
+    vi.unstubAllGlobals()
+  })
+
   it('explains what the provider sent back', async () => {
     renderSignIn({ path: '/sign-in?error=membership_inactive' })
     expect(
