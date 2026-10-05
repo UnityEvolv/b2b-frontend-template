@@ -175,6 +175,8 @@ export const common = {
         'Your organization requires an authenticator app. Set one up, then sign in again.',
       setUp: 'Set up an authenticator',
     },
+    // A password refused because the address's organization requires single sign-on.
+    ssoContinue: 'Continue with single sign-on',
     // The desktop app signs in through the person's own browser.
     browser: {
       body: 'Your organization’s sign-in has opened in your browser. Finish there and you will come straight back here.',
@@ -186,6 +188,8 @@ export const common = {
       noMembership: 'You do not belong to any organization. Ask for an invitation.',
       throttled: 'Too many failed attempts. Try again in a few minutes.',
       codeInvalid: 'That code is not right.',
+      ssoRequired:
+        'Your organization requires single sign-on for this address. Continue with its sign-in instead of a password.',
       providerRefused: 'Your organization’s sign-in did not go through. Try again.',
       attemptExpired: 'That sign-in took too long. Start again.',
       inactive: 'Your account in this organization has been deactivated.',

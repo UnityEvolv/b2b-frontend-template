@@ -68,6 +68,23 @@ function SignInForm() {
     setError('unexpected')
   }
 
+  /** To the organization's identity provider, through `/v1/sign-in/start?email=…`. */
+  const toProvider = async () => {
+    if (!auth) return
+    // In the desktop app the provider's page opens in the person's own
+    // browser, and the sign-in comes back into the app.
+    const desktop = desktopBridge()
+    if (desktop?.signInWithBrowser) {
+      const opened = await desktop.signInWithBrowser(
+        auth.signIn.ssoStartUrl(email.trim(), next, 'desktop'),
+      )
+      if (opened) setStep('browser')
+      else setError('unexpected')
+      return
+    }
+    window.location.assign(auth.signIn.ssoStartUrl(email.trim(), next))
+  }
+
   const submitEmail = async (event: FormEvent) => {
     event.preventDefault()
     if (!auth) return
@@ -75,21 +92,7 @@ function SignInForm() {
     setError(null)
     try {
       const method = await auth.signIn.methods(email.trim())
-      if (method === 'sso') {
-        // In the desktop app the provider's page opens in the person's own
-        // browser, and the sign-in comes back into the app.
-        const desktop = desktopBridge()
-        if (desktop?.signInWithBrowser) {
-          const opened = await desktop.signInWithBrowser(
-            auth.signIn.ssoStartUrl(email.trim(), next, 'desktop'),
-          )
-          if (opened) setStep('browser')
-          else setError('unexpected')
-          return
-        }
-        window.location.assign(auth.signIn.ssoStartUrl(email.trim(), next))
-        return
-      }
+      if (method === 'sso') return await toProvider()
       setStep('password')
     } catch (err) {
       failed(err)
@@ -164,6 +167,13 @@ function SignInForm() {
           <Alert variant="danger" className="mb-4">
             {t(`signIn.errors.${error}` as never)}
           </Alert>
+        )}
+        {error === 'ssoRequired' && (
+          // The password was right, but the organization signs this domain
+          // in through its identity provider (sso.required).
+          <Button className="mb-4 w-full" disabled={busy} onClick={() => void toProvider()}>
+            {t('signIn.ssoContinue')}
+          </Button>
         )}
 
         {step === 'email' && (

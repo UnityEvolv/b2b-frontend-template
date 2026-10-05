@@ -50,11 +50,14 @@ export function SignInScreen({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
+  const [ssoRequired, setSsoRequired] = useState(false)
   const address = email.trim()
 
   const failed = (err: unknown) => {
     const key = refusalKey(err, SIGN_IN_ERRORS)
     setError(t(`signIn.errors.${key}` as 'signIn.errors.unexpected'))
+    // The right password, but the organization requires single sign-on.
+    setSsoRequired(err instanceof SignInRefused && err.code === 'sso.required')
     if (err instanceof SignInRefused && err.code === 'mfa.challenge_expired') setStep('email')
   }
 
@@ -62,12 +65,26 @@ export function SignInScreen({
     setBusy(true)
     setError(null)
     setInfo(null)
+    setSsoRequired(false)
     try {
       await work()
     } catch (err) {
       failed(err)
     } finally {
       setBusy(false)
+    }
+  }
+
+  /** Through the organization's identity provider, in the system browser. */
+  const toProvider = async () => {
+    setInfo(t('mobile:signIn.opening'))
+    const outcome = await signInWithProvider(auth.signIn, address)
+    setInfo(null)
+    if (outcome.kind === 'signed-in') reload()
+    else if (outcome.kind === 'cancelled') setInfo(t('mobile:signIn.cancelled'))
+    else {
+      const key = CALLBACK_ERRORS[outcome.code] ?? 'unexpected'
+      setError(t(`signIn.errors.${key}` as 'signIn.errors.unexpected'))
     }
   }
 
@@ -78,15 +95,7 @@ export function SignInScreen({
         setStep('password')
         return
       }
-      setInfo(t('mobile:signIn.opening'))
-      const outcome = await signInWithProvider(auth.signIn, address)
-      setInfo(null)
-      if (outcome.kind === 'signed-in') reload()
-      else if (outcome.kind === 'cancelled') setInfo(t('mobile:signIn.cancelled'))
-      else {
-        const key = CALLBACK_ERRORS[outcome.code] ?? 'unexpected'
-        setError(t(`signIn.errors.${key}` as 'signIn.errors.unexpected'))
-      }
+      await toProvider()
     })
 
   const submitPassword = () =>
@@ -120,6 +129,9 @@ export function SignInScreen({
       {notice ? <Banner tone="ok">{notice}</Banner> : null}
       {error ? <Banner tone="danger">{error}</Banner> : null}
       {info ? <Banner tone="info">{info}</Banner> : null}
+      {ssoRequired ? (
+        <Button label={t('signIn.ssoContinue')} onPress={() => void run(toProvider)} busy={busy} />
+      ) : null}
 
       {step === 'email' && (
         <View style={{ gap: 16 }}>

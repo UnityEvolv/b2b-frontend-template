@@ -42,6 +42,8 @@ export const SIGN_IN_ERRORS: Readonly<Record<string, string>> = {
   'organization.suspended': 'orgSuspended',
   'organization.closing': 'orgClosing',
   'signin.throttled': 'throttled',
+  // The right password, but the address's organization requires single sign-on.
+  'sso.required': 'ssoRequired',
   'mfa.code_invalid': 'codeInvalid',
   'mfa.challenge_expired': 'attemptExpired',
   'signin.exchange_invalid': 'attemptExpired',
