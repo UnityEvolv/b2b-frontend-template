@@ -191,6 +191,11 @@ export function SessionProvider({
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }
 
+/** The session, or null outside a SessionProvider: for a hook that has a sensible answer without one. */
+export function useOptionalSession(): SessionContextValue | null {
+  return useContext(SessionContext)
+}
+
 export function useSession(): SessionContextValue {
   const value = useContext(SessionContext)
   if (!value) throw new Error('useSession is used outside SessionProvider')

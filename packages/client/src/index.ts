@@ -93,6 +93,7 @@ export {
 export {
   memorySessionSource,
   SessionProvider,
+  useOptionalSession,
   useSession,
   type Preferences,
   type Session,

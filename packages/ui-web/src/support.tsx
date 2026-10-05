@@ -6,6 +6,8 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { useTranslation } from 'react-i18next'
 
 import { useApp } from './app'
+import { useOptionalSession } from '@b2b-template/client'
+
 import { useSession } from './session'
 
 /**
@@ -78,10 +80,10 @@ export function forgetSupportRequest(env: SupportEnvironment | undefined = brows
   }
 }
 
-/** The support session this tab is, or null outside one. */
+/** The support session this tab is, or null outside one (and outside a session at all). */
 export function useSupport(): SessionImpersonation | null {
-  const { state } = useSession()
-  return state.status === 'signed-in' ? (state.session.impersonation ?? null) : null
+  const state = useOptionalSession()?.state
+  return state?.status === 'signed-in' ? (state.session.impersonation ?? null) : null
 }
 
 /**
