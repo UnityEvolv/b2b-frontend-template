@@ -14,6 +14,7 @@ import { useOrg, useSession } from '@b2b-template/ui-web'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SetupHint } from '../onboarding/SetupHint'
 import { copyText, refusal, TestReport } from './identity-provider-parts'
 import { SamlDetails, SamlProviderForm } from './SamlProviderForm'
 import { SsoEnforcement } from './SsoEnforcement'
@@ -279,7 +280,7 @@ export function IdentityProviderSettings() {
   return (
     <>
       <Card header={title}>
-        <div className="space-y-4">
+        <div id="set_up_sso" className="space-y-4">
           {saved ? (
             <div className="space-y-1 text-sm">
               <p className="flex flex-wrap items-center gap-2">
@@ -312,7 +313,10 @@ export function IdentityProviderSettings() {
               )}
             </div>
           ) : (
-            <p className="text-sm">{t('settings.identity.local')}</p>
+            <>
+              <SetupHint step="set_up_sso" />
+              <p className="text-sm">{t('settings.identity.local')}</p>
+            </>
           )}
 
           <Select

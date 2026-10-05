@@ -1,0 +1,15 @@
+{
+  "name": "@b2b-template/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "End-to-end tests in a real browser against the backend's running local stack: support mode and the setup checklist. Opt in with npm run e2e; never part of npm run check.",
+  "type": "module",
+  "scripts": {
+    "e2e": "playwright test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.20.3"
+  }
+}

@@ -61,7 +61,11 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | API keys nav, `/api-keys`: list, create, revoke | identity `ListApiKeys`, `CreateApiKey`, `RevokeApiKey`: `api_keys`; each group granted must be one the maker holds, never `api_keys`, `settings` or Owner-only; the plan must include `api_access` | route `permission: 'api_keys'`; the groups offered are the registry's the viewer `can`, less `api_keys`, `settings` and `owner_only`; a plan refusal (`plan.limit_reached`) is shown, with a link to `/billing` for `can('billing')` |
 | Webhooks nav, `/webhooks`: event types, endpoints (add, edit, turn on or off, delete, rotate the secret, send a test), deliveries (list, detail, resend) | webhooks admin API: `webhooks` on every request; adding an endpoint, a test and a resend also need the plan's `webhooks` feature (`plan.limit_reached`); at most 20 endpoints (`webhooks.endpoint_limit`) | route `permission: 'webhooks'`; with the event types' `available` false (or a `plan.limit_reached` refusal) Add, Send test and Resend are disabled and the refusal names `required_plan`, with a link to `/billing` for `can('billing')`; editing, turning off, rotating and deleting stay offered on any plan |
 | Roles nav, `/roles`: permission matrix, ownership transfer | authorization `SetPermissions`: `configure_permissions`; `RequestOwnershipTransfer`, cancel: the Owner | route `permission: 'configure_permissions'` |
-| `/settings/security` (own second factor) | identity: the caller's own | signed in |
+| `/settings/security` (own second factor) | identity: the caller's own | signed in; not in a support session |
+| Setup checklist (start page): read; hide or show a step or the whole checklist (the latter also on `/settings`) | organization `GetOnboarding`, `DismissOnboarding`, `RestoreOnboarding`, `DismissOnboardingStep`, `RestoreOnboardingStep`: `settings` | `can('settings')`, else not asked for; hiding and showing not `useReadOnly()` |
+| Setup links in empty states (Users, Settings, Single sign-on, Billing) | none: links to the step's page, which has its own gate | the page's own gate; on Users only with `mayInvite` |
+| Support access nav, `/support-access`: standing access, consents, support sessions (read) | identity `GetSupportAccess`, `ListImpersonationGrants`, `ListImpersonations`: `settings` | route `permission: 'settings'` |
+| Standing access on or off, include Owners; give or withdraw a consent; end a support session | identity `SetSupportAccess`, `CreateImpersonationGrant`, `RevokeImpersonationGrant`, `EndImpersonation`: an Owner of the org, never an Admin, a platform operator, a key or a support session; a consent 15 to 1440 minutes | `role === 'owner'` and not `useReadOnly()`; the duration picker offers 15 minutes to 24 hours only |
 
 **Platform app** (sign-in admits members of the platform org only)
 
@@ -70,7 +74,18 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | Organizations nav, `/organizations`, `/organizations/:id` | organization `ListOrganizations`, and reads: platform operator | app `orgs: [PLATFORM_ORG]` |
 | `/organizations/new` (create, invite the Owner) | organization `CreateOrganization`: platform; identity `CreateInvite`: platform | app `orgs` |
 | Plan, status (suspend, reactivate), close, retention | organization `ChangePlan`, `SetOrganizationStatus`, `CloseOrganization`, `SetRetention`: platform | app `orgs`; retention only on a contractual plan |
+| Support sessions (an organization's page): consents and standing access, its sessions | identity `ListUsableImpersonationGrants`: platform; `ListImpersonations`: `settings` (a platform operator holds it) | app `orgs` |
+| View as (a member) | identity `StartImpersonation`: platform; an open consent or standing access; an Owner only with `include_owners`; an active member of an active org | app `orgs`; `wayIn`: an open consent or standing access, an Owner only when it includes Owners; the target app's origin configured |
 | Overrides: list, add, edit, remove | organization `ListPlanOverrides`, `SetPlanOverride`, `RemovePlanOverride`: platform; the key must be registered, an end in the future | app `orgs`; limits and features picked from the plan catalogue, never typed |
+
+**Any app in a support session** (a tab the platform app opened with `?support=1`)
+
+| control or route | backend check | UI gate |
+| --- | --- | --- |
+| Every write | every service's middleware: a support session's `POST`, `PUT`, `PATCH`, `DELETE` refused, 403 `impersonation.read_only`; security settings, billing, ownership and the account refused whatever is allowed later | `session.impersonation.readOnly`: every submit button disabled and every form submission refused by the shell, `useReadOnly()` for other controls; a refusal is said as a support session's |
+| API keys, access tokens, own second factor | identity: no key or token is ever made by a support session | route and menu entry `support: false`: no entry, and the page says it is not available |
+| Org switcher, sign-out | the support session is apart from the operator's own (its own cookie) | no switcher; signing out ends the support session only |
+| Owner-only pages (roles, ownership) | an Owner is seen as only under `include_owners` | as for the person seen as |
 
 **Account app** (any signed-in person)
 
@@ -79,7 +94,7 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | Profile, photo, email change, sign out other sessions, your data, deleting the account | user, identity and organization `/v1/me/*`: the caller's own | signed in |
 | Notifications nav, preferences, push | notification preferences: the caller's own in the org | signed in; admins' categories shown to admin roles |
 | Security nav (own second factor) | identity: the caller's own | signed in |
-| Access tokens nav, `/settings/tokens`: own personal access tokens | identity `ListPersonalAccessTokens`, `CreatePersonalAccessToken`, `RevokePersonalAccessToken`: the caller's own; groups a subset of their own now, never `api_keys`, `settings` or Owner-only; the plan must include `api_access` | signed in; the groups offered are those the person `can`, less the same; a plan refusal is shown, asking whoever manages billing |
+| Access tokens nav, `/settings/tokens`: own personal access tokens (not in a support session) | identity `ListPersonalAccessTokens`, `CreatePersonalAccessToken`, `RevokePersonalAccessToken`: the caller's own; groups a subset of their own now, never `api_keys`, `settings` or Owner-only; the plan must include `api_access` | signed in; the groups offered are those the person `can`, less the same; a plan refusal is shown, asking whoever manages billing |
 
 ## Sessions and tokens
 
@@ -99,6 +114,13 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
   endpoint or rotating its secret, held only in that dialog's state and
   dropped when it closes; the endpoint list never carries one
   ([webhooks.md](webhooks.md)).
+- **Support sessions** ([impersonation.md](impersonation.md)): the support
+  cookie (`<productId>_impersonation`) is HTTP-only on the API's host, apart
+  from the operator's own session. The token the platform's start answers
+  with is not kept; the support tab gets its own from the support refresh
+  and holds it in memory only. The tab keeps one flag, that it is a support
+  tab, in its session storage, and nothing of the person's in the device's
+  cache.
 - **Revocation** reaches an open web tab at once through the live session
   stream (`session.revoked` signs it out).
 - **Single sign-on** on the phone and the desktop always opens the system

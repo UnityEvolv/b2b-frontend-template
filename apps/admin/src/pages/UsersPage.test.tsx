@@ -75,4 +75,16 @@ describe('the people list', () => {
     expect(screen.getByRole('link', { name: 'Invite people' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Import from a sheet' })).toBeTruthy()
   })
+
+  it('points a lone member who may invite to the invite step, by its page', async () => {
+    await renderAs('admin', ['settings', 'users'])
+    expect(screen.getByRole('link', { name: 'Invite your teammates' }).getAttribute('href')).toBe(
+      '/users/invite',
+    )
+  })
+
+  it('does not point someone who may not invite there', async () => {
+    await renderAs('admin', ['settings'])
+    expect(screen.queryByRole('link', { name: 'Invite your teammates' })).toBeNull()
+  })
 })

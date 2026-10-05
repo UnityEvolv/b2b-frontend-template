@@ -28,6 +28,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 
+import { SetupHint } from '../onboarding/SetupHint'
+
 import {
   daysUntil,
   money,
@@ -126,6 +128,9 @@ export default function BillingPage() {
   }
   const paid = account.provider_configured
   const offered = offeredBands(account)
+  // On the ladder's lowest band now, not trying another: the plan step is not done.
+  const lowest = catalogue?.bands[0]?.name
+  const onLowest = !!lowest && account.band === lowest && account.state !== 'trialing'
 
   const addCard = async () => {
     setBusy(true)
@@ -282,8 +287,9 @@ export default function BillingPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-2xl font-semibold">{t('billing.title')}</h1>
       {!paid && <Alert variant="info">{t('billing.noProvider')}</Alert>}
+      {onLowest && <SetupHint step="choose_plan" />}
 
-      <Card header={t('billing.plan.title')}>
+      <Card id="choose_plan" header={t('billing.plan.title')}>
         <p className="text-lg font-semibold">
           {label(account.band)}{' '}
           <span className="text-sm font-normal text-muted-foreground">{price(account.band)}</span>

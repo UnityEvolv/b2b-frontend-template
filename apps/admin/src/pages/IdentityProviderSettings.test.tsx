@@ -4,6 +4,7 @@ import { createI18n } from '@b2b-template/i18n'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { IdentityProviderSettings } from './IdentityProviderSettings'
@@ -106,7 +107,9 @@ function setup({ saved, test = () => json(PASSING), put = () => json(SAVED) }: S
   }
   render(
     <I18nextProvider i18n={createI18n()}>
-      <IdentityProviderSettings />
+      <MemoryRouter initialEntries={['/sso']}>
+        <IdentityProviderSettings />
+      </MemoryRouter>
     </I18nextProvider>,
   )
   return { sent, user: userEvent.setup() }

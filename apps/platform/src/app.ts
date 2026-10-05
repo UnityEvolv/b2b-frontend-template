@@ -1,4 +1,5 @@
 import {
+  appOriginsFromEnv,
   createAuth,
   developmentSessionSource,
   PLATFORM_ORG,
@@ -18,6 +19,8 @@ const auth =
     : createAuth({
         app: 'platform',
         orgs: [PLATFORM_ORG],
+        // The operator's own app: never a support tab, whatever its address.
+        support: false,
         ...serviceOriginsFromEnv(import.meta.env),
       })
 
@@ -60,6 +63,8 @@ export const definition: AppDefinition = {
     { path: '/organizations/:orgId', page: () => import('./pages/OrganizationDetailPage') },
     { path: '/sign-in', access: 'public', page: publicPage('SignInPage') },
   ],
+  // Where "View as" opens the admin or account app.
+  appOrigins: appOriginsFromEnv(import.meta.env),
   sessionSource: auth?.sessionSource ?? developmentSessionSource(import.meta.env.DEV, []),
   ...(auth ? { auth } : {}),
   // From the build's configuration: no DSN on a laptop, so nothing is sent.

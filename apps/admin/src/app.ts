@@ -1,4 +1,5 @@
 import {
+  appOriginsFromEnv,
   createAuth,
   developmentSessionSource,
   serviceOriginsFromEnv,
@@ -80,6 +81,8 @@ export const definition: AppDefinition = {
     {
       path: '/settings/security',
       page: () => import('@b2b-template/ui-web').then((m) => ({ default: m.MfaSettingsPage })),
+      // The person's own second factor: never support's to see.
+      support: false,
     },
     {
       path: '/users',
@@ -120,6 +123,7 @@ export const definition: AppDefinition = {
       path: '/api-keys',
       page: () => import('./pages/ApiKeysPage'),
       permission: 'api_keys',
+      support: false,
       nav: { key: 'api-keys', icon: 'external-link', label: (t) => t('admin:nav.apiKeys') },
     },
     {
@@ -127,6 +131,12 @@ export const definition: AppDefinition = {
       page: () => import('./webhooks/WebhooksPage'),
       permission: 'webhooks',
       nav: { key: 'webhooks', icon: 'share', label: (t) => t('admin:nav.webhooks') },
+    },
+    {
+      path: '/support-access',
+      page: () => import('./support/SupportAccessPage'),
+      permission: 'settings',
+      nav: { key: 'support-access', icon: 'info', label: (t) => t('admin:nav.supportAccess') },
     },
     {
       path: '/roles',
@@ -154,6 +164,8 @@ export const definition: AppDefinition = {
       page: () => import('@b2b-template/ui-web').then((m) => ({ default: m.SignInPage })),
     },
   ],
+  // Where an onboarding step in another app is.
+  appOrigins: appOriginsFromEnv(import.meta.env),
   sessionSource: auth?.sessionSource ?? developmentSessionSource(import.meta.env.DEV, []),
   ...(auth ? { auth } : {}),
   // From the build's configuration: no DSN on a laptop, so nothing is sent.
