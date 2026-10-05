@@ -51,7 +51,8 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 | Audit log nav, `/audit`, export | audit list and export: `audit` | route `permission: 'audit'` |
 | Settings nav, `/settings`: general, the domain claim (read), session policy | organization `UpdateOrganization`, `GetDomain`, identity `SetSessionPolicy`: `settings` | route `permission: 'settings'` |
 | Claim, Verify now (domain) | organization `SetDomain`, `VerifyDomain`: `claim_domain` (the Owner; or a platform operator) | `can('claim_domain')`; an Admin sees the claim and its record, no action |
-| Single sign-on nav, `/sso`: identity provider test, save | identity provider endpoints: `sso` | route `permission: 'sso'` |
+| Single sign-on nav, `/sso`: identity provider (OpenID Connect or SAML) test, save; the SAML service provider's details | identity provider endpoints, `GetSamlServiceProvider`: `sso` | route `permission: 'sso'`; Save only after a passing test of the values as they are |
+| Require single sign-on for the domain (on `/sso`) | identity `SetSsoEnforcement`: the Owner role only (never an Admin, a platform operator or a support session); on only while the provider is active and verified (409 `identity_provider.not_verified`) | `role === 'owner'`, else disabled with why; turning it on also needs `status === 'active'` and `verified_at`; a 409 is explained ([sso.md](sso.md)) |
 | Notification defaults | notification `SetOrgNotificationSettings`: `settings` and the Owner role | `role === 'owner'` |
 | Exports, Close organization | organization `CreateOrgExport`, `ListOrgExports`: `delete_organization` as Owner; `CloseOrganization`: `delete_organization` | `role === 'owner'` |
 | Billing nav, `/billing`: card, band, trial, cancel pending; the banner; limits and features set by agreement (an override) marked with their end | billing `StartSetup`, `ChangeBand`, `StartTrial`, `CancelPending`: `billing` | route `permission: 'billing'`; banner `can('billing')`; with `provider_configured` false (`StartSetup` and priced bands answer 503) no card, automatic upgrade or priced band, only the trial and the lowest band |
@@ -103,6 +104,10 @@ Admin by default), `settings` (Owner and Admin, fixed), and the Owner-only
 - **Single sign-on** on the phone and the desktop always opens the system
   browser, never an embedded view, with PKCE: the app holds the verifier and
   redeems a one-time code ([mobile-and-desktop.md](mobile-and-desktop.md)).
+- **Required single sign-on.** A password refused with `sso.required` is
+  sent on to the organization's provider, never retried; the break glass
+  (an Owner with a second factor) is the server's to decide
+  ([sso.md](sso.md)).
 
 ## The web apps' security headers
 
