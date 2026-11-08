@@ -17,9 +17,9 @@
   },
   "dependencies": {
     "@b2b-template/product-config": "0.0.0",
-    "@tailwindcss/vite": "^4.1.0",
+    "@tailwindcss/vite": "^4.3.4",
     "@vitejs/plugin-react": "^5.0.0",
     "tailwindcss": "^4.1.0",
-    "vite": "^7.0.0"
+    "vite": "^7.3.7"
   }
 }
